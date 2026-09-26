@@ -1,0 +1,5 @@
+{
+  "proyecto": "<NOMBRE_DEL_PROYECTO>",
+  "scopes": ["<stack-a>", "<stack-b>"],
+  "secretos": ["<NOMBRE_DE_VARIABLE_SECRETA_1>", "<NOMBRE_DE_VARIABLE_SECRETA_2>"]
+}

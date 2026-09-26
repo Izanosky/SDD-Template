@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Ultima puerta antes de que un secreto exista dentro de un commit.
+#
+# El escaneo del CI corre DESPUES del push: para entonces el objeto ya esta
+# servido y rotar el secreto obliga a reconfigurar cada servicio a mano.
+# `git --staged` mira el indice, el unico momento en que el secreto todavia
+# no existe en ningun sitio.
+#
+# Vive versionado en .githooks/ para que un clon nuevo lo tenga. Se activa una
+# vez por clon (no viaja con el repo):
+#   git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+# Falla CERRADO: un escaner que se salta a si mismo cuando no esta instalado
+# no es una puerta, es una sugerencia.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: falta gitleaks (https://github.com/gitleaks/gitleaks)." >&2
+  exit 1
+fi
+
+# --redact para que el hallazgo no acabe en el scrollback de la terminal.
+gitleaks git --staged --no-banner --redact --config .gitleaks.toml

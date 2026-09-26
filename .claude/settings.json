@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.production)",
+      "Read(**/.env.development)",
+      "Read(**/.envrc)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.*.local)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.development)",
+      "Edit(**/.envrc)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "clear",
+        "hooks": [{ "type": "command", "command": "bash scripts/session_start.sh" }]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/scripts/guard_secrets.py\"" }]
+      }
+    ]
+  }
+}

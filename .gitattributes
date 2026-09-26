@@ -1,0 +1,3 @@
+# Los hooks y los init.sh los ejecuta bash: con CRLF el shebang revienta.
+*.sh text eol=lf
+.githooks/* text eol=lf

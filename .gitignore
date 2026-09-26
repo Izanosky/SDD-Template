@@ -1,0 +1,24 @@
+# Secretos: nunca en git. La plantilla .env.example si.
+.env
+.env.*
+!.env.example
+.envrc
+*.pem
+*.key
+
+# Entornos y dependencias
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+
+# Salidas de build y caches
+dist/
+build/
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Anadir aqui lo propio de cada stack.

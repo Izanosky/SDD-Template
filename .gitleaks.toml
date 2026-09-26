@@ -1,0 +1,33 @@
+title = "<NOMBRE_DEL_PROYECTO>"
+
+[extend]
+useDefault = true
+
+# Una regla por cada secreto propio del proyecto (ver harness.json "secretos").
+# Si el secreto tiene un formato reconocible, darle una regla: la regla
+# generica solo lo pilla por entropia y puede fallar.
+#
+# [[rules]]
+# id = "<proyecto>-token"
+# description = "Token de <servicio>"
+# regex = '''<prefijo>_[A-Za-z0-9]{32,}'''
+# keywords = ["<prefijo>_"]
+
+[allowlist]
+description = "Falsos positivos conocidos"
+# Se excusan por RUTA, nunca por VALOR: excusar un secreto falso por su valor
+# desactivaria tambien su deteccion en los tests que prueban esta config.
+# Se excusa el FICHERO concreto, nunca el directorio entero: un secreto real
+# en otro fichero del mismo directorio tiene que seguir saltando.
+#
+# Leccion: en tests, preferir literales de BAJA entropia (p. ej.
+# "sb_secret_test") a excusar rutas. Un literal que parece un secreto real
+# dispara la regla generica y acaba en una allowlist que nadie revisa.
+paths = [
+  '''\.gitleaks\.toml$''',
+  '''\.env\.example$''',
+  # Dependencias de terceros: los init.sh escanean con --no-git, que ignora
+  # .gitignore. Nada de esto se commitea.
+  '''(^|/)\.venv/''',
+  '''(^|/)node_modules/''',
+]

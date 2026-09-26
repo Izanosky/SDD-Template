@@ -1,0 +1,13 @@
+[
+  {
+    "id": "F01",
+    "title": "<Primera feature: la mas pequena que demuestre la arquitectura de punta a punta>",
+    "status": "pending",
+    "sdd": true,
+    "scope": ["<stack-a>"],
+    "acceptance": [
+      "<Comportamiento observable 1, comprobable por test>",
+      "<Comportamiento observable 2>"
+    ]
+  }
+]
