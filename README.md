@@ -55,10 +55,16 @@ feature_list.json          specs/<F>/                 progress/<F>/IT<n>/
 
 - [Claude Code](https://claude.com/claude-code)
 - Git y **bash** (en Windows, Git Bash)
-- Python 3.10+ con `pytest`
+- Python 3.10+ con `pytest` — **solo para el propio harness** (`scripts/` y
+  `tests/`), sea cual sea el lenguaje de tu proyecto
 - [gitleaks](https://github.com/gitleaks/gitleaks) (lo exige el hook de
   pre-commit y los `init.sh` de cada stack)
-- Las toolchains de tus stacks
+- Las toolchains de tus stacks (Node, Go, Java…): se usan desde
+  `<scope>/init.sh`
+
+> `pytest tests/` verifica el harness, no tu producto. Los tests de tu
+> código los lanza el `init.sh` de cada stack con su herramienta (`npm test`,
+> `go test`, `mvn test`…).
 
 ---
 
