@@ -5,7 +5,13 @@
       "Read(**/.env.local)",
       "Read(**/.env.*.local)",
       "Read(**/.env.production)",
+      "Read(**/.env.prod)",
       "Read(**/.env.development)",
+      "Read(**/.env.dev)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.test)",
+      "Read(**/.env.ci)",
+      "Read(**/.env-*)",
       "Read(**/.envrc)",
       "Read(**/*.pem)",
       "Read(**/*.key)",
@@ -13,21 +19,67 @@
       "Edit(**/.env.local)",
       "Edit(**/.env.*.local)",
       "Edit(**/.env.production)",
+      "Edit(**/.env.prod)",
       "Edit(**/.env.development)",
+      "Edit(**/.env.dev)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.ci)",
+      "Edit(**/.env-*)",
       "Edit(**/.envrc)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "PowerShell(git commit *)",
+      "PowerShell(git push *)",
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Bash(npm add *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm install *)",
+      "Bash(yarn add *)",
+      "Bash(bun add *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(python -m pip install *)",
+      "Bash(python3 -m pip install *)",
+      "Bash(py -m pip install *)",
+      "Bash(uv add *)",
+      "Bash(uv pip install *)",
+      "Bash(poetry add *)",
+      "Bash(cargo add *)",
+      "Bash(go get *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm i *)",
+      "PowerShell(npm add *)",
+      "PowerShell(pnpm add *)",
+      "PowerShell(pnpm install *)",
+      "PowerShell(yarn add *)",
+      "PowerShell(bun add *)",
+      "PowerShell(pip install *)",
+      "PowerShell(pip3 install *)",
+      "PowerShell(python -m pip install *)",
+      "PowerShell(python3 -m pip install *)",
+      "PowerShell(py -m pip install *)",
+      "PowerShell(uv add *)",
+      "PowerShell(uv pip install *)",
+      "PowerShell(poetry add *)",
+      "PowerShell(cargo add *)",
+      "PowerShell(go get *)"
     ]
   },
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "clear",
-        "hooks": [{ "type": "command", "command": "bash scripts/session_start.sh" }]
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/session_start.sh\"" }]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Bash|PowerShell",
-        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/scripts/guard_secrets.py\"" }]
+        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/py.sh\" \"$CLAUDE_PROJECT_DIR/scripts/guard_secrets.py\"" }]
       }
     ]
   }

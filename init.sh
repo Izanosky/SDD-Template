@@ -13,23 +13,13 @@ case "${1:-}" in
   --all)     ALL=1 ;;
 esac
 
-# El nombre del interprete cambia entre sistemas: Git Bash tiene `python`, un
-# Linux normalmente solo `python3`. Se prueba cada candidato EJECUTANDOLO, no
-# solo mirando el PATH: en Windows `python3` suele ser el stub de la Microsoft
-# Store, que esta en el PATH y no arranca nada.
-PY=""
-for c in "${PYTHON:-}" python python3 py; do
-  [ -n "$c" ] || continue
-  if command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1; then
-    PY="$c"; break
-  fi
-done
-[ -n "$PY" ] || { echo "No encuentro un interprete de Python en el PATH." >&2; exit 1; }
+# El interprete lo elige scripts/py.sh (python3/python/py, el que arranque).
+PY="bash scripts/py.sh"
 
 if [ "$ALL" -eq 1 ]; then
-  SCOPES="$("$PY" -c 'import json; print(" ".join(json.load(open("harness.json", encoding="utf-8"))["scopes"]))')"
+  SCOPES="$($PY -c 'import json; print(" ".join(json.load(open("harness.json", encoding="utf-8"))["scopes"]))')"
 else
-  SCOPES="$("$PY" scripts/state.py | "$PY" -c \
+  SCOPES="$($PY scripts/state.py | $PY -c \
     'import json,sys; print(" ".join(json.load(sys.stdin).get("scope", [])))')"
 fi
 

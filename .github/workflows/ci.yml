@@ -13,23 +13,27 @@ jobs:
     # de 0 en una maquina recien arrancada. Ver docs/verification.md.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      # Actions fijadas por SHA, no por etiqueta: una etiqueta se puede mover.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0   # historial completo: el paso de secretos lo escanea entero
 
       # Toolchains de cada stack. Fijar versiones: un CI que cambia de
       # comportamiento porque alguien publico una release no verifica lo mismo
       # dos veces seguidas.
-      - uses: astral-sh/setup-uv@v6   # el harness (tests/, scripts/) es Python
-      # - uses: actions/setup-node@v4
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0 (harness en Python)
+      # - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       #   with: { node-version: 24, cache: npm, cache-dependency-path: <stack>/package-lock.json }
       # - <otras toolchains>
 
       - name: Instalar gitleaks (version fijada)
         run: |
           mkdir -p "$HOME/.local/bin"
-          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
-            | tar -xz -C "$HOME/.local/bin" gitleaks
+          # Checksum antes de extraer: un binario descargado no se ejecuta a ciegas.
+          curl -fsSL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz -C "$HOME/.local/bin" gitleaks
+          rm gitleaks.tar.gz
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # Los init.sh escanean el arbol de trabajo. Esto escanea la HISTORIA: un
@@ -37,10 +41,21 @@ jobs:
       - name: Secretos en el historial
         run: gitleaks detect --redact --config .gitleaks.toml
 
+      # La misma regla que el pre-commit, para quien no lo active o use
+      # --no-verify. Sin base (rama nueva) no hay rango que comparar.
+      - name: docs/ con su entrada en docs/CHANGELOG.md
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            bash scripts/check_docs_changelog.sh "$BASE..HEAD"
+          fi
+
       - name: Tests del harness
         run: uv run --with pytest --no-project pytest tests/ -q
 
-      # Lee el scope de la feature activa y delega. Falla si un stack del
-      # scope no tiene init.sh, que es justo lo que se quiere.
-      - name: Verificacion del scope activo
-        run: ./init.sh
+      # Todos los stacks, no solo el de la feature activa: con todo `done` el
+      # scope activo esta vacio y `./init.sh` daria verde sin verificar nada.
+      # Falla si un stack no tiene init.sh, que es justo lo que se quiere.
+      - name: Verificacion de todos los stacks
+        run: bash init.sh --all

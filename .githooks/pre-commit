@@ -12,6 +12,10 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
+# Regla dura: docs/ cambia solo con su entrada en docs/CHANGELOG.md. La
+# misma comprobacion corre en el CI para quien no active este hook.
+bash scripts/check_docs_changelog.sh
+
 # Falla CERRADO: un escaner que se salta a si mismo cuando no esta instalado
 # no es una puerta, es una sugerencia.
 if ! command -v gitleaks >/dev/null 2>&1; then

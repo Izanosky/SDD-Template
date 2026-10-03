@@ -1,4 +1,7 @@
 import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -34,6 +37,16 @@ BLOQUEADOS = [
     "set",
     "Get-ChildItem env:",
     "gci Env:",
+    # El patron de busqueda se ignora, pero el fichero buscado no.
+    "grep -e KEY .env",
+    "grep -n TOKEN .env | head",
+    "rg KEY backend/.env",
+    # Leccion: con el patron dentro de la opcion se quitaba el .env.
+    "grep -e. .env",
+    "grep -ne. .env",
+    "rg --regexp=. .env",
+    "grep -f .env x",
+    "cat .env-prod",
 ]
 
 PERMITIDOS = [
@@ -44,6 +57,9 @@ PERMITIDOS = [
     "git status",
     "./init.sh --all",
     "env FOO=1 pytest",
+    # Leccion: buscar el TEXTO ".env" en la documentacion no lee ningun .env.
+    'grep -n "./.env" notas.txt',
+    "rg '\\.env' docs",
 ]
 
 
@@ -55,3 +71,40 @@ def test_bloquea(comando):
 @pytest.mark.parametrize("comando", PERMITIDOS)
 def test_permite(comando):
     assert guard_secrets.motivo(comando) is None
+
+
+def _hook(entrada: str):
+    return subprocess.run([sys.executable, str(RAIZ / "scripts/guard_secrets.py")],
+                          input=entrada.encode("utf-8"), capture_output=True)
+
+
+def test_hook_bloquea_con_codigo_2():
+    assert _hook(json.dumps({"tool_input": {"command": "printenv"}})).returncode == 2
+
+
+def test_hook_deja_pasar_lo_seguro_aunque_venga_con_bom():
+    assert _hook("﻿" + json.dumps({"tool_input": {"command": "git status"}})).returncode == 0
+
+
+def test_hook_falla_cerrado_si_la_entrada_es_ilegible():
+    assert _hook("esto no es json").returncode == 2
+
+
+BASH = shutil.which("bash")
+
+
+@pytest.mark.skipif(BASH is None, reason="sin bash")
+def test_lanzador_sin_python_bloquea():
+    # Leccion: un hook cuyo interprete no existe es un error NO bloqueante en
+    # Claude Code; el lanzador convierte ese caso en un bloqueo (codigo 2).
+    r = subprocess.run([BASH, str(RAIZ / "scripts/py.sh"), "-c", "pass"],
+                       env={"PATH": "/nonexistent"}, capture_output=True, text=True)
+    assert r.returncode == 2
+
+
+@pytest.mark.skipif(BASH is None, reason="sin bash")
+def test_lanzador_con_python_ejecuta():
+    # Sin comillas en el argumento: la bash de Git en Windows las quita.
+    r = subprocess.run([BASH, str(RAIZ / "scripts/py.sh"), "-c", "print(6*7)"],
+                       env={**os.environ, "PYTHON": sys.executable}, capture_output=True, text=True)
+    assert r.returncode == 0 and "42" in r.stdout

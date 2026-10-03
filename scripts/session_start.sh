@@ -1,29 +1,33 @@
 #!/usr/bin/env bash
-# SessionStart: muestra el estado que los agentes ya dejaron escrito en disco.
-# No genera contenido ni interpreta nada: solo concatena. Por eso no puede
-# quedar desincronizado ni depende de que ningun agente lo mantenga.
+# SessionStart (startup, resume, clear, compact): inyecta el estado que los
+# agentes ya dejaron en disco. Solo concatena; no interpreta nada.
+#
+# Corto a proposito: Claude Code recorta la salida de un hook a 10.000
+# caracteres (deja un preview de 2.000). Por eso no vuelca los veredictos:
+# da sus rutas y el leader lee lo que necesite.
 set -uo pipefail
-cd "$(git rev-parse --show-toplevel)" || exit 0
+# La raiz es la del propio script, no la del directorio actual.
+cd "$(dirname "$0")/.." || exit 0
+PY="bash scripts/py.sh"
 
-echo "=== ESTADO DE DESPACHO ==="
-python scripts/state.py || echo "(scripts/state.py fallo)"
+echo "=== state.py ==="
+ESTADO="$($PY scripts/state.py 2>/dev/null || echo '{"error": "scripts/state.py fallo"}')"
+echo "$ESTADO"
 
 echo
-echo "=== progress/current.md ==="
-if [ -f progress/current.md ]; then cat progress/current.md; else echo "(no existe)"; fi
+echo "=== progress/current.md (primeras 80 lineas) ==="
+if [ -f progress/current.md ]; then head -n 80 progress/current.md; else echo "(no existe)"; fi
 
-FEATURE="$(python scripts/state.py 2>/dev/null | python -c \
+FEATURE="$(printf '%s' "$ESTADO" | $PY -c \
   'import json,sys; print(json.load(sys.stdin).get("feature",""))' 2>/dev/null || true)"
 [ -z "$FEATURE" ] && exit 0
-
 IT="$(ls -d "progress/$FEATURE"/IT* 2>/dev/null | sort -V | tail -1 || true)"
 [ -z "$IT" ] && exit 0
 
 echo
 echo "=== Ultima iteracion: $IT ==="
+# evidence.md no se lista: el leader no lo lee nunca.
 for f in impl.md review.md security.md; do
-  if [ -f "$IT/$f" ]; then echo "--- $f ---"; cat "$IT/$f"; fi
+  [ -f "$IT/$f" ] && echo "$IT/$f"
 done
-
-# evidence.md NO se muestra: el leader no lo lee nunca.
 exit 0

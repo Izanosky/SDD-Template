@@ -1,6 +1,7 @@
 # Secretos: nunca en git. La plantilla .env.example si.
 .env
 .env.*
+.env-*
 !.env.example
 .envrc
 *.pem

@@ -36,6 +36,50 @@ def test_los_revisores_no_pueden_abrir_subagentes():
         assert "Agent" not in cabecera, f"{nombre} puede multiplicar el gasto"
 
 
+def _agente(nombre):
+    return (RAIZ / f".claude/agents/{nombre}.md").read_text(encoding="utf-8")
+
+
+def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
+    # state.py solo entiende estas cadenas: si un agente las cambia, el
+    # despacho se rompe en silencio.
+    for revisor in ("reviewer", "security_reviewer"):
+        assert "Veredicto: APPROVED" in _agente(revisor), revisor
+        assert "Veredicto: CHANGES_REQUESTED" in _agente(revisor), revisor
+    assert "## Sabotajes" in _agente("implementer")
+    assert "SERVICIOS REALES" in _agente("spec_author")
+
+
+def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
+    # Leccion: un hook cuyo interprete no existe deja pasar el comando.
+    hooks = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))["hooks"]
+    guardia = hooks["PreToolUse"][0]["hooks"][0]["command"]
+    assert "scripts/py.sh" in guardia and "guard_secrets.py" in guardia
+    assert "compact" in hooks["SessionStart"][0]["matcher"]
+
+
+def test_commit_y_push_piden_confirmacion():
+    ask = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))["permissions"]["ask"]
+    for regla in ("Bash(git commit *)", "Bash(git push *)", "PowerShell(git commit *)"):
+        assert regla in ask
+
+
+def test_cada_regla_ask_de_bash_tiene_su_gemela_en_powershell():
+    # Leccion: los instaladores solo estaban completos para Bash, y en Windows
+    # entraba una dependencia sin preguntar.
+    ask = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))["permissions"]["ask"]
+    for regla in ask:
+        if regla.startswith("Bash("):
+            assert "PowerShell(" + regla[len("Bash("):] in ask, regla
+
+
+def test_las_skills_del_harness_solo_se_invocan_a_mano():
+    skills = list((RAIZ / ".claude/skills").glob("*/SKILL.md"))
+    assert skills
+    for skill in skills:
+        assert "disable-model-invocation: true" in skill.read_text(encoding="utf-8"), skill
+
+
 def test_los_sh_versionados_son_ejecutables():
     # Leccion: en Windows no se nota; en el CI Linux da "Permission denied".
     r = subprocess.run(["git", "ls-files", "-s"], capture_output=True, text=True, cwd=RAIZ)

@@ -12,10 +12,13 @@ Exit 2 = bloqueado; el motivo va por stderr y lo lee el agente.
 """
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+_ENV = re.compile(r"(?<![\w-])\.env(?!\.example\b)(?!\w)")
+_BUSCADORES = {"grep", "egrep", "fgrep", "rg"}
 
 
 def _secretos() -> tuple[str, ...]:
@@ -28,10 +31,6 @@ def _secretos() -> tuple[str, ...]:
 
 def _reglas() -> list[tuple[re.Pattern[str], str]]:
     reglas = [
-        # Cualquier fichero .env salvo la plantilla .env.example. `.venv` no
-        # casa: el punto va delante de la v, no de la e.
-        (re.compile(r"(?<![\w-])\.env(?!\.example\b)(?![\w-])"),
-         "toca un fichero .env (solo .env.example es legible)"),
         # Volcar el entorno entero.
         (re.compile(r"(^|[;&|(]\s*)(printenv|env|set|export\s+-p)\s*($|[;&|)])"),
          "vuelca todas las variables de entorno"),
@@ -52,7 +51,36 @@ def _reglas() -> list[tuple[re.Pattern[str], str]]:
     return reglas
 
 
+def _sin_patron_de_busqueda(comando: str) -> str:
+    """`grep -n "x.env" notas.txt` busca un texto, no lee un .env.
+
+    Solo para un buscador suelto (sin tuberias ni encadenados): se quita su
+    primer argumento posicional, que es el patron. Ante cualquier duda se
+    devuelve el comando entero, y la regla de .env sigue mirandolo todo.
+    """
+    if re.search(r"[;&|`$<>]", comando):
+        return comando
+    try:
+        partes = shlex.split(comando)
+    except ValueError:
+        return comando
+    if not partes or Path(partes[0]).name not in _BUSCADORES:
+        return comando
+    # Con -e/-f/--regexp/--file el patron va en la opcion y el primer
+    # posicional ya es un fichero. Leccion: `grep -e. .env` quitaba el .env.
+    if any(re.match(r"-[^-]*[ef]|--(regexp|file)\b", p) for p in partes[1:]):
+        return comando
+    for i, p in enumerate(partes[1:], 1):
+        if not p.startswith("-"):
+            return " ".join(partes[:i] + partes[i + 1:])
+    return comando
+
+
 def motivo(comando: str) -> str | None:
+    # Cualquier fichero .env (tambien .env-prod) salvo la plantilla
+    # .env.example. `.venv` no casa: el punto va delante de la v, no de la e.
+    if _ENV.search(_sin_patron_de_busqueda(comando)):
+        return "toca un fichero .env (solo .env.example es legible)"
     for patron, texto in _reglas():
         if patron.search(comando):
             return texto
@@ -61,16 +89,21 @@ def motivo(comando: str) -> str | None:
 
 def main() -> int:
     try:
-        entrada = json.load(sys.stdin)
-    except ValueError:
-        return 0
-    comando = (entrada.get("tool_input") or {}).get("command") or ""
+        # lstrip: algunas shells de Windows anteponen un BOM al reenviar stdin.
+        # Bytes en UTF-8: en Windows sys.stdin decodifica con la pagina ANSI.
+        entrada = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace").lstrip("﻿"))
+        comando = (entrada.get("tool_input") or {}).get("command") or ""
+    except (ValueError, AttributeError):
+        # Falla cerrado: una entrada que no se entiende no se da por segura.
+        print("Bloqueado por scripts/guard_secrets.py: entrada del hook ilegible.",
+              file=sys.stderr)
+        return 2
     razon = motivo(comando)
     if razon is None:
         return 0
     print(f"Bloqueado por scripts/guard_secrets.py: el comando {razon}. "
           "Los secretos no pasan por el contexto de un agente (CLAUDE.md, "
-          "Prohibiciones). Si hace falta, pideselo al humano.",
+          "Reglas duras). Si hace falta, pideselo al humano.",
           file=sys.stderr)
     return 2
 
