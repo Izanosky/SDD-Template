@@ -450,13 +450,40 @@ Cuatro capas para secretos (detalle en `docs/security.md`):
 - **Lecciones trasladables**: a `progress/para_la_plantilla.md`, y de ahí al
   repo de la plantilla.
 - **Auditoría de seguridad completa** cada 4 features o al cerrar una fase
-  (`/auditoria-seguridad`).
-- **Retrospectiva** al terminar (`/retrospectiva`), con
-  `/doctor prompt-audit` para recortar y desenredar instrucciones, y la
-  búsqueda de reglas muertas (las que nadie citó nunca).
+  (`/auditoria-seguridad`, abajo).
+- **Retrospectiva** al terminar (`/retrospectiva`, abajo).
 - **Umbrales** (200 líneas, ~400 de spec, 4 features, 2 reanudaciones): en
   `CLAUDE.md`, "Parámetros del harness". Ajústalos con datos de
   `metrics.csv`, no a ojo.
+
+### Las skills del harness
+
+Son propias de esta plantilla (`.claude/skills/`), no vienen con Claude
+Code. Llevan `disable-model-invocation: true` (hay test): **solo las lanza
+el humano** escribiendo su nombre, así que no cuestan contexto hasta
+entonces y ningún agente puede dispararlas por su cuenta. El `leader` sabe
+cuándo proponerlas. Se ejecutan en la sesión principal. El procedimiento
+paso a paso está en cada `SKILL.md` (Parte II); aquí, para qué sirven.
+
+**`/auditoria-seguridad`** — revisión de seguridad del repositorio entero.
+- **Por qué**: cada `security_reviewer` mira solo el diff de su IT; nadie
+  mira el conjunto (una tabla que pierde su protección con la migración de
+  otra feature, una ruta vieja que no conoce un rol nuevo).
+- **Cuándo**: cada 4 features cerradas o al cerrar una fase, y siempre que
+  `state.py` devuelva `audits_pending`.
+- **Qué deja**: un informe del `security_reviewer` en
+  `progress/audits/<fecha>/` y, decidido con el humano, el destino de cada
+  hallazgo en `cambios.md` (arreglo, feature nueva, línea de `acceptance` o
+  descarte). No bloquea ninguna feature.
+
+**`/retrospectiva`** — balance del proyecto y del propio harness.
+- **Por qué**: los umbrales y las reglas solo se ajustan bien con datos.
+- **Cuándo**: con `TODO_HECHO` o al cerrar una fase.
+- **Qué deja**: `progress/retrospective.md` con qué mantener, cambiar o
+  quitar (proceso, código y producto), cada fila con su dato, y lo
+  trasladable en `progress/para_la_plantilla.md`. Usa `/doctor
+  prompt-audit`, de serie en Claude Code, para revisar las instrucciones.
+  No cambia reglas: las propone.
 
 ---
 
@@ -1150,17 +1177,25 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
 
 ## Si `state.py` trae `audits_pending`: dar destino a los hallazgos
 
-1. Lee `progress/audits/<fecha>/informe.md` (no `evidencia.md`).
+1. Lee `progress/audits/<fecha>/informe.md` (no `evidencia.md`). Si falta o
+   está cortado, la auditoría no terminó: reanuda al `security_reviewer`
+   (leader, "Agente que vuelve sin terminar"), no sigas.
 2. Con el humano, cada hallazgo sale con un destino:
    - **arreglo pequeño del leader** (solo si cumple "Arreglos pequeños" de
      `.claude/agents/leader.md`);
    - **feature nueva** en `feature_list.json`, colocada delante de la que más
-     depende de ella, con el `archivo:línea` y el cambio propuesto copiados
-     en su `acceptance` (así nadie reabre el informe);
+     depende de ella pero **nunca delante de la que está en curso**
+     (`state.py` despacha la primera no `done`: la en curso quedaría parada
+     a mitad de una IT y habría dos en curso), con el
+     `archivo:línea` y el cambio propuesto copiados en su `acceptance` (así
+     nadie reabre el informe);
    - **línea más** en el `acceptance` de una feature pendiente;
    - **descartado**, con motivo.
 3. Escribe `progress/audits/<fecha>/cambios.md`: tabla hallazgo → destino.
-   Desde ahí se lee `cambios.md`, nunca el informe.
+   Sin hallazgos en un informe completo, también: `cambios.md` con "Sin
+   hallazgos"; si falta, la auditoría sigue en `audits_pending` para
+   siempre. Desde ahí se lee
+   `cambios.md`, nunca el informe.
 
 ## Si no: lanzar una auditoría nueva
 
@@ -1170,9 +1205,6 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
    `progress/audits/<fecha>/`. Revisa el repositorio entero contra su estado
    actual (ver tu sección 'Modo auditoría'). Escribe `informe.md` (≤ 200
    líneas) y, si hace falta, `evidencia.md`."
-   En repositorios grandes, una alternativa es un workflow de Claude Code
-   que reparta rutas o módulos entre varios agentes y verifique cada
-   hallazgo antes de informarlo; cuesta más tokens.
 4. Línea en `progress/metrics.csv` con `feature = audit` e `it = <fecha>`.
 5. Vuelve al primer apartado para dar destino a los hallazgos.
 ~~~~~~~
@@ -1194,25 +1226,45 @@ Tres frentes, en este orden.
 
 ## 1. El proceso (lo que se lleva a otro proyecto)
 
-Datos: `progress/metrics.csv`, `progress/*/IT*/review.md` y `security.md`,
-`progress/history.md`, `docs/CHANGELOG.md`.
+Datos, del más barato al más caro: `progress/metrics.csv` (ya trae el
+veredicto y la causa de cada rechazo), `progress/history.md` y
+`docs/CHANGELOG.md`. Los `review.md` y `security.md` **no se leen enteros**:
+busca sus líneas `Veredicto:` y abre uno concreto solo para explicar un caso
+raro (una feature con muchas IT, una causa `otro`) o para comprobar una
+regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
 
 - Iteraciones por feature y **causa de cada rechazo** (`codigo`, `tests`,
   `spec`, `otro`). Qué tipo de rechazo cuesta más tokens.
 - **Cada ajuste del CHANGELOG, si sirvió**: compara `metrics.csv` antes y
-  después de su fecha.
-- **Reglas muertas**: las que ningún veredicto ni `impl.md` citó nunca.
-  Candidatas a borrarse (con su entrada en el CHANGELOG).
+  después de su fecha. Con pocas features es un indicio, no una prueba:
+  dilo.
+- **Reglas candidatas a quitar**: que nadie cite una regla no prueba que
+  sobre; puede ser justo la que evita el fallo. Es candidata solo si no sale
+  de ninguna lección (su comentario "Leccion:" o una entrada del CHANGELOG)
+  y el fallo que previene no aparece en ningún veredicto. Quitarla lo decide
+  el humano, con su entrada en el CHANGELOG.
 - **Coste por rol y por feature** (tokens y minutos).
-- Ejecuta `/doctor prompt-audit` sobre `CLAUDE.md`, `.claude/agents/` y
-  `.claude/skills/`: propone recortes y detecta contradicciones.
+- **Instrucciones**: `/doctor prompt-audit` (skill de serie de Claude Code,
+  v2.1.283+, según code.claude.com/docs/en/commands, consultado el
+  2026-10-03; si no puedes lanzarla tú, pídesela al humano) sobre
+  `CLAUDE.md`, `.claude/agents/` y `.claude/skills/`: instrucciones
+  obsoletas o contradictorias. Cada recorte propuesto, con fichero, línea y
+  motivo.
 - Lo trasladable a otros proyectos, a `progress/para_la_plantilla.md`.
 
 ## 2. El código
 
-- Auditoría de seguridad completa (`/auditoria-seguridad`).
-- Sobreingeniería y deuda: revisión del repo entero buscando código que
-  sobra, y los atajos marcados a propósito en el código.
+- **Auditoría de seguridad**: con el mismo criterio que el leader (4 o más
+  features cerradas desde la última carpeta de `progress/audits/`, o una
+  fase cerrada), propónsela al humano.
+  `/auditoria-seguridad` solo se invoca a mano: tú no puedes lanzarla.
+- **Atajos**: busca la etiqueta `ATAJO:` (`docs/principios.md`) en el
+  código. Para cada uno: mantener, pagarlo ya o convertirlo en feature.
+- **Sobreingeniería**, solo si el humano lo pide (recorre el repo entero):
+  lanza `explorer` con el encargo "código que sobra: abstracciones con una
+  sola implementación, código muerto, lo que ya hace la librería estándar o
+  una dependencia instalada". Escribe `progress/explore_sobreingenieria.md`;
+  aquí va solo su resumen.
 
 ## 3. El producto (solo lo sabe el humano)
 
@@ -1524,6 +1576,18 @@ Formato:
 - Cómo se medirá: <qué mirar en metrics.csv o en los veredictos, si aplica>
 ```
 
+## 2026-10-03 — Hotfix sin excepción "urgente" y etiqueta ATAJO:
+- Ficheros: docs/specs.md, docs/principios.md
+- Antes → ahora: hotfix "delante si es urgente" → siempre justo tras la
+  feature en curso; atajo "comentario con su límite" → etiqueta literal
+  `ATAJO: <límite> · <camino de mejora>`
+- Por qué: delante de la feature en curso quedaban dos en curso (rompe
+  test_como_mucho_una_feature_en_curso); sin etiqueta fija la retrospectiva
+  no puede encontrar los atajos
+- Aprobado por: <humano>
+- Propagado a: .claude/skills/auditoria-seguridad/SKILL.md,
+  .claude/skills/retrospectiva/SKILL.md, HARNESS.md
+
 ## <AAAA-MM-DD> — Creación de docs/ desde la plantilla
 - Ficheros: todos los de docs/
 - Antes → ahora: — → reglas iniciales del harness
@@ -1623,8 +1687,9 @@ conflicto, gana el código más simple que cumple la spec y se deja verificar.
   el control que ya existía, nunca un error 500. Un control de seguridad
   falla cerrado.
 - **Sondeo antes que push** si nadie puede abrir conexiones hacia el cliente.
-- **Atajos marcados**: un atajo deliberado lleva un comentario con su límite
-  y su camino de mejora.
+- **Atajos marcados**: un atajo deliberado lleva un comentario
+  `ATAJO: <límite> · <camino de mejora>`, con esa etiqueta literal para que
+  la retrospectiva pueda encontrarlos todos. <!-- ajuste-2026-10-03 -->
 - <RELLENAR: posturas propias del proyecto.>
 ~~~~~~~
 
@@ -1819,8 +1884,8 @@ la IT aparece una decisión de diseño de verdad, se pasa a `"sdd": true`.
 - **Hotfix de una feature `done`**: no se reabre (`state.py` salta las
   `done` y solo admite una en curso). Se añade una feature nueva a
   `feature_list.json` (p. ej. `F01-fix1`), normalmente con `"sdd": false`,
-  el bug y su test esperado en `acceptance`, colocada tras la que está en
-  curso; delante solo si el humano decide que es urgente.
+  el bug y su test esperado en `acceptance`, colocada justo tras la que está
+  en curso (delante, habría dos en curso). <!-- ajuste-2026-10-03 -->
 - **Hallazgos de auditoría**: features nuevas con `archivo:línea` y el
   cambio propuesto copiados en su `acceptance`.
 ~~~~~~~

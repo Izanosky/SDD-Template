@@ -82,7 +82,7 @@ la IT aparece una decisión de diseño de verdad, se pasa a `"sdd": true`.
 - **Hotfix de una feature `done`**: no se reabre (`state.py` salta las
   `done` y solo admite una en curso). Se añade una feature nueva a
   `feature_list.json` (p. ej. `F01-fix1`), normalmente con `"sdd": false`,
-  el bug y su test esperado en `acceptance`, colocada tras la que está en
-  curso; delante solo si el humano decide que es urgente.
+  el bug y su test esperado en `acceptance`, colocada justo tras la que está
+  en curso (delante, habría dos en curso). <!-- ajuste-2026-10-03 -->
 - **Hallazgos de auditoría**: features nuevas con `archivo:línea` y el
   cambio propuesto copiados en su `acceptance`.

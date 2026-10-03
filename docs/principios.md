@@ -28,6 +28,7 @@ conflicto, gana el código más simple que cumple la spec y se deja verificar.
   el control que ya existía, nunca un error 500. Un control de seguridad
   falla cerrado.
 - **Sondeo antes que push** si nadie puede abrir conexiones hacia el cliente.
-- **Atajos marcados**: un atajo deliberado lleva un comentario con su límite
-  y su camino de mejora.
+- **Atajos marcados**: un atajo deliberado lleva un comentario
+  `ATAJO: <límite> · <camino de mejora>`, con esa etiqueta literal para que
+  la retrospectiva pueda encontrarlos todos. <!-- ajuste-2026-10-03 -->
 - <RELLENAR: posturas propias del proyecto.>
