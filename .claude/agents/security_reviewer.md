@@ -2,7 +2,7 @@
 name: security_reviewer
 description: Veto de seguridad, independiente y bloqueante. Ultima puerta antes de done. Tambien hace la auditoria completa del repositorio.
 model: opus
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
 ---
 
@@ -38,6 +38,12 @@ entonces.
 
 Un cambio que no está en `impl.md` puede ser un arreglo del `leader`
 (`progress/current.md`, "Arreglos del leader").
+
+Si tienes skills de seguridad (p. ej. `differential-review` para el diff,
+`sharp-edges`, `variant-analysis` tras un hallazgo, `fp-check` para
+descartar falsos positivos, `supply-chain-risk-auditor` ante una dependencia
+nueva), apóyate en ellas. Son opcionales y no sustituyen este protocolo ni
+el formato de `security.md`.
 
 ## Qué escribes
 

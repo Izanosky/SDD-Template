@@ -1,7 +1,6 @@
 ---
 name: retrospectiva
 description: Retrospectiva del proyecto al terminar (TODO_HECHO) o al cerrar una fase. Mide el harness con datos y propone mantener, cambiar o quitar.
-disable-model-invocation: true
 ---
 
 # Retrospectiva
@@ -42,8 +41,8 @@ regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
 
 - **Auditoría de seguridad**: con el mismo criterio que el leader (4 o más
   features cerradas desde la última carpeta de `progress/audits/`, o una
-  fase cerrada), propónsela al humano.
-  `/auditoria-seguridad` solo se invoca a mano: tú no puedes lanzarla.
+  fase cerrada), propónsela al humano y lánzala (`/auditoria-seguridad`)
+  solo con su sí: es cara.
 - **Atajos**: busca la etiqueta `ATAJO:` (`docs/principios.md`) en el
   código. Para cada uno: mantener, pagarlo ya o convertirlo en feature.
 - **Sobreingeniería**, solo si el humano lo pide (recorre el repo entero):

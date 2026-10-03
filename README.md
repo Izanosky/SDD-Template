@@ -81,7 +81,7 @@ pregúntame lo que no sepas".
      entrada en `docs/CHANGELOG.md`);
    - ejecutar las tasks con servicios reales;
    - hacer los commits (Claude Code te los pide confirmar).
-3. Skills manuales: `/auditoria-seguridad` y `/retrospectiva`.
+3. Skills del harness: `/auditoria-seguridad` (con tu confirmación: es cara) y `/retrospectiva`.
 
 ## Comandos
 

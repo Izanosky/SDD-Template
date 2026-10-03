@@ -73,11 +73,13 @@ def test_cada_regla_ask_de_bash_tiene_su_gemela_en_powershell():
             assert "PowerShell(" + regla[len("Bash("):] in ask, regla
 
 
-def test_las_skills_del_harness_solo_se_invocan_a_mano():
-    skills = list((RAIZ / ".claude/skills").glob("*/SKILL.md"))
-    assert skills
-    for skill in skills:
-        assert "disable-model-invocation: true" in skill.read_text(encoding="utf-8"), skill
+def test_la_auditoria_automatica_exige_leader_y_confirmacion():
+    # Las skills se activan solas; la auditoria es cara y un subagente no
+    # puede preguntar al humano, asi que su descripcion pone el freno.
+    cabecera = (RAIZ / ".claude/skills/auditoria-seguridad/SKILL.md").read_text(
+        encoding="utf-8").split("---")[1]
+    assert "humano" in cabecera and "subagente" in cabecera
+    assert "/auditoria-seguridad" in _agente("implementer")
 
 
 def test_los_sh_versionados_son_ejecutables():

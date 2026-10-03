@@ -1,7 +1,6 @@
 ---
 name: auditoria-seguridad
-description: Lanza una auditoria de seguridad completa del repositorio, o da destino a los hallazgos de una auditoria pendiente (audits_pending).
-disable-model-invocation: true
+description: Lanza una auditoria de seguridad completa del repositorio, o da destino a los hallazgos de una auditoria pendiente (audits_pending). Solo la sesion principal (leader), nunca un subagente, y solo tras confirmarlo con el humano - es cara.
 ---
 
 # Auditoría de seguridad completa

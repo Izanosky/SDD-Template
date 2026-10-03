@@ -105,8 +105,8 @@ como ligeras.
 - **Lo que Claude Code ofrece hoy y ya se usa aquí** ([features-overview][c1],
   [best-practices][c2]):
   - **hooks** para lo determinista (guardia de secretos, estado al arrancar);
-  - **skills** de invocación manual para procedimientos ocasionales
-    (auditoría y retrospectiva);
+  - **skills** para procedimientos ocasionales (auditoría y
+    retrospectiva);
   - `maxTurns` en subagentes como tope de gasto;
   - el **reviewer adversarial en contexto limpio**, que la propia guía
     recomienda.
@@ -191,9 +191,12 @@ retrospectiva no puede medir si un ajuste sirvió.
   for ruta, cuerpo in re.findall(r"^~{7} fichero=(\S+)\n(.*?)^~{7}$", t, re.M | re.S):
       p = pathlib.Path(ruta); p.parent.mkdir(parents=True, exist_ok=True)
       p.write_text(cuerpo, encoding="utf-8", newline="\n"); print(ruta)
+      if ruta.endswith(".sh") or ruta.startswith(".githooks/"): p.chmod(0o755)
   EOF
   ```
 
+  El `chmod` importa en Linux y macOS: sin él git ignora el pre-commit sin
+  avisar (`update-index` del paso 1 solo cambia el índice, no el disco).
   También vale pedirle a Claude Code: "extrae la Parte II de HARNESS.md a
   ficheros". Una vez extraído, `bash scripts/py.sh scripts/harness_bundle.py
   --extract <destino>` hace lo mismo.
@@ -259,7 +262,7 @@ que más ahorra.
 | `specs/<F>/*` | implementer y revisores | en cada IT: por eso el tope de tamaño |
 | `impl.md`, `review.md`, `security.md` | leader y revisores | ≤ 200 líneas |
 | `evidence.md` | nadie, salvo para cuestionar una prueba | nunca el leader |
-| skills `/auditoria-seguridad`, `/retrospectiva` | quien las invoca | solo a mano (coste cero hasta entonces) |
+| skills `/auditoria-seguridad`, `/retrospectiva` | sesión principal | su descripción siempre; el contenido, al activarse |
 | `HARNESS.md` | nadie durante el trabajo | montaje, mantenimiento, reconstrucción |
 
 ---
@@ -289,6 +292,12 @@ Aquí, el porqué.
 - **Los revisores y el explorer no pueden abrir subagentes** (no tienen
   `Agent` en `tools`; hay test): es la vía por la que el gasto se multiplica
   sin que nadie lo decida.
+- **Skills del usuario, opcionales**: el `implementer` (todas las
+  herramientas) y los dos revisores (`Skill` en `tools`) usan las que tenga
+  instaladas quien trabaja: diseño de interfaz en el `implementer`,
+  seguridad en el `security_reviewer`. El `reviewer` solo las usa para
+  verificar lo que pide la spec; el gusto que la spec no pide no bloquea.
+  El harness funciona igual sin ninguna.
 - **Cada checkpoint tiene un único dueño** (`CHECKPOINTS.md`).
 - **"Cómo terminas"**: los subagentes a veces cortan su turno antes de
   escribir su fichero. Cada rol termina cuando su fichero está entero, y el
@@ -459,10 +468,11 @@ Cuatro capas para secretos (detalle en `docs/security.md`):
 ### Las skills del harness
 
 Son propias de esta plantilla (`.claude/skills/`), no vienen con Claude
-Code. Llevan `disable-model-invocation: true` (hay test): **solo las lanza
-el humano** escribiendo su nombre, así que no cuestan contexto hasta
-entonces y ningún agente puede dispararlas por su cuenta. El `leader` sabe
-cuándo proponerlas. Se ejecutan en la sesión principal. El procedimiento
+Code. Se activan solas cuando la tarea encaja (solo su descripción está
+siempre en contexto) o con su nombre. La auditoría es cara y un subagente
+no puede preguntar al humano, así que su descripción la limita a la sesión
+principal y con confirmación del humano, y el `implementer` la tiene
+prohibida (hay test). El `leader` sabe cuándo proponerlas. El procedimiento
 paso a paso está en cada `SKILL.md` (Parte II); aquí, para qué sirven.
 
 **`/auditoria-seguridad`** — revisión de seguridad del repositorio entero.
@@ -689,7 +699,11 @@ Ejecutas las tasks de **una única feature** en la `IT<n>` que te indica el
    **modo ligero** no hay spec: los requisitos son el `acceptance` que te da
    el `leader`, y cada línea cuenta como un `R<n>`.
 2. Lee `docs/architecture.md`, `docs/principios.md` y el `conventions.md` de
-   tu scope, **solo ese**.
+   tu scope, **solo ese**. Si la IT toca interfaz y tienes skills de diseño
+   (p. ej. `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`, `break-ui`),
+   úsalas; en parsers, serialización o validación de entrada,
+   `property-based-testing` si la tienes. Son opcionales y la spec y las
+   convenciones mandan sobre ellas; ninguna aprueba una dependencia.
 3. **Reconcilia qué tasks ya están `[x]`** (una sesión anterior pudo cortarse).
    Con tramos, solo las del tramo encargado. La task humana no la ejecutas.
 4. Tasks en orden, marcando `[x]` una a una. **TDD**: test primero, verlo
@@ -747,7 +761,7 @@ diseño se **anexa** a "Desviaciones aprobadas" de `design.md`.
 
 Commit, `.env`, dependencias no aprobadas, operaciones destructivas sobre
 datos reales, marcar `done` fuera del paso 7 (el cierre), autoaprobarte, editar
-`docs/`. Un cambio del diff que no es tuyo puede ser un arreglo del
+`docs/`, lanzar `/auditoria-seguridad` o `/retrospectiva` (son del `leader`). Un cambio del diff que no es tuyo puede ser un arreglo del
 `leader` (`progress/current.md`, "Arreglos del leader").
 
 ## Cómo terminas
@@ -871,7 +885,7 @@ cerrar", `sonnet`. `explorer` en `opus` si toca fronteras de arquitectura.
 name: reviewer
 description: Veto funcional. Aprueba o rechaza el trabajo del implementer. Nunca edita codigo.
 model: opus
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
 ---
 
@@ -902,6 +916,10 @@ mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
    fallo cuesta una iteración de cierre.
 7. Un cambio que no está en `impl.md` puede ser un arreglo del `leader`:
    mira "Arreglos del leader" en `progress/current.md` antes de devolverlo.
+8. **Skills, solo para verificar** lo que piden la spec, `CHECKPOINTS.md` y
+   las convenciones (p. ej. `web-design-guidelines`, `review-animations` o
+   `break-ui` en interfaz). Lo que sea gusto y la spec no pide va a
+   observaciones que no bloquean: no cuesta una iteración.
 
 En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca;
 **la verificación no se reduce**.
@@ -939,7 +957,7 @@ paras antes ante un bloqueo real, y lo dices en una línea.
 name: security_reviewer
 description: Veto de seguridad, independiente y bloqueante. Ultima puerta antes de done. Tambien hace la auditoria completa del repositorio.
 model: opus
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
 ---
 
@@ -975,6 +993,12 @@ entonces.
 
 Un cambio que no está en `impl.md` puede ser un arreglo del `leader`
 (`progress/current.md`, "Arreglos del leader").
+
+Si tienes skills de seguridad (p. ej. `differential-review` para el diff,
+`sharp-edges`, `variant-analysis` tras un hallazgo, `fp-check` para
+descartar falsos positivos, `supply-chain-risk-auditor` ante una dependencia
+nueva), apóyate en ellas. Son opcionales y no sustituyen este protocolo ni
+el formato de `security.md`.
 
 ## Qué escribes
 
@@ -1165,8 +1189,7 @@ ante un bloqueo real, y lo dices en una línea.
 ~~~~~~~ fichero=.claude/skills/auditoria-seguridad/SKILL.md
 ---
 name: auditoria-seguridad
-description: Lanza una auditoria de seguridad completa del repositorio, o da destino a los hallazgos de una auditoria pendiente (audits_pending).
-disable-model-invocation: true
+description: Lanza una auditoria de seguridad completa del repositorio, o da destino a los hallazgos de una auditoria pendiente (audits_pending). Solo la sesion principal (leader), nunca un subagente, y solo tras confirmarlo con el humano - es cara.
 ---
 
 # Auditoría de seguridad completa
@@ -1215,7 +1238,6 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
 ---
 name: retrospectiva
 description: Retrospectiva del proyecto al terminar (TODO_HECHO) o al cerrar una fase. Mide el harness con datos y propone mantener, cambiar o quitar.
-disable-model-invocation: true
 ---
 
 # Retrospectiva
@@ -1256,8 +1278,8 @@ regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
 
 - **Auditoría de seguridad**: con el mismo criterio que el leader (4 o más
   features cerradas desde la última carpeta de `progress/audits/`, o una
-  fase cerrada), propónsela al humano.
-  `/auditoria-seguridad` solo se invoca a mano: tú no puedes lanzarla.
+  fase cerrada), propónsela al humano y lánzala (`/auditoria-seguridad`)
+  solo con su sí: es cara.
 - **Atajos**: busca la etiqueta `ATAJO:` (`docs/principios.md`) en el
   código. Para cada uno: mantener, pagarlo ya o convertirlo en feature.
 - **Sobreingeniería**, solo si el humano lo pide (recorre el repo entero):
@@ -3049,8 +3071,10 @@ def test_lanzador_con_python_ejecuta():
 ### `tests/test_harness_bundle.py`
 
 ~~~~~~~ fichero=tests/test_harness_bundle.py
+import os
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -3094,6 +3118,20 @@ def test_solo_entra_el_harness_y_nunca_lo_ignorado(tmp_path, monkeypatch):
     monkeypatch.setattr(harness_bundle, "RAIZ", tmp_path)
     rutas = [p.relative_to(tmp_path).as_posix() for p in harness_bundle.ficheros()]
     assert rutas == [".gitignore", "docs/regla.md"]
+
+
+def test_el_extractor_del_paso_0_reconstruye_el_setup(tmp_path):
+    # Es la via "solo con este documento": se ejecuta tal cual esta en la
+    # seccion 3. Leccion: sin chmod, en Linux/macOS git ignoraba el pre-commit.
+    guia = (RAIZ / "HARNESS.md").read_text(encoding="utf-8")
+    codigo = textwrap.dedent(guia.split("python3 - <<'EOF'\n", 1)[1].split("  EOF\n", 1)[0])
+    (tmp_path / "HARNESS.md").write_text(guia, encoding="utf-8")
+    subprocess.run([sys.executable, "-c", codigo], cwd=tmp_path, check=True,
+                   capture_output=True)
+    for p in harness_bundle.ficheros():
+        assert (tmp_path / p.relative_to(RAIZ)).is_file(), p
+    if os.name != "nt":  # en Windows no hay bit de ejecucion que mirar
+        assert os.access(tmp_path / ".githooks/pre-commit", os.X_OK)
 ~~~~~~~
 
 ### `tests/test_init_dispatcher.py`
@@ -3219,11 +3257,13 @@ def test_cada_regla_ask_de_bash_tiene_su_gemela_en_powershell():
             assert "PowerShell(" + regla[len("Bash("):] in ask, regla
 
 
-def test_las_skills_del_harness_solo_se_invocan_a_mano():
-    skills = list((RAIZ / ".claude/skills").glob("*/SKILL.md"))
-    assert skills
-    for skill in skills:
-        assert "disable-model-invocation: true" in skill.read_text(encoding="utf-8"), skill
+def test_la_auditoria_automatica_exige_leader_y_confirmacion():
+    # Las skills se activan solas; la auditoria es cara y un subagente no
+    # puede preguntar al humano, asi que su descripcion pone el freno.
+    cabecera = (RAIZ / ".claude/skills/auditoria-seguridad/SKILL.md").read_text(
+        encoding="utf-8").split("---")[1]
+    assert "humano" in cabecera and "subagente" in cabecera
+    assert "/auditoria-seguridad" in _agente("implementer")
 
 
 def test_los_sh_versionados_son_ejecutables():

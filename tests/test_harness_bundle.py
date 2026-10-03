@@ -1,5 +1,7 @@
+import os
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -43,3 +45,17 @@ def test_solo_entra_el_harness_y_nunca_lo_ignorado(tmp_path, monkeypatch):
     monkeypatch.setattr(harness_bundle, "RAIZ", tmp_path)
     rutas = [p.relative_to(tmp_path).as_posix() for p in harness_bundle.ficheros()]
     assert rutas == [".gitignore", "docs/regla.md"]
+
+
+def test_el_extractor_del_paso_0_reconstruye_el_setup(tmp_path):
+    # Es la via "solo con este documento": se ejecuta tal cual esta en la
+    # seccion 3. Leccion: sin chmod, en Linux/macOS git ignoraba el pre-commit.
+    guia = (RAIZ / "HARNESS.md").read_text(encoding="utf-8")
+    codigo = textwrap.dedent(guia.split("python3 - <<'EOF'\n", 1)[1].split("  EOF\n", 1)[0])
+    (tmp_path / "HARNESS.md").write_text(guia, encoding="utf-8")
+    subprocess.run([sys.executable, "-c", codigo], cwd=tmp_path, check=True,
+                   capture_output=True)
+    for p in harness_bundle.ficheros():
+        assert (tmp_path / p.relative_to(RAIZ)).is_file(), p
+    if os.name != "nt":  # en Windows no hay bit de ejecucion que mirar
+        assert os.access(tmp_path / ".githooks/pre-commit", os.X_OK)

@@ -17,7 +17,11 @@ Ejecutas las tasks de **una única feature** en la `IT<n>` que te indica el
    **modo ligero** no hay spec: los requisitos son el `acceptance` que te da
    el `leader`, y cada línea cuenta como un `R<n>`.
 2. Lee `docs/architecture.md`, `docs/principios.md` y el `conventions.md` de
-   tu scope, **solo ese**.
+   tu scope, **solo ese**. Si la IT toca interfaz y tienes skills de diseño
+   (p. ej. `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`, `break-ui`),
+   úsalas; en parsers, serialización o validación de entrada,
+   `property-based-testing` si la tienes. Son opcionales y la spec y las
+   convenciones mandan sobre ellas; ninguna aprueba una dependencia.
 3. **Reconcilia qué tasks ya están `[x]`** (una sesión anterior pudo cortarse).
    Con tramos, solo las del tramo encargado. La task humana no la ejecutas.
 4. Tasks en orden, marcando `[x]` una a una. **TDD**: test primero, verlo
@@ -75,7 +79,7 @@ diseño se **anexa** a "Desviaciones aprobadas" de `design.md`.
 
 Commit, `.env`, dependencias no aprobadas, operaciones destructivas sobre
 datos reales, marcar `done` fuera del paso 7 (el cierre), autoaprobarte, editar
-`docs/`. Un cambio del diff que no es tuyo puede ser un arreglo del
+`docs/`, lanzar `/auditoria-seguridad` o `/retrospectiva` (son del `leader`). Un cambio del diff que no es tuyo puede ser un arreglo del
 `leader` (`progress/current.md`, "Arreglos del leader").
 
 ## Cómo terminas

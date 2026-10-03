@@ -2,7 +2,7 @@
 name: reviewer
 description: Veto funcional. Aprueba o rechaza el trabajo del implementer. Nunca edita codigo.
 model: opus
-tools: Read, Glob, Grep, Bash, Write
+tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
 ---
 
@@ -33,6 +33,10 @@ mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
    fallo cuesta una iteración de cierre.
 7. Un cambio que no está en `impl.md` puede ser un arreglo del `leader`:
    mira "Arreglos del leader" en `progress/current.md` antes de devolverlo.
+8. **Skills, solo para verificar** lo que piden la spec, `CHECKPOINTS.md` y
+   las convenciones (p. ej. `web-design-guidelines`, `review-animations` o
+   `break-ui` en interfaz). Lo que sea gusto y la spec no pide va a
+   observaciones que no bloquean: no cuesta una iteración.
 
 En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca;
 **la verificación no se reduce**.
