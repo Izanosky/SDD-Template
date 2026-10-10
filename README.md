@@ -43,7 +43,8 @@ feature_list.json          specs/<F>/                 progress/<F>/IT<n>/
 | `spec_author` | opus | escribe `specs/<F>/` |
 | `explorer` | sonnet | investiga y deja hallazgos citados |
 | `implementer` | sonnet | código, tests (TDD + sabotajes), cierre |
-| `reviewer` | opus | veto funcional, con mutantes |
+| `implementer_ui` | sonnet | lo mismo en los tramos de interfaz, con criterio de diseño y capturas |
+| `reviewer` | opus | veto funcional, con mutantes y revisión de capturas |
 | `security_reviewer` | opus | veto de seguridad; auditoría completa |
 
 ## Requisitos
@@ -67,9 +68,12 @@ grep -rn "<RELLENAR" .      # lo que hay que rellenar
 ```
 
 La lista completa de qué rellenar y en qué orden está en la sección 3 de
-HARNESS.md; las decisiones previas, en su Anexo C. Atajo: abre Claude Code y
-pide "rellena los `<RELLENAR>` de esta plantilla para <tu proyecto>;
-pregúntame lo que no sepas".
+HARNESS.md. Las decisiones las toma `/arranque` contigo, y no se empieza
+ninguna feature hasta que la apruebes (`state.py` devuelve `ARRANQUE`):
+producto, un mapa de todas las decisiones técnicas (arquitectura, stack y
+librerías de backend y frontend, calidad, operación) que tú ajustas, y
+bloque a bloque las propuestas, investigando solo lo que tú marques. Si hay
+interfaz, después va `/direccion-visual`.
 
 ## Uso diario
 
@@ -81,7 +85,52 @@ pregúntame lo que no sepas".
      entrada en `docs/CHANGELOG.md`);
    - ejecutar las tasks con servicios reales;
    - hacer los commits (Claude Code te los pide confirmar).
-3. Skills del harness: `/auditoria-seguridad` (con tu confirmación: es cara) y `/retrospectiva`.
+3. Skills del harness: `/arranque` (primer uso), `/direccion-visual` (antes
+   de la primera pantalla, o para rediseñar), `/auditoria-seguridad` (con tu
+   confirmación: es cara) y `/retrospectiva`.
+
+## Skills opcionales
+
+Ninguna es obligatoria: si una no está instalada, Claude Code la ignora sin
+avisar, y `scripts/skills.py` (lo ejecuta el hook de sesión) te lo dice.
+Instálalas en `~/.claude/skills/<nombre>/` después de leerlas: una skill son
+instrucciones que el agente sigue con tus permisos.
+
+| Skill | Origen y licencia | Rol | Cómo |
+|---|---|---|---|
+| `ponytail:ponytail` | plugin [ponytail](https://github.com/DietrichGebert/ponytail), MIT | `implementer`, `implementer_ui` | precargada |
+| `property-based-testing` | [trailofbits/skills](https://github.com/trailofbits/skills), CC BY-SA 4.0 | `implementer`, `implementer_ui`, `reviewer` | precargada |
+| `migration`, `surgical-patch`, `investigate-first` | skills de usuario enlazadas desde `~/.agents/skills/` (origen sin registrar en un `ORIGEN.md`) | `implementer` (las dos primeras); `leader` la tercera | precargadas / bajo demanda |
+| `frontend-design:frontend-design` | plugin oficial `frontend-design` (Anthropic) | `implementer_ui`, `/direccion-visual` | precargada |
+| `frontend-design-direction`, `make-interfaces-feel-better` | [affaan-m/ECC](https://github.com/affaan-m/ECC), MIT | `implementer_ui`, `/direccion-visual` | precargadas |
+| `web-design-guidelines` | [vercel-labs/web-interface-guidelines](https://github.com/vercel-labs/web-interface-guidelines), MIT | `implementer_ui`, `reviewer` | precargada |
+| `ui-ux-pro-max`, `redesign-existing-projects`, `pick-ui-library` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), [emilkowalski/skills](https://github.com/emilkowalski/skills); MIT | `/direccion-visual` | las invoca la skill |
+| `differential-review` | trailofbits/skills, CC BY-SA 4.0 | `security_reviewer` | precargada |
+| `supply-chain-risk-auditor`, `variant-analysis`, `sharp-edges` | trailofbits/skills, CC BY-SA 4.0 | `security_reviewer` | las invoca por regla (lockfile, tras un hallazgo, auditoría) |
+| `security-audit` | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill), MIT | `/auditoria-seguridad` | motor opcional; muchos agentes |
+| `insecure-defaults` | trailofbits/skills, CC BY-SA 4.0 (plugin con workflow) | `/auditoria-seguridad` | `/insecure-defaults:audit` |
+| `spec-to-code-compliance` | trailofbits/skills, CC BY-SA 4.0 (plugin con workflow) | `/retrospectiva` | al cerrar una fase; caro |
+| `ponytail:ponytail-audit` | plugin ponytail, MIT | `/retrospectiva` | sobreingeniería |
+| `council`, `architecture-decision-records` | affaan-m/ECC, MIT | `/arranque` y `leader` | decisiones de arquitectura disputadas; ADR en `docs/adr/` |
+| `/deep-research` | workflow de serie de Claude Code | `/arranque` | preguntas de arquitectura con fuentes cruzadas; caro |
+| `prd-securability-enhancement` | [OWASP/secure-agent-playbook](https://github.com/OWASP/secure-agent-playbook), CC BY 4.0 | `spec_author` | la precarga `/arranque` si hay usuarios o servidor |
+| `vercel-react-best-practices`, `vercel-composition-patterns`, `vercel-react-view-transitions` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills), MIT | `implementer_ui` | las precarga `/arranque` si el stack es React |
+| `modern-python` | trailofbits/skills, CC BY-SA 4.0 (solo la skill, sin sus hooks) | `implementer` | la precarga `/arranque` si el stack es Python |
+
+Navegador para las capturas y el `explorer`: el plugin oficial `playwright`
+(MCP). Si tu servidor de Playwright tiene otro nombre, cambia los nombres
+`mcp__plugin_playwright_playwright__*` de `.claude/agents/explorer.md`.
+
+**Cada skill del listado ocupa contexto en cada turno de cada agente.**
+`skillOverrides` de `.claude/settings.json` deja en `name-only` las que el
+harness usa por nombre (la precarga sigue funcionando) y en
+`user-invocable-only` las que no usa (siguen en tu menú `/`). Una skill de
+plugin no admite esto: se apunta en `skills_revisadas` de `harness.json` o
+se desactiva el plugin para el proyecto (`enabledPlugins`).
+
+Revisión puntual de la configuración `.claude/`:
+`npx ecc-agentshield@<versión fijada> scan` ([AgentShield](https://github.com/affaan-m/agentshield),
+MIT); ejecuta código descargado, así que con versión de más de 7 días.
 
 ## Comandos
 
@@ -89,6 +138,8 @@ pregúntame lo que no sepas".
 bash scripts/py.sh scripts/state.py   # qué feature toca y qué acción (JSON)
 bash init.sh                          # verifica el scope de la feature activa
 bash init.sh --all                    # verifica todos los stacks (lo usa el CI)
+bash scripts/py.sh scripts/skills.py  # skills sin clasificar o que faltan
+bash scripts/py.sh scripts/agent_tokens.py <agent_id> --run <n>   # consumo real de un agente
 bash scripts/py.sh -m pytest tests/ -q   # tests del harness
 bash scripts/py.sh scripts/harness_bundle.py  # regenera la Parte II de HARNESS.md
 ```

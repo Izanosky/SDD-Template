@@ -33,11 +33,26 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
 
 ## Si no: lanzar una auditoría nueva
 
-1. Confirma con el humano (es una ejecución cara sobre todo el repo).
+1. Confirma con el humano (es una ejecución cara sobre todo el repo) y elige
+   con él el motor; los dos primeros orquestan muchos agentes y solo
+   funcionan desde la sesión principal, nunca desde un subagente:
+   - **`security-audit`** (Cloudflare), si está instalada: modo auditoría
+     completa, perfil `quick` o `standard` y presupuesto de agentes
+     acordados con el humano. Su salida va fuera del repo
+     (`~/security-audit-skill/<repo>/run-<N>`, déjala ahí).
+   - **`/insecure-defaults:audit`** (Trail of Bits), si está instalado: más
+     barato y acotado a configuraciones inseguras por defecto (secretos de
+     respaldo, credenciales por defecto, modos que fallan abiertos, CORS
+     `*`, debug). Puede acompañar a cualquiera de los otros dos.
+   - **`security_reviewer` en modo auditoría**: el de siempre, si no hay
+     ninguna de las anteriores o el humano prefiere un solo agente.
 2. Crea `progress/audits/<AAAA-MM-DD>/` (`-2` si ya existe una ese día).
-3. Lanza `security_reviewer` con: "Modo auditoría. Carpeta
+3. Con `security_reviewer`, lánzalo con: "Modo auditoría. Carpeta
    `progress/audits/<fecha>/`. Revisa el repositorio entero contra su estado
    actual (ver tu sección 'Modo auditoría'). Escribe `informe.md` (≤ 200
-   líneas) y, si hace falta, `evidencia.md`."
+   líneas) y, si hace falta, `evidencia.md`." Con las otras, escribe tú
+   `informe.md` (≤ 200 líneas) a partir de su informe: hallazgos
+   confirmados con gravedad y `archivo:línea`, los pendientes de validar
+   aparte, y la ruta del informe original en `evidencia.md`.
 4. Línea en `progress/metrics.csv` con `feature = audit` e `it = <fecha>`.
 5. Vuelve al primer apartado para dar destino a los hallazgos.

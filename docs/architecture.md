@@ -6,6 +6,16 @@
 dividido en módulos que se llaman por funciones. Un servicio nuevo carga con
 la prueba: qué problema paga la latencia y el despliegue extra.>
 
+## Stack y librerías <!-- ajuste-2026-10-10 -->
+
+La deja `/arranque`. Es la lista de dependencias aprobadas: lo que no esté
+aquí pide permiso al humano. Las decisiones grandes, con su ADR en
+`docs/adr/`.
+
+| Pieza | Elección y versión | Para qué | Alternativa descartada | ADR |
+|---|---|---|---|---|
+| <RELLENAR> | | | | |
+
 ## Módulos y fronteras que no se cruzan
 
 <RELLENAR: módulos, quién puede importar a quién, dónde viven los contratos

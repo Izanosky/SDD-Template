@@ -17,10 +17,15 @@ El hook de sesión ya te da la salida de `scripts/state.py`, `current.md` y
 las rutas de la última IT. Si no la ves, ejecuta `bash scripts/py.sh
 scripts/state.py`. **No leas `feature_list.json` entero.**
 
+- La siguiente feature crea pantallas y no existe
+  `docs/<scope>/direccion-visual.md`: propón `/direccion-visual` antes de
+  su spec.
+
 ## Despacho
 
 | `action` | Qué haces |
 |---|---|
+| `ARRANQUE` | `/arranque` con el humano (o lo retomas donde diga `progress/arranque.md`). Nada más hasta que lo apruebe |
 | `LANZAR_SPEC_AUTHOR` | `spec_author` sobre la feature |
 | `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste |
 | `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
@@ -32,6 +37,10 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 | `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` | Cierre (ver "Modelos") |
 | `TODO_HECHO` | Propones `/retrospectiva` |
 
+- **Tramo de interfaz** (cabecera con `(interfaz)` en `tasks.md`, o en modo
+  ligero un `acceptance` que cambia pantallas): donde la tabla dice
+  `implementer`, lanzas `implementer_ui`. El cierre sigue siendo del
+  `implementer`.
 - Con `audits_pending`: antes de la acción, propón `/auditoria-seguridad`
   para dar destino a los hallazgos.
 - Tras cerrar una feature: si van **4 o más** cerradas desde la última
@@ -61,9 +70,36 @@ feature.
 ## Métricas
 
 Al terminar cada agente, una línea en `progress/metrics.csv`:
-`fecha,feature,it,rol,tokens,minutos,veredicto,causa`. `veredicto` solo en
-revisores; `causa` solo en rechazos: `codigo`, `tests` (código bien, tests
-flojos), `spec` u `otro`. Una reanudación es otra línea.
+`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`.
+`veredicto` solo en revisores; `causa` solo en rechazos: `codigo`, `tests`
+(código bien, tests flojos), `spec` u `otro`. Una reanudación es otra línea.
+
+`tokens`, `cache_read`, `minutos` y `skills` (las invocadas, no las
+precargadas) salen de `bash scripts/py.sh scripts/agent_tokens.py
+<agent_id> --run <n>` (n = nº de ejecución de ese agente: 1 al lanzarlo, +1
+por cada reanudación), **nunca** del `subagent_tokens` del resultado de
+Agent: ese es el tamaño del contexto al terminar, arrastra las ejecuciones
+anteriores y no cuenta las relecturas de caché.
+
+## Skills
+
+Cada rol precarga las suyas (`skills:` en su definición): **no nombres
+skills en los encargos**. Lección: nombradas en el encargo, los agentes las
+"aplicaban a mano" sin cargarlas.
+
+- El hook trae `=== skills.py ===` con skills **nuevas**: para cada una
+  propón al humano, con una línea de por qué, precargarla en un rol
+  (`skills:` del agente y `"name-only"` en `skillOverrides` de
+  `.claude/settings.json`) o descartarla (`"user-invocable-only"`; las de
+  plugin, a `skills_revisadas` de `harness.json`). Con su sí, lo editas.
+- Skills **ausentes**: avisa al humano; ese rol trabaja sin ellas.
+- Tests intermitentes o un fallo sin causa clara: `investigate-first`
+  antes de tocar código.
+- El humano toma o cambia una decisión de arquitectura (stack, plataforma,
+  almacenamiento, despliegue): **para la feature en curso**, propón
+  investigarla como en `/arranque` (ronda 2; `council` si está disputada)
+  y déjala como ADR (`architecture-decision-records`) antes de seguir.
+  Lección: un cambio de framework a mitad de feature tiró una IT entera.
 
 ## Encargos
 
@@ -80,7 +116,7 @@ El subagente arranca en frío (plantilla: HARNESS.md, "Encargo tipo").
 
 ## Modelos
 
-Cada rol declara el suyo. El cierre (paso 7 del implementer) en `haiku` **con el resumen
+Cada rol declara el suyo (`implementer_ui` también en `sonnet`). El cierre (paso 7 del implementer) en `haiku` **con el resumen
 para `history.md` redactado por ti** (un modelo que no implementó rellena
 huecos con lo que suena plausible); si hay "Correcciones de texto al
 cerrar", `sonnet`. `explorer` en `opus` si toca fronteras de arquitectura.

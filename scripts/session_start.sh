@@ -18,6 +18,14 @@ echo
 echo "=== progress/current.md (primeras 80 lineas) ==="
 if [ -f progress/current.md ]; then head -n 80 progress/current.md; else echo "(no existe)"; fi
 
+# Solo si hay algo: una skill sin clasificar o una precargada que falta.
+SKILLS="$($PY scripts/skills.py 2>/dev/null || true)"
+if [ -n "$SKILLS" ]; then
+  echo
+  echo "=== skills.py ==="
+  echo "$SKILLS"
+fi
+
 FEATURE="$(printf '%s' "$ESTADO" | $PY -c \
   'import json,sys; print(json.load(sys.stdin).get("feature",""))' 2>/dev/null || true)"
 [ -z "$FEATURE" ] && exit 0

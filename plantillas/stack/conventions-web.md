@@ -4,12 +4,18 @@
 docs/<stack>/conventions.md lo que aplique; cada punto salió de una
 iteración rechazada en un proyecto real. -->
 
-- **Cada spec que crea pantallas define su aspecto.** Una pantalla sin
-  estilos no está terminada (un reset CSS puede dejar los campos de un
-  formulario invisibles). No dejar el diseño para una feature final: una
-  feature aprobada funcionalmente puede reabrirse si el humano rechaza el
-  aspecto. Base visual común (paleta, tipografía, componentes) en una carpeta
-  que cada spec reutiliza.
+- **La base visual vive en `docs/<stack>/direccion-visual.md`** (skill
+  `/direccion-visual`, antes de la primera pantalla); cada spec la cita y
+  define solo lo propio de sus pantallas. Una pantalla sin estilos no está
+  terminada (un reset CSS puede dejar los campos de un formulario
+  invisibles). No dejar el diseño para una feature final: una feature
+  aprobada funcionalmente puede reabrirse si el humano rechaza el aspecto.
+- **Modo de datos falsos**: un comando (`<RELLENAR: p. ej. pnpm dev:demo>`)
+  arranca la interfaz sin backend ni datos reales, con dos juegos: normal y
+  **peor caso** (nombres largos e irrompibles, lista vacía, un solo
+  elemento, cifras enormes y negativas, texto en otro idioma). Con él hace
+  sus capturas el `implementer_ui`. Lección: los fallos visuales los
+  encontraba el humano con sus datos reales.
 - **Nunca un spinner indefinido**: todo estado de espera dice **qué** se
   espera y **por qué** (servicio dormido, proceso desconectado, motivo real
   del fallo). Los estados raros legítimos, sin explicar, parecen fallos.

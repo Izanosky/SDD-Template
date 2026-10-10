@@ -11,9 +11,12 @@ F = {"id": "F01", "title": "t", "status": "in_progress", "sdd": True, "scope": [
 IMPL = ("progress/F01/IT1/impl.md", "informe\n## Sabotajes\nN/A: solo texto")
 
 
-def _preparar(tmp_path, monkeypatch, features, ficheros=()):
+ARRANQUE = ("progress/arranque.md", "# Arranque\nEstado: APROBADO\n")
+
+
+def _preparar(tmp_path, monkeypatch, features, ficheros=(), arranque=ARRANQUE):
     (tmp_path / "feature_list.json").write_text(json.dumps(features), encoding="utf-8")
-    for ruta, contenido in ficheros:
+    for ruta, contenido in ([arranque] if arranque else []) + list(ficheros):
         f = tmp_path / ruta
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(contenido, encoding="utf-8")
@@ -196,3 +199,14 @@ def test_modo_ligero_mantiene_los_dos_vetos(tmp_path, monkeypatch):
         IMPL, ("progress/F01/IT1/review.md", "Veredicto: APPROVED"),
     ])
     assert state.next_action()["action"] == "LANZAR_SECURITY_REVIEWER"
+
+
+@pytest.mark.parametrize("arranque", [None, ("progress/arranque.md", "Estado: en curso")])
+def test_sin_arranque_aprobado_no_se_escribe_ninguna_spec(tmp_path, monkeypatch, arranque):
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "pending"}], arranque=arranque)
+    assert state.next_action()["action"] == "ARRANQUE"
+
+
+def test_con_arranque_aprobado_se_despacha_normal(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "pending"}])
+    assert state.next_action()["action"] == "LANZAR_SPEC_AUTHOR"

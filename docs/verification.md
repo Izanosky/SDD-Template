@@ -42,6 +42,20 @@ que dice proteger.
 - **Revertir solo la línea de producción**: si hace falta revertir también
   el test o el arnés, el test no protegía nada.
 
+## Interfaz: capturas <!-- ajuste-2026-10-10 -->
+
+Los tests de interfaz (jsdom y similares) no ven el resultado: un texto
+cortado, una columna desalineada o un diálogo vacío pasan en verde. En cada
+tramo `(interfaz)`:
+
+- el `implementer_ui` arranca el **modo de datos falsos** (normal y peor
+  caso), captura cada pantalla tocada (claro/oscuro, 1280 y 390 px, ~8 como
+  mucho) en `progress/<F>/IT<n>/capturas/` y las lista en `impl.md`
+  (`## Capturas`);
+- el `reviewer` las abre y bloquea **solo por fallos que se ven** (cortado,
+  solapado, desalineado, contraste, peor caso roto, contradicción con
+  `docs/<scope>/direccion-visual.md`). El gusto va a observaciones.
+
 ## Dobles de test
 
 - **El doble prueba al llamador, no al adaptador.** Cada método nuevo de un

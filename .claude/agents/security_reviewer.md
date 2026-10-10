@@ -4,6 +4,8 @@ description: Veto de seguridad, independiente y bloqueante. Ultima puerta antes 
 model: opus
 tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
+skills:
+  - differential-review
 ---
 
 # security_reviewer
@@ -39,11 +41,14 @@ entonces.
 Un cambio que no está en `impl.md` puede ser un arreglo del `leader`
 (`progress/current.md`, "Arreglos del leader").
 
-Si tienes skills de seguridad (p. ej. `differential-review` para el diff,
-`sharp-edges`, `variant-analysis` tras un hallazgo, `fp-check` para
-descartar falsos positivos, `supply-chain-risk-auditor` ante una dependencia
-nueva), apóyate en ellas. Son opcionales y no sustituyen este protocolo ni
-el formato de `security.md`.
+Llevas precargada `differential-review` (si está instalada): es tu método
+para revisar el diff. Además, con la herramienta `Skill`:
+- si el diff toca un lockfile o un manifiesto de dependencias, invoca
+  `supply-chain-risk-auditor`;
+- tras un hallazgo, invoca `variant-analysis` para buscar el mismo fallo en
+  el resto del repositorio.
+
+No sustituyen este protocolo ni el formato de `security.md`.
 
 ## Qué escribes
 
@@ -65,7 +70,8 @@ repositorio entero contra su estado actual, no un diff. Cada revisión mira
 su diff y nadie mira el conjunto.
 - Todo `docs/security.md`; permisos de **todas** las tablas y funciones; la
   tabla de ataque de **todas** las rutas; el artefacto público (bundle); la
-  configuración.
+  configuración, con `sharp-edges` (invócala) para las APIs y opciones que
+  invitan al error.
 - Escribes `progress/audits/<AAAA-MM-DD>/informe.md` (≤ 200 líneas; anexo en
   `evidencia.md`), hallazgos con gravedad y `archivo:línea`. No bloquea
   ninguna feature: el destino de cada hallazgo lo decide el humano.

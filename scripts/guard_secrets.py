@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""PreToolUse (Bash|PowerShell): bloquea comandos que pueden sacar un secreto.
+"""PreToolUse (Bash|PowerShell): bloquea comandos que pueden sacar un secreto
+o saltarse el pre-commit.
 
 Los permisos `deny` de settings.json cubren Read/Grep/Edit, pero para la
 shell solo comparan prefijos de texto: `type backend\\.env`, `Get-Content`
@@ -7,6 +8,10 @@ o `$env:MI_TOKEN` los esquivan. Este hook mira el comando entero.
 
 Los nombres de los secretos salen de `harness.json` ("secretos"), para que
 no haya una segunda lista que se desincronice.
+
+El pre-commit es la ultima puerta antes de que un secreto exista en un
+commit: `--no-verify`, `commit -n` o un `core.hooksPath` distinto de
+`.githooks` lo apagan sin dejar rastro (idea del hook block-no-verify de ECC).
 
 Exit 2 = bloqueado; el motivo va por stderr y lo lee el agente.
 """
@@ -87,6 +92,45 @@ def motivo(comando: str) -> str | None:
     return None
 
 
+def salta_el_pre_commit(comando: str) -> bool:
+    """Por tokens, no por texto: un mensaje de commit que mencione --no-verify pasa."""
+    try:
+        lexer = shlex.shlex(comando, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+    except ValueError:
+        # Comillas sin cerrar: se mira el texto entero, aunque sobre-bloquee.
+        return bool(re.search(r"--no-verify|core\.hookspath", comando, re.I))
+    tramo: list[str] = []
+    for t in tokens + [";"]:
+        if t and set(t) <= set(";&|()"):
+            if _tramo_salta(tramo):
+                return True
+            tramo = []
+        else:
+            tramo.append(t)
+    return False
+
+
+def _tramo_salta(tramo: list[str]) -> bool:
+    if "git" not in (Path(t).stem.lower() for t in tramo[:3]):
+        return False
+    bajos = [t.lower() for t in tramo]
+    if "--no-verify" in bajos or ("commit" in bajos and "-n" in bajos):
+        return True
+    if "core.hookspath" in bajos and ("--unset" in bajos or "--unset-all" in bajos):
+        return True
+    for i, t in enumerate(bajos):
+        valor = None
+        if t.startswith("core.hookspath="):
+            valor = t.split("=", 1)[1]
+        elif t == "core.hookspath" and i + 1 < len(bajos):
+            valor = bajos[i + 1]
+        if valor is not None and valor.strip("/\\") != ".githooks":
+            return True
+    return False
+
+
 def main() -> int:
     try:
         # lstrip: algunas shells de Windows anteponen un BOM al reenviar stdin.
@@ -97,6 +141,12 @@ def main() -> int:
         # Falla cerrado: una entrada que no se entiende no se da por segura.
         print("Bloqueado por scripts/guard_secrets.py: entrada del hook ilegible.",
               file=sys.stderr)
+        return 2
+    if salta_el_pre_commit(comando):
+        print("Bloqueado por scripts/guard_secrets.py: el comando se salta el "
+              "pre-commit (--no-verify, commit -n o core.hooksPath distinto de "
+              ".githooks). Si un hook falla, arregla la causa; si sobra, lo "
+              "decide el humano.", file=sys.stderr)
         return 2
     razon = motivo(comando)
     if razon is None:

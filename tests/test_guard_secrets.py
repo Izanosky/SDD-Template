@@ -108,3 +108,40 @@ def test_lanzador_con_python_ejecuta():
     r = subprocess.run([BASH, str(RAIZ / "scripts/py.sh"), "-c", "print(6*7)"],
                        env={**os.environ, "PYTHON": sys.executable}, capture_output=True, text=True)
     assert r.returncode == 0 and "42" in r.stdout
+
+
+SALTAN_EL_PRE_COMMIT = [
+    "git commit --no-verify -m x",
+    "git commit -n -m x",
+    "git push --no-verify",
+    "git -c core.hooksPath=/dev/null commit -m x",
+    "git config core.hooksPath .git/hooks",
+    "git config --unset core.hooksPath",
+    "cd app && git commit --no-verify -m x",
+    "git.exe commit --no-verify -m x",
+]
+
+RESPETAN_EL_PRE_COMMIT = [
+    "git commit -m x",
+    # Leccion: mirar el texto entero bloqueaba un mensaje que lo mencionaba.
+    'git commit -m "docs: bloquear --no-verify"',
+    "git config core.hooksPath .githooks",
+    "git push -n",
+    "git log -n 5",
+    "echo --no-verify",
+]
+
+
+@pytest.mark.parametrize("comando", SALTAN_EL_PRE_COMMIT)
+def test_bloquea_saltarse_el_pre_commit(comando):
+    assert guard_secrets.salta_el_pre_commit(comando)
+
+
+@pytest.mark.parametrize("comando", RESPETAN_EL_PRE_COMMIT)
+def test_permite_git_normal(comando):
+    assert not guard_secrets.salta_el_pre_commit(comando)
+
+
+def test_hook_bloquea_no_verify_con_codigo_2():
+    r = _hook(json.dumps({"tool_input": {"command": "git commit --no-verify -m x"}}))
+    assert r.returncode == 2 and b"pre-commit" in r.stderr

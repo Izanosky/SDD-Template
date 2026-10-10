@@ -32,9 +32,16 @@ implementer *anexa* y nunca sobrescribe.
 
 **`tasks.md` — los pasos.** `T1`, `T2`… con sus `R<n>`; no repite el diseño.
 Con varios stacks o capas, agrupadas en **tramos** en orden de dependencia:
-cada tramo es una IT aprobada antes del siguiente. Si hay servicios reales,
+cada tramo es una IT aprobada antes del siguiente. El tramo que crea o
+cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
+`implementer_ui`, con capturas. <!-- ajuste-2026-10-10 --> Si hay servicios reales,
 la última es la **prueba humana**, con `ÚNICA TASK CON SERVICIOS REALES` en
 su cabecera. Mapa inverso `R<n> → T<n>` al final.
+
+**El aspecto no es un `R<n>`**: colores, tipografía, componentes y
+movimiento salen de `docs/<scope>/direccion-visual.md` (skill
+`/direccion-visual`); la spec la cita y solo fija lo propio de sus
+pantallas. <!-- ajuste-2026-10-10 -->
 
 **Tamaño**: ~400 líneas entre los tres (≈ 6-8 k tokens). Cada cosa se dice
 una vez, se cita `archivo:línea` en vez de copiar código y no hay

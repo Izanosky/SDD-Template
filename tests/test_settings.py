@@ -1,17 +1,18 @@
 import json
+import sys
 import subprocess
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 AGENTES = {"leader", "spec_author", "explorer",
-           "implementer", "reviewer", "security_reviewer"}
+           "implementer", "implementer_ui", "reviewer", "security_reviewer"}
 
 
 def test_settings_es_json_valido():
     json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))
 
 
-def test_existen_los_seis_agentes_y_solo_esos():
+def test_existen_los_siete_agentes_y_solo_esos():
     presentes = {p.stem for p in (RAIZ / ".claude/agents").glob("*.md")}
     assert presentes == AGENTES
 
@@ -22,7 +23,7 @@ def test_los_agentes_declaran_modelo():
         assert texto.startswith("---"), nombre
         cabecera = texto.split("---")[1]
         assert "model:" in cabecera, nombre
-        if nombre != "implementer":
+        if nombre not in {"implementer", "implementer_ui"}:
             # Los roles que no escriben codigo declaran tools explicitamente.
             assert "tools:" in cabecera, nombre
 
@@ -48,6 +49,7 @@ def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
         assert "Veredicto: CHANGES_REQUESTED" in _agente(revisor), revisor
     assert "## Sabotajes" in _agente("implementer")
     assert "SERVICIOS REALES" in _agente("spec_author")
+    assert "Estado: APROBADO" in (RAIZ / ".claude/skills/arranque/SKILL.md").read_text(encoding="utf-8")
 
 
 def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
@@ -56,6 +58,9 @@ def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
     guardia = hooks["PreToolUse"][0]["hooks"][0]["command"]
     assert "scripts/py.sh" in guardia and "guard_secrets.py" in guardia
     assert "compact" in hooks["SessionStart"][0]["matcher"]
+    config = next(h for h in hooks["PreToolUse"] if "Edit" in h["matcher"])
+    assert "scripts/py.sh" in config["hooks"][0]["command"]
+    assert "guard_config.py" in config["hooks"][0]["command"]
 
 
 def test_commit_y_push_piden_confirmacion():
@@ -91,3 +96,22 @@ def test_los_sh_versionados_son_ejecutables():
         modo, *_, ruta = linea.split()
         if ruta.endswith(".sh") or ruta.startswith(".githooks/"):
             assert modo == "100755", f"{ruta} sin bit de ejecucion (git update-index --chmod=+x)"
+
+
+def test_ninguna_skill_precargada_esta_oculta_del_todo():
+    # Leccion (comprobado 2026-10-10): con "user-invocable-only" u "off" en
+    # skillOverrides la precarga deja de funcionar en silencio; "name-only"
+    # recorta el listado y la conserva.
+    sys.path.insert(0, str(RAIZ / "scripts"))
+    import skills
+    overrides = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8")).get(
+        "skillOverrides", {})
+    for skill in skills.precargadas():
+        assert overrides.get(skill, "on") in {"on", "name-only"}, skill
+
+
+def test_implementer_ui_remite_al_implementer_y_hace_capturas():
+    ui = _agente("implementer_ui")
+    assert ".claude/agents/implementer.md" in ui and "## Capturas" in ui
+    assert "Capturas" in _agente("reviewer")
+    assert "implementer_ui" in _agente("leader")

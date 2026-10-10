@@ -48,7 +48,7 @@ Agnóstico de lenguaje y de stack. Lo que depende del proyecto está marcado
 ## 0. Qué es y por qué funciona
 
 Un **harness** convierte "un agente que escribe código" en "un equipo con
-puertas de calidad": seis roles (subagentes de Claude Code), un proceso con
+puertas de calidad": siete roles (subagentes de Claude Code), un proceso con
 aprobación humana, verificación ejecutable y un estado derivado del disco.
 Se trabaja con **SDD** (Spec-Driven Development): ninguna feature se
 implementa sin una spec escrita y aprobada, salvo las que el humano marca
@@ -209,7 +209,9 @@ retrospectiva no puede medir si un ajuste sirvió.
    - `git add -A`;
    - `git update-index --chmod=+x` sobre todos los `.sh` y
      `.githooks/pre-commit`.
-2. **Rellena los huecos** (`grep -rn "<RELLENAR" .`):
+2. **Rellena los huecos** (`grep -rn "<RELLENAR" .`). Lo más cómodo es
+   abrir Claude Code y ejecutar `/arranque`: pregunta en rondas y rellena lo
+   que sigue.
    - `harness.json`: nombre, `scopes` (una carpeta por stack) y `secretos`
      (solo los nombres);
    - `CLAUDE.md`: qué es el proyecto, dónde vive cada pieza y por qué,
@@ -262,7 +264,10 @@ que más ahorra.
 | `specs/<F>/*` | implementer y revisores | en cada IT: por eso el tope de tamaño |
 | `impl.md`, `review.md`, `security.md` | leader y revisores | ≤ 200 líneas |
 | `evidence.md` | nadie, salvo para cuestionar una prueba | nunca el leader |
-| skills `/auditoria-seguridad`, `/retrospectiva` | sesión principal | su descripción siempre; el contenido, al activarse |
+| `docs/<stack>/direccion-visual.md` | spec_author, implementer_ui, reviewer | en tramos de interfaz |
+| skills precargadas (`skills:` del rol) | ese rol | enteras, en cada ejecución |
+| listado de skills instaladas | todos | en cada turno: nombre y descripción, salvo las recortadas con `skillOverrides` |
+| skills del harness (`/arranque`, `/direccion-visual`, `/auditoria-seguridad`, `/retrospectiva`) | sesión principal | su descripción siempre; el contenido, al activarse |
 | `HARNESS.md` | nadie durante el trabajo | montaje, mantenimiento, reconstrucción |
 
 ---
@@ -278,6 +283,7 @@ Aquí, el porqué.
 | `spec_author` | opus | `specs/<F>/` | código |
 | `explorer` | sonnet (opus en fronteras de arquitectura) | `progress/explore_*.md` | código, decisiones |
 | `implementer` | sonnet | código, tests, `impl.md`, `evidence.md`, cierre | autoaprobarse, `docs/` |
+| `implementer_ui` | sonnet | lo mismo en tramos `(interfaz)`, más las capturas | lo mismo; cerrar la feature |
 | `reviewer` | opus | `review.md` | editar código |
 | `security_reviewer` | opus | `security.md`, informes de auditoría | editar código |
 
@@ -292,12 +298,22 @@ Aquí, el porqué.
 - **Los revisores y el explorer no pueden abrir subagentes** (no tienen
   `Agent` en `tools`; hay test): es la vía por la que el gasto se multiplica
   sin que nadie lo decida.
-- **Skills del usuario, opcionales**: el `implementer` (todas las
-  herramientas) y los dos revisores (`Skill` en `tools`) usan las que tenga
-  instaladas quien trabaja: diseño de interfaz en el `implementer`,
-  seguridad en el `security_reviewer`. El `reviewer` solo las usa para
-  verificar lo que pide la spec; el gusto que la spec no pide no bloquea.
-  El harness funciona igual sin ninguna.
+- **Skills precargadas, no "opcionales"**: cada rol declara las suyas en
+  `skills:` y Claude Code inyecta su contenido entero al lanzarlo.
+  Lección del piloto: dadas como opcionales, o nombradas en el encargo, los
+  subagentes no las invocaban (0 de las de diseño en 110 ejecuciones del
+  implementer) y anotaban "criterio aplicado a mano". Las que no están
+  instaladas se saltan sin error; `scripts/skills.py` lo avisa en el hook
+  de sesión, igual que las instaladas que ningún rol usa todavía (el
+  leader propone dónde van). Son criterio, no protocolo: la spec, las
+  convenciones y la definición del rol mandan. Lista en el README ("Skills
+  opcionales"). El harness funciona igual sin ninguna.
+- **`implementer_ui`**: el `implementer` de los tramos `(interfaz)`, con
+  criterio de diseño precargado y la obligación de mirar lo que construye
+  (capturas en claro/oscuro y dos anchos, con datos normales y de peor
+  caso). Su definición remite a la del `implementer` para no duplicarla.
+  Lección: los tests de jsdom no veían un diálogo vacío ni una columna
+  desalineada; los encontraba el humano.
 - **Cada checkpoint tiene un único dueño** (`CHECKPOINTS.md`).
 - **"Cómo terminas"**: los subagentes a veces cortan su turno antes de
   escribir su fichero. Cada rol termina cuando su fichero está entero, y el
@@ -345,6 +361,9 @@ pending ──spec_author──> spec_ready ──HUMANO──> in_progress ─�
 `{feature, status, scope, iteration, action[, modo][, audits_pending]}`.
 Algoritmo completo (cada paso con su test en `tests/test_state.py`):
 
+0. Sin la línea `Estado: APROBADO` en `progress/arranque.md` → `ARRANQUE`:
+   de ahí salen los documentos que guían todo, y no se escribe ninguna spec
+   sin ellos.
 1. Feature activa = la primera de `feature_list.json` que no está en `done`.
    Si no hay → `TODO_HECHO`.
 2. Con `"sdd": false` → `"modo": "ligero"` y se salta al paso 3. Si no:
@@ -373,6 +392,7 @@ reformatean**; un test comprueba que los agentes los escriben así:
 | `## Sabotajes` (encabezado) | `impl.md` o `evidence.md` | implementer |
 | `SERVICIOS REALES` en la cabecera `- [ ] **T<n> — …**` (se acepta `PRUEBA REAL`, de la plantilla anterior) | `specs/<F>/tasks.md` | spec_author |
 | `"sdd": false` | `feature_list.json` | humano |
+| `Estado: APROBADO` (línea propia) | `progress/arranque.md` | leader, con el sí del humano al final de `/arranque` |
 
 Límite consciente: `state.py` despacha **una feature a la vez** (un test
 exige que haya como mucho una en `spec_ready` o `in_progress`). Para trabajo
@@ -421,9 +441,18 @@ Cuatro capas para secretos (detalle en `docs/security.md`):
 - **No escribas en `docs/` lo que el modelo ya sabe** (patrones de diseño,
   SOLID, convenciones estándar del lenguaje). Cada línea se paga en cada
   ejecución de tres roles.
+- **El listado de skills se paga en cada turno de cada agente**: en el
+  piloto, 46 skills instaladas sumaban ~3,6 k tokens de descripciones,
+  releídos en cada paso. `skillOverrides` en `.claude/settings.json` deja
+  en `name-only` las que el harness usa por nombre (comprobado: la precarga
+  sigue funcionando; con `user-invocable-only` deja de funcionar) y en
+  `user-invocable-only` las que no usa. Las de plugin no admiten
+  `skillOverrides`: se desactiva el plugin para el proyecto o se acepta su
+  coste. Los servidores MCP llegan diferidos (solo el nombre) y cuestan poco.
 - Mide desde el día 1: una línea por agente en `progress/metrics.csv` (la
-  escribe el leader). La causa de cada rechazo (`codigo`, `tests`, `spec`,
-  `otro`) dice qué regla falta.
+  escribe el leader con `scripts/agent_tokens.py`, que lee el transcript:
+  tokens nuevos, relecturas de caché, minutos y skills invocadas). La causa
+  de cada rechazo (`codigo`, `tests`, `spec`, `otro`) dice qué regla falta.
 - Cada hallazgo que se repite en dos features se convierte en regla, con su
   entrada en el CHANGELOG.
 - Si el humano dice "para", no se lanza nada más.
@@ -475,16 +504,55 @@ principal y con confirmación del humano, y el `implementer` la tiene
 prohibida (hay test). El `leader` sabe cuándo proponerlas. El procedimiento
 paso a paso está en cada `SKILL.md` (Parte II); aquí, para qué sirven.
 
+**`/arranque`** — primer uso del harness en un proyecto.
+- **Por qué**: de aquí salen los documentos que guían todo lo demás. En el
+  piloto, una sola ronda con todas las decisiones acababa en "sigue", el
+  stack se decidió sin pesar la ambición visual (cambio de framework a mitad
+  de F01) y nadie preguntó por el móvil.
+- **Cuándo**: siempre primero; `state.py` devuelve `ARRANQUE` y no despacha
+  ninguna feature hasta que `progress/arranque.md` dice `Estado: APROBADO`.
+- **Cómo**: guiado por el humano. Tras el producto, un **mapa de todas las
+  decisiones técnicas** (plataforma, arquitectura, backend, datos,
+  seguridad, frontend con sus librerías, calidad, operación), cada una con
+  propuesta y modo: obvia (se acepta en bloque), a elegir (2-3 opciones) o a
+  investigar. El humano ajusta el mapa y aprueba qué se investiga
+  (`explorer`, `/deep-research`, una prueba mínima, `council`) antes de
+  gastar nada. Se decide bloque a bloque en orden de dependencia, con
+  comprobación de coherencia.
+- **Qué deja**: ADR en `docs/adr/`, "Stack y librerías" en
+  `docs/architecture.md` (la lista de dependencias aprobadas), el resto de
+  documentos, las skills del stack asignadas y `F00` completa. Sustituye al
+  Anexo C. El mapa vive en `progress/arranque.md` (desde
+  `plantillas/arranque.md`) y se propone `/clear` al cerrar cada bloque.
+- **`F00`, andamiaje en modo ligero**, siempre la primera feature: generador
+  oficial, `init.sh` que sabe fallar, CI en verde, un "hola mundo" de punta
+  a punta y una prueba de cada **supuesto de riesgo** del mapa. Lección: en
+  el piloto la primera feature cargó con el toolchain y el cambio de stack
+  (11 IT); un supuesto falso se descubre aquí con casi nada construido.
+
+**`/direccion-visual`** — la dirección visual del proyecto.
+- **Por qué**: sin ella, la paleta sale de los valores por defecto
+  (índigo, Inter, tarjetas iguales) y queda congelada en los `R<n>`.
+- **Cuándo**: antes de la primera feature con pantallas, o para rediseñar.
+- **Qué deja**: `docs/<stack>/direccion-visual.md` (tokens, tipografía,
+  componentes, iconos, gráficos, presupuesto de movimiento y lo prohibido)
+  y una maqueta aprobada por el humano mirándola. Usa las skills de diseño
+  en la sesión principal.
+
 **`/auditoria-seguridad`** — revisión de seguridad del repositorio entero.
 - **Por qué**: cada `security_reviewer` mira solo el diff de su IT; nadie
   mira el conjunto (una tabla que pierde su protección con la migración de
   otra feature, una ruta vieja que no conoce un rol nuevo).
 - **Cuándo**: cada 4 features cerradas o al cerrar una fase, y siempre que
   `state.py` devuelva `audits_pending`.
-- **Qué deja**: un informe del `security_reviewer` en
-  `progress/audits/<fecha>/` y, decidido con el humano, el destino de cada
-  hallazgo en `cambios.md` (arreglo, feature nueva, línea de `acceptance` o
-  descarte). No bloquea ninguna feature.
+- **Qué deja**: un informe en `progress/audits/<fecha>/` y, decidido con el
+  humano, el destino de cada hallazgo en `cambios.md` (arreglo, feature
+  nueva, línea de `acceptance` o descarte). No bloquea ninguna feature.
+- **Motor**: el `security_reviewer` en modo auditoría, o, si están
+  instaladas, `security-audit` de Cloudflare (varias fases con verificadores
+  que intentan refutar cada hallazgo) y `/insecure-defaults:audit` de Trail
+  of Bits. Las dos últimas orquestan muchos agentes: solo desde la sesión
+  principal y con el presupuesto acordado.
 
 **`/retrospectiva`** — balance del proyecto y del propio harness.
 - **Por qué**: los umbrales y las reglas solo se ajustan bien con datos.
@@ -492,8 +560,10 @@ paso a paso está en cada `SKILL.md` (Parte II); aquí, para qué sirven.
 - **Qué deja**: `progress/retrospective.md` con qué mantener, cambiar o
   quitar (proceso, código y producto), cada fila con su dato, y lo
   trasladable en `progress/para_la_plantilla.md`. Usa `/doctor
-  prompt-audit`, de serie en Claude Code, para revisar las instrucciones.
-  No cambia reglas: las propone.
+  prompt-audit`, de serie en Claude Code, para revisar las instrucciones;
+  si están instaladas, `/ponytail-audit` para la sobreingeniería y, al
+  cerrar una fase y con el sí del humano, `spec-to-code-compliance` para
+  comparar el código con sus specs. No cambia reglas: las propone.
 
 ---
 
@@ -516,6 +586,11 @@ Cada una costó al menos una iteración en un proyecto real.
 | Spec reescrita por un alcance ambiguo | preguntar antes de redactar |
 | El cierre con modelo barato inventó una función | resumen redactado por el leader |
 | Feature reabierta por el aspecto | diseño en cada spec; enmiendas fechadas |
+| Interfaces "hechas con IA" (paleta por defecto congelada como `R<n>`) y fallos visuales que solo veía el humano | `/direccion-visual`, `implementer_ui` con capturas, el reviewer las mira |
+| Skills de diseño nunca invocadas; nombradas en el encargo, "aplicadas a mano" | `skills:` precargadas por rol; `skills.py` avisa de las nuevas y las ausentes |
+| La línea "Skills usadas" no distinguía invocar de aplicar a mano | columna `skills` de `metrics.csv` desde el transcript (`agent_tokens.py`) |
+| `subagent_tokens` sumado contaba varias veces lo mismo | `agent_tokens.py` lee el consumo real por ejecución |
+| Una ronda con todas las decisiones acababa en "sigue" | `/arranque` en rondas: producto, técnica, diseño |
 | Errata de pocas líneas con protocolo completo | arreglos pequeños del leader |
 | Arreglo del leader sin anotar, devuelto como "no declarado" | "Arreglos del leader" en `current.md` |
 | Agentes que cortan antes de escribir su fichero | "Cómo terminas", reanudar, `maxTurns` |
@@ -587,17 +662,21 @@ Todos están completos en la Parte II.
 | `plantillas/stack/` | `<RELLENAR>` | `init.sh` y `conventions.md` por stack; `conventions-web.md` opcional |
 | `scripts/state.py` | listo | despacho (sección 7) |
 | `scripts/py.sh` | listo | lanzador de Python que falla cerrado |
-| `scripts/guard_secrets.py` | listo | hook contra fugas de secretos |
+| `scripts/guard_secrets.py` | listo | hook contra fugas de secretos y saltos del pre-commit |
+| `scripts/guard_config.py` | listo | pide confirmación antes de tocar configuración de lint, tipos o del harness |
+| `scripts/skills.py` | listo | skills instaladas sin clasificar y precargadas que faltan |
+| `scripts/agent_tokens.py` | listo | consumo real de un subagente leído de su transcript |
 | `scripts/session_start.sh` | listo | estado al arrancar, limpiar y compactar |
 | `scripts/check_docs_changelog.sh` | listo | regla del CHANGELOG (hook y CI) |
 | `scripts/harness_bundle.py` | listo | regenera, comprueba y extrae la Parte II |
-| `.claude/settings.json` | listo; añade tus `.env.*` e instaladores | deny, ask y hooks |
-| `.claude/agents/*.md` | listos; zonas sensibles en `leader.md` | los seis roles |
-| `.claude/skills/` | listos | `/auditoria-seguridad`, `/retrospectiva` |
+| `.claude/settings.json` | listo; añade tus `.env.*` e instaladores | deny, ask, hooks y `skillOverrides` |
+| `.claude/agents/*.md` | listos; zonas sensibles en `leader.md` | los siete roles |
+| `.claude/skills/` | listos | `/arranque`, `/direccion-visual`, `/auditoria-seguridad`, `/retrospectiva` |
 | `.githooks/pre-commit` | listo | CHANGELOG + gitleaks |
 | `.github/workflows/ci.yml` | `<RELLENAR>` toolchains | historia, CHANGELOG, tests, `init.sh --all` |
 | `.gitleaks.toml` | `<RELLENAR>` reglas | escáner de secretos |
 | `specs/_plantilla/` | listo | requirements, design, tasks |
+| `plantillas/arranque.md` | listo | mapa de decisiones de `/arranque` (se copia a `progress/`) |
 | `progress/` | listo | `current.md`, `history.md`, `metrics.csv`, `audits/`, `para_la_plantilla.md` |
 | `tests/` | listos | tests del harness (no del producto) |
 
@@ -615,7 +694,13 @@ Termina con init.sh en verde, impl.md y ## Sabotajes escritos.
 
 ## Anexo C — Decisiones antes de la primera spec
 
+Las pregunta `/arranque` en dos rondas (producto; técnica) y
+`/direccion-visual` la de diseño. Esta lista es la referencia de lo que
+tiene que quedar decidido.
+
 - [ ] Qué es el producto, para quién, alcance de la primera versión.
+- [ ] **Dónde y en qué dispositivos se usa** (escritorio, web, móvil, sin
+      conexión), ahora y más adelante.
 - [ ] Stacks (`scopes`) y sus herramientas de test, lint, formato, tipos,
       build y auditoría.
 - [ ] Dónde vive cada pieza y **por qué**. Política de coste y límites de
@@ -630,6 +715,9 @@ Termina con init.sh en verde, impl.md y ## Sabotajes escritos.
 - [ ] Qué no se puede verificar con tests y cómo se verificará a mano.
 - [ ] Ramas y despliegue (qué rama despliega dónde).
 - [ ] Idioma del código y de la prosa.
+- [ ] Dirección visual, librería de componentes, iconos y movimiento (si
+      hay interfaz).
+- [ ] Skills del stack asignadas a su rol.
 
 ---
 
@@ -648,7 +736,7 @@ se regenera con `bash scripts/py.sh scripts/harness_bundle.py`.
 name: explorer
 description: Investigacion de solo lectura previa a una spec. Escribe hallazgos, no codigo.
 model: sonnet
-tools: Read, Glob, Grep, WebSearch, WebFetch, Write
+tools: Read, Glob, Grep, WebSearch, WebFetch, Write, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_close
 maxTurns: 60
 ---
 
@@ -670,6 +758,12 @@ decides.** No escribes código ni tests ni tocas `specs/`: tu salida va a
 - Un resumen de ≤ 2 k tokens al principio del fichero: es lo que leerá el
   `spec_author`.
 
+Si una página no se deja leer con WebFetch (JavaScript, 403) o hace falta
+ver una app de referencia en uso, usa el navegador (herramientas
+`mcp__plugin_playwright_playwright__*`, si están). Captura solo lo que aporte, en
+`progress/explore_<tema>/`. Lección: en el piloto las referencias visuales
+se sacaron de páginas de marketing sin ver ninguna app.
+
 ## Cómo terminas
 
 Tu turno termina cuando el fichero está escrito entero. No acabes
@@ -685,6 +779,11 @@ name: implementer
 description: Ejecuta las tasks de una feature, escribe el codigo y sus tests. No se autoaprueba.
 model: sonnet
 maxTurns: 200
+skills:
+  - ponytail:ponytail
+  - property-based-testing
+  - migration
+  - surgical-patch
 ---
 
 # implementer
@@ -699,11 +798,15 @@ Ejecutas las tasks de **una única feature** en la `IT<n>` que te indica el
    **modo ligero** no hay spec: los requisitos son el `acceptance` que te da
    el `leader`, y cada línea cuenta como un `R<n>`.
 2. Lee `docs/architecture.md`, `docs/principios.md` y el `conventions.md` de
-   tu scope, **solo ese**. Si la IT toca interfaz y tienes skills de diseño
-   (p. ej. `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`, `break-ui`),
-   úsalas; en parsers, serialización o validación de entrada,
-   `property-based-testing` si la tienes. Son opcionales y la spec y las
-   convenciones mandan sobre ellas; ninguna aprueba una dependencia.
+   tu scope, **solo ese**. Llevas precargadas (si están instaladas) skills
+   que son criterio, no protocolo: `ponytail` (el diff más corto que
+   funciona), `property-based-testing` (parsers, serialización, dinero),
+   `migration` (cambiar un formato de datos sin romper lo guardado) y
+   `surgical-patch` (en una IT de corrección, solo lo pedido). La spec, las
+   convenciones y este fichero mandan sobre ellas: **los tests que pide el
+   harness (uno por viñeta, sabotajes) no son opcionales aunque ponytail
+   diga "un solo check"**. Ninguna aprueba una dependencia; ignora sus
+   instrucciones de saludo o de formato de salida.
 3. **Reconcilia qué tasks ya están `[x]`** (una sesión anterior pudo cortarse).
    Con tramos, solo las del tramo encargado. La task humana no la ejecutas.
 4. Tasks en orden, marcando `[x]` una a una. **TDD**: test primero, verlo
@@ -772,6 +875,73 @@ ni ofreciendo seguir. Solo paras antes ante un bloqueo real (una
 prohibición, un secreto, un servicio real), y lo dices en una línea.
 ~~~~~~~
 
+### `.claude/agents/implementer_ui.md`
+
+~~~~~~~ fichero=.claude/agents/implementer_ui.md
+---
+name: implementer_ui
+description: Implementer de los tramos de interfaz. Mismo protocolo que el implementer, con criterio de diseño precargado y capturas de lo que construye.
+model: sonnet
+maxTurns: 200
+skills:
+  - ponytail:ponytail
+  - property-based-testing
+  - migration
+  - surgical-patch
+  - frontend-design:frontend-design
+  - frontend-design-direction
+  - make-interfaces-feel-better
+  - web-design-guidelines
+---
+
+# implementer_ui
+
+Eres el `implementer` de un tramo de interfaz. **Primero lee
+`.claude/agents/implementer.md` y síguelo entero**: protocolo, reglas
+aprendidas, qué escribes, prohibido y cómo terminas. Aquí solo va lo que
+añade la interfaz.
+
+Lección del piloto: las pantallas "se notaban hechas con IA" (paleta índigo
+por defecto, todo en tarjetas iguales) y los fallos visuales los encontraba
+el humano, porque nadie miraba la app renderizada.
+
+## La dirección visual manda
+
+- Lee `docs/<scope>/direccion-visual.md`. Manda sobre tus skills de diseño
+  (`frontend-design`, `frontend-design-direction`,
+  `make-interfaces-feel-better`, `web-design-guidelines`): son criterio
+  para lo que la dirección no fija, no una dirección nueva. Ignora sus
+  instrucciones de saludo o de formato de salida.
+- Si el tramo crea pantallas y ese fichero no existe, **para** y dilo en una
+  línea: el `leader` propone `/direccion-visual` al humano.
+- Movimiento, solo el que fija la dirección visual. No añadas animaciones
+  por pulir: en el piloto fueron la mayor fuente de iteraciones.
+
+## Capturas
+
+Antes de entregar, mira lo que has construido:
+
+1. Arranca la interfaz con el **modo de datos falsos** del scope (comando en
+   `docs/<scope>/conventions.md`), con datos normales y con el juego de
+   **peor caso** (nombres largos, cero elementos, cifras enormes, texto en
+   otro idioma).
+2. Con el navegador (herramientas `mcp__plugin_playwright_playwright__*` o
+   equivalentes; cárgalas con ToolSearch) captura cada pantalla que toca el
+   tramo: tema claro y oscuro si existen, ancho 1280 y 390, datos normales y
+   peor caso. **Como mucho ~8 capturas**: prioriza lo nuevo.
+3. Guárdalas en `progress/<F>/IT<n>/capturas/<pantalla>-<tema>-<ancho>-<datos>.png`
+   (si la herramienta las deja en otra carpeta, cópialas).
+4. Ábrelas y arregla lo que veas: texto cortado o solapado, desalineado,
+   contraste pobre, estados rotos con el peor caso, lo que contradiga la
+   dirección visual.
+5. Cierra el navegador y para **solo tu servidor** (por su PID; nunca matar
+   todos los procesos de `node` o `python` de la máquina).
+
+En `impl.md`, una sección `## Capturas` con la lista de ficheros y lo que
+corregiste al verlas. Sin navegador disponible: `## Capturas` con
+`no disponibles: <motivo>`, y el `reviewer` decide.
+~~~~~~~
+
 ### `.claude/agents/leader.md`
 
 ~~~~~~~ fichero=.claude/agents/leader.md
@@ -794,10 +964,15 @@ El hook de sesión ya te da la salida de `scripts/state.py`, `current.md` y
 las rutas de la última IT. Si no la ves, ejecuta `bash scripts/py.sh
 scripts/state.py`. **No leas `feature_list.json` entero.**
 
+- La siguiente feature crea pantallas y no existe
+  `docs/<scope>/direccion-visual.md`: propón `/direccion-visual` antes de
+  su spec.
+
 ## Despacho
 
 | `action` | Qué haces |
 |---|---|
+| `ARRANQUE` | `/arranque` con el humano (o lo retomas donde diga `progress/arranque.md`). Nada más hasta que lo apruebe |
 | `LANZAR_SPEC_AUTHOR` | `spec_author` sobre la feature |
 | `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste |
 | `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
@@ -809,6 +984,10 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 | `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` | Cierre (ver "Modelos") |
 | `TODO_HECHO` | Propones `/retrospectiva` |
 
+- **Tramo de interfaz** (cabecera con `(interfaz)` en `tasks.md`, o en modo
+  ligero un `acceptance` que cambia pantallas): donde la tabla dice
+  `implementer`, lanzas `implementer_ui`. El cierre sigue siendo del
+  `implementer`.
 - Con `audits_pending`: antes de la acción, propón `/auditoria-seguridad`
   para dar destino a los hallazgos.
 - Tras cerrar una feature: si van **4 o más** cerradas desde la última
@@ -838,9 +1017,36 @@ feature.
 ## Métricas
 
 Al terminar cada agente, una línea en `progress/metrics.csv`:
-`fecha,feature,it,rol,tokens,minutos,veredicto,causa`. `veredicto` solo en
-revisores; `causa` solo en rechazos: `codigo`, `tests` (código bien, tests
-flojos), `spec` u `otro`. Una reanudación es otra línea.
+`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`.
+`veredicto` solo en revisores; `causa` solo en rechazos: `codigo`, `tests`
+(código bien, tests flojos), `spec` u `otro`. Una reanudación es otra línea.
+
+`tokens`, `cache_read`, `minutos` y `skills` (las invocadas, no las
+precargadas) salen de `bash scripts/py.sh scripts/agent_tokens.py
+<agent_id> --run <n>` (n = nº de ejecución de ese agente: 1 al lanzarlo, +1
+por cada reanudación), **nunca** del `subagent_tokens` del resultado de
+Agent: ese es el tamaño del contexto al terminar, arrastra las ejecuciones
+anteriores y no cuenta las relecturas de caché.
+
+## Skills
+
+Cada rol precarga las suyas (`skills:` en su definición): **no nombres
+skills en los encargos**. Lección: nombradas en el encargo, los agentes las
+"aplicaban a mano" sin cargarlas.
+
+- El hook trae `=== skills.py ===` con skills **nuevas**: para cada una
+  propón al humano, con una línea de por qué, precargarla en un rol
+  (`skills:` del agente y `"name-only"` en `skillOverrides` de
+  `.claude/settings.json`) o descartarla (`"user-invocable-only"`; las de
+  plugin, a `skills_revisadas` de `harness.json`). Con su sí, lo editas.
+- Skills **ausentes**: avisa al humano; ese rol trabaja sin ellas.
+- Tests intermitentes o un fallo sin causa clara: `investigate-first`
+  antes de tocar código.
+- El humano toma o cambia una decisión de arquitectura (stack, plataforma,
+  almacenamiento, despliegue): **para la feature en curso**, propón
+  investigarla como en `/arranque` (ronda 2; `council` si está disputada)
+  y déjala como ADR (`architecture-decision-records`) antes de seguir.
+  Lección: un cambio de framework a mitad de feature tiró una IT entera.
 
 ## Encargos
 
@@ -857,7 +1063,7 @@ El subagente arranca en frío (plantilla: HARNESS.md, "Encargo tipo").
 
 ## Modelos
 
-Cada rol declara el suyo. El cierre (paso 7 del implementer) en `haiku` **con el resumen
+Cada rol declara el suyo (`implementer_ui` también en `sonnet`). El cierre (paso 7 del implementer) en `haiku` **con el resumen
 para `history.md` redactado por ti** (un modelo que no implementó rellena
 huecos con lo que suena plausible); si hay "Correcciones de texto al
 cerrar", `sonnet`. `explorer` en `opus` si toca fronteras de arquitectura.
@@ -887,6 +1093,9 @@ description: Veto funcional. Aprueba o rechaza el trabajo del implementer. Nunca
 model: opus
 tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
+skills:
+  - property-based-testing
+  - web-design-guidelines
 ---
 
 # reviewer
@@ -916,10 +1125,17 @@ mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
    fallo cuesta una iteración de cierre.
 7. Un cambio que no está en `impl.md` puede ser un arreglo del `leader`:
    mira "Arreglos del leader" en `progress/current.md` antes de devolverlo.
-8. **Skills, solo para verificar** lo que piden la spec, `CHECKPOINTS.md` y
-   las convenciones (p. ej. `web-design-guidelines`, `review-animations` o
-   `break-ui` en interfaz). Lo que sea gusto y la spec no pide va a
-   observaciones que no bloquean: no cuesta una iteración.
+8. **Tramo de interfaz**: abre las capturas de `## Capturas` en `impl.md`
+   (Read las muestra). Bloqueas solo por fallos que se ven: texto cortado o
+   solapado, desalineado, contraste insuficiente, un estado roto con los
+   datos de peor caso, o algo que contradice
+   `docs/<scope>/direccion-visual.md`. Sin capturas y sin motivo,
+   `CHANGES_REQUESTED`.
+9. **Skills precargadas, solo para verificar** lo que piden la spec,
+   `CHECKPOINTS.md` y las convenciones: `property-based-testing` para juzgar
+   propiedades, `web-design-guidelines` como lista objetiva de interfaz.
+   Lo que sea gusto y la spec no pide va a observaciones que no bloquean: no
+   cuesta una iteración.
 
 En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca;
 **la verificación no se reduce**.
@@ -959,6 +1175,8 @@ description: Veto de seguridad, independiente y bloqueante. Ultima puerta antes 
 model: opus
 tools: Read, Glob, Grep, Bash, Write, Skill
 maxTurns: 100
+skills:
+  - differential-review
 ---
 
 # security_reviewer
@@ -994,11 +1212,14 @@ entonces.
 Un cambio que no está en `impl.md` puede ser un arreglo del `leader`
 (`progress/current.md`, "Arreglos del leader").
 
-Si tienes skills de seguridad (p. ej. `differential-review` para el diff,
-`sharp-edges`, `variant-analysis` tras un hallazgo, `fp-check` para
-descartar falsos positivos, `supply-chain-risk-auditor` ante una dependencia
-nueva), apóyate en ellas. Son opcionales y no sustituyen este protocolo ni
-el formato de `security.md`.
+Llevas precargada `differential-review` (si está instalada): es tu método
+para revisar el diff. Además, con la herramienta `Skill`:
+- si el diff toca un lockfile o un manifiesto de dependencias, invoca
+  `supply-chain-risk-auditor`;
+- tras un hallazgo, invoca `variant-analysis` para buscar el mismo fallo en
+  el resto del repositorio.
+
+No sustituyen este protocolo ni el formato de `security.md`.
 
 ## Qué escribes
 
@@ -1020,7 +1241,8 @@ repositorio entero contra su estado actual, no un diff. Cada revisión mira
 su diff y nadie mira el conjunto.
 - Todo `docs/security.md`; permisos de **todas** las tablas y funciones; la
   tabla de ataque de **todas** las rutas; el artefacto público (bundle); la
-  configuración.
+  configuración, con `sharp-edges` (invócala) para las APIs y opciones que
+  invitan al error.
 - Escribes `progress/audits/<AAAA-MM-DD>/informe.md` (≤ 200 líneas; anexo en
   `evidencia.md`), hallazgos con gravedad y `archivo:línea`. No bloquea
   ninguna feature: el destino de cada hallazgo lo decide el humano.
@@ -1073,8 +1295,16 @@ scope, **solo ese**. Si necesitas explorar el repositorio a fondo, pide al
   caracteres de control, duplicado, servicio externo caído o lento.
 - **Seguridad obligatoria**: si toca input, auth, datos sensibles o acceso a
   datos, `R<n>` de seguridad verificables aunque el `acceptance` no los pida.
+  Si llevas precargada `prd-securability-enhancement` (la añade `/arranque`
+  en proyectos con usuarios o servidor), úsala para elegirlos contra ASVS.
 - **Tramos**: con varios stacks o capas, `tasks.md` agrupa las tasks por
-  tramo en orden de dependencia (lo que otros consumen, primero).
+  tramo en orden de dependencia (lo que otros consumen, primero). El tramo
+  que crea o cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
+  `implementer_ui`.
+- **El aspecto no va en `R<n>`**: colores, tipografía y componentes salen de
+  `docs/<scope>/direccion-visual.md`; la spec la cita y solo añade lo propio
+  de sus pantallas. Lección: con los tokens congelados como requisito, el
+  diseño no podía mejorar sin enmendar specs.
 - **Las tasks no explican el harness** ni afirman lo que hace `init.sh`.
 - **Task humana** (si hay servicios reales): la última, con
   `ÚNICA TASK CON SERVICIOS REALES` en su cabecera; pasos en orden
@@ -1178,10 +1408,264 @@ ante un bloqueo real, y lo dices en una línea.
       {
         "matcher": "Bash|PowerShell",
         "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/py.sh\" \"$CLAUDE_PROJECT_DIR/scripts/guard_secrets.py\"" }]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/py.sh\" \"$CLAUDE_PROJECT_DIR/scripts/guard_config.py\"" }]
       }
     ]
+  },
+  "skillOverrides": {
+    "differential-review": "name-only",
+    "property-based-testing": "name-only",
+    "web-design-guidelines": "name-only",
+    "migration": "name-only",
+    "surgical-patch": "name-only",
+    "frontend-design-direction": "name-only",
+    "make-interfaces-feel-better": "name-only",
+    "supply-chain-risk-auditor": "name-only",
+    "variant-analysis": "name-only",
+    "sharp-edges": "name-only",
+    "ui-ux-pro-max": "name-only",
+    "redesign-existing-projects": "name-only",
+    "pick-ui-library": "name-only",
+    "investigate-first": "name-only",
+    "security-audit": "name-only",
+    "prd-securability-enhancement": "name-only",
+    "vercel-react-best-practices": "name-only",
+    "vercel-composition-patterns": "name-only",
+    "vercel-react-view-transitions": "name-only",
+    "modern-python": "name-only",
+    "council": "name-only",
+    "architecture-decision-records": "name-only",
+    "emil-design-eng": "user-invocable-only",
+    "review-animations": "user-invocable-only",
+    "break-ui": "user-invocable-only",
+    "fp-check": "user-invocable-only",
+    "agent-browser": "user-invocable-only",
+    "lean-build": "user-invocable-only",
+    "safe-refactor": "user-invocable-only",
+    "verify-and-stop": "user-invocable-only",
+    "grill-me": "user-invocable-only",
+    "prompt-master": "user-invocable-only",
+    "cavecrew": "user-invocable-only",
+    "caveman": "user-invocable-only",
+    "caveman-commit": "user-invocable-only",
+    "caveman-compress": "user-invocable-only",
+    "caveman-discover": "user-invocable-only",
+    "caveman-evidence-review": "user-invocable-only",
+    "caveman-explore": "user-invocable-only",
+    "caveman-help": "user-invocable-only",
+    "caveman-learn": "user-invocable-only",
+    "caveman-manage": "user-invocable-only",
+    "caveman-optimize": "user-invocable-only",
+    "caveman-review": "user-invocable-only",
+    "caveman-setup": "user-invocable-only",
+    "caveman-stats": "user-invocable-only"
   }
 }
+~~~~~~~
+
+### `.claude/skills/arranque/SKILL.md`
+
+~~~~~~~ fichero=.claude/skills/arranque/SKILL.md
+---
+name: arranque
+description: Primer uso del harness en un proyecto - flujo guiado por el humano que decide producto, arquitectura, stack y librerias de backend y frontend (con propuestas y solo la investigacion que el humano apruebe) y lo deja escrito. Solo la sesion principal (leader), nunca un subagente.
+---
+
+# Arranque
+
+**De aquí salen los documentos que guían todo el proyecto**: cada spec,
+cada encargo y cada revisión se miden contra ellos. Por eso nada empieza
+hasta que esté todo claro: `state.py` devuelve `ARRANQUE` (y no despacha
+ninguna feature) mientras `progress/arranque.md` no tenga la línea
+`Estado: APROBADO`, que solo se escribe con el sí del humano al final.
+
+Sustituye a la lista del Anexo C de `HARNESS.md`. Lecciones del piloto:
+
+- una sola ronda con todo acababa en respuestas de "sigue";
+- el stack se eligió sin pesar la ambición visual del producto, y hubo que
+  cambiar de framework a mitad de la primera feature (una IT tirada, dos
+  investigaciones, una enmienda de ~360 líneas);
+- nadie preguntó en qué dispositivos se usaría: el deseo de usarla en el
+  móvil llegó con la arquitectura de escritorio ya construida;
+- las librerías de interfaz (componentes, animación, gráficos) se fueron
+  eligiendo feature a feature, cada una con su investigación.
+
+## Principios del flujo
+
+- **Manda el humano.** Tú preparas, propones y recomiendas; él decide qué se
+  decide, cómo y con cuánta investigación. **No investigues nada que no
+  haya aprobado**, y antes di qué harías y su coste aproximado.
+- **Nada se queda sin decidir por omisión**: el mapa de decisiones (paso 2)
+  cubre todo el proyecto, y cada fila acaba decidida, aplazada con
+  disparador o descartada por no aplicar.
+- **En orden de dependencia**: lo que condiciona a lo demás, primero
+  (plataforma → arquitectura → backend → frontend → calidad y operación).
+  Una decisión no se pregunta antes que aquellas de las que depende.
+- **Pocas interrupciones**: tandas de hasta 4 preguntas con
+  `AskUserQuestion` (si está), la recomendada la primera y con su porqué;
+  lo obvio se propone en bloque para aceptarlo de una vez.
+- **Lo que ya dice el repositorio** no se pregunta: se lee y se confirma.
+  **Con código existente**, el mapa del paso 2 sale prerrellenado de las
+  dependencias, la configuración y la estructura (lo que hay es la
+  decisión tomada); el humano confirma o corrige, y solo las filas sin
+  código detrás siguen el flujo normal.
+- **Reanudable y barato**: el estado vive en `progress/arranque.md` (copia
+  de `plantillas/arranque.md`), que se actualiza tras cada tanda. **Al
+  cerrar cada bloque, propón `/clear`**: ese fichero basta para seguir, y
+  las investigaciones no se arrastran en el contexto de la sesión.
+- Sin commits: el primero lo hace el humano (`HARNESS.md`, sección 3).
+
+## 1. Producto
+
+Primera tanda, abierta. Como mínimo debe quedar claro (y sigue tirando del
+hilo cuando una respuesta abre otra):
+
+- qué es, para quién, qué problema resuelve; qué entra en la primera
+  versión y **qué no**;
+- **dónde y en qué dispositivos se usa**, ahora y más adelante (escritorio,
+  web, móvil, sin conexión);
+- qué datos maneja, dónde deben vivir, si son sensibles, quién los ve (uno
+  o varios usuarios) y cuánto costaría perderlos;
+- **cuánto pesa la interfaz** (austera, pulida, con animaciones): condiciona
+  el stack;
+- volumen y crecimiento, presupuesto (gratis, de pago y cuánto), plazos;
+- **preferencias y vetos del humano**: lenguajes que conoce o quiere
+  aprender, servicios que ya usa, cosas que no quiere.
+
+Escribe `CLAUDE.md` (qué es, para quién; "Estado") y `feature_list.json`:
+`F00` (andamiaje, ya en la plantilla; se completa en el paso 4) y después
+las features de producto en orden, la primera la más pequeña que aporte
+valor.
+
+## 2. Mapa de decisiones
+
+Con el producto, copia `plantillas/arranque.md` a `progress/arranque.md` y
+rellena la tabla de **todas** las decisiones técnicas que aplican (borra
+las que no), en orden de dependencia:
+
+| Bloque | Decisiones |
+|---|---|
+| Plataforma | tipo de app (web, escritorio, móvil, CLI, servicio), empaquetado y distribución, sin conexión |
+| Arquitectura | forma (monolito, cliente-servidor, local-first, serverless…), capas y fronteras, dónde vive cada pieza |
+| Backend | lenguaje y versión, framework, estilo de API y contratos, validación, errores, tareas en segundo plano |
+| Datos | almacenamiento o base de datos, ORM o acceso, migraciones y versionado de formatos, copias de seguridad |
+| Seguridad | autenticación y autorización, secretos, riesgos propios y zonas sensibles |
+| Frontend | framework, enrutado, estado y caché de datos, formularios, estilos, librería de componentes, iconos, animación, gráficos, i18n, accesibilidad |
+| Calidad | tests por capa (unidad, integración, extremo a extremo), lint, formato, tipos, auditoría de dependencias |
+| Operación | build, CI, despliegue y ramas, entornos, logs y errores, coste |
+
+Cada fila con una **propuesta** y un **modo**:
+
+- **obvia**: hay una opción claramente mejor para este producto (dilo y
+  por qué); se acepta en bloque;
+- **a elegir**: 2-3 opciones conocidas con sus pros y contras; decide el
+  humano;
+- **a investigar**: hay hechos que no sabes con seguridad (versión,
+  mantenimiento, licencia, límites de un plan, soporte de una plataforma)
+  o una apuesta arriesgada.
+
+Cierra el mapa con los **2-3 supuestos de riesgo**: lo que, si resulta
+falso, obliga a cambiar una decisión de base (que un puente entre procesos
+funcione con la CSP, que una librería corra en la plataforma, que un plan
+gratuito aguante el volumen). Los comprobará `F00` antes de escribir
+producto.
+
+Enseña el mapa y deja que el humano lo ajuste: cambiar el modo de una
+fila, decidir alguna él directamente, marcar qué investigar y con cuánto
+esfuerzo. **Solo entonces** se pasa al paso 3.
+
+## 3. Decidir, bloque a bloque
+
+Por bloque y en orden:
+
+1. Las **obvias**, en una sola pregunta para aceptarlas o abrir alguna.
+2. Las **a investigar** que el humano aprobó, todas las del bloque a la
+   vez y en paralelo:
+   - `explorer` para preguntas acotadas (una librería, un plan, un límite);
+   - `/deep-research` (workflow de serie de Claude Code) para una pregunta
+     amplia que necesita fuentes cruzadas; es el más caro;
+   - una **prueba mínima** en el scratchpad si una opción depende de algo
+     sin comprobar (que un puente entre procesos funcione, que una
+     librería corra en la plataforma);
+   - `council` si, tras investigar, sigue habiendo varias buenas sin
+     ganadora y el humano quiere contraste.
+   Cada hecho con fuente y fecha. Las librerías, con licencia, último
+   release y si cumplen la política de dependencias.
+3. Las **a elegir**, con las opciones y la recomendación (ya con lo
+   investigado).
+4. Antes de cerrar el bloque, **coherencia** con lo ya decidido (versiones
+   compatibles, licencias, plataforma, CSP, coste) y **qué la haría
+   revisable**: cada decisión se marca fija o revisable con su disparador
+   ("app móvil: revisar al cerrar la fase 2").
+
+Actualiza `progress/arranque.md` al cerrar cada bloque.
+
+## 4. Lo que queda escrito
+
+- **ADR** en `docs/adr/` para cada decisión de arquitectura, plataforma,
+  datos o framework principal (skill `architecture-decision-records`:
+  contexto, decisión, alternativas y por qué no, consecuencias, cuándo
+  revisarla).
+- `docs/architecture.md`, sección "Stack y librerías": cada pieza con
+  versión, para qué, alternativa descartada y su ADR si lo tiene. Es la
+  lista de dependencias aprobadas: lo que no esté ahí sigue pidiendo
+  permiso.
+- `F00` en `feature_list.json` con sus scopes reales y una línea de
+  `acceptance` por supuesto de riesgo. Va en modo ligero: andamiaje con el
+  generador oficial, `init.sh` que sabe fallar, CI en verde y un "hola
+  mundo" de punta a punta. Lección: en el piloto la primera feature cargó
+  con el toolchain y el cambio de stack, y necesitó 11 IT.
+- `harness.json` (scopes, secretos), el resto de `CLAUDE.md` (la tabla
+  "Dónde vive cada pieza" enlaza a los ADR), `docs/security.md`,
+  `docs/verification.md`, `docs/<scope>/conventions.md` y
+  `<scope>/init.sh` desde `plantillas/stack/`, las zonas sensibles de
+  `.claude/agents/leader.md` y la entrada de `docs/CHANGELOG.md`.
+- **Skills según el stack**, propuestas al humano; con su sí, en `skills:`
+  del agente y `"name-only"` en `skillOverrides` de `.claude/settings.json`:
+
+| Si el proyecto… | Skill | Agente |
+|---|---|---|
+| usa React | `vercel-react-best-practices`, `vercel-composition-patterns` | `implementer_ui` |
+| usa la API View Transitions | `vercel-react-view-transitions` | `implementer_ui` |
+| usa Python | `modern-python` | `implementer` |
+| tiene usuarios o servidor | `prd-securability-enhancement` | `spec_author` |
+| usa una plataforma con skills propias (Supabase, Cloudflare…) | las suyas, si están instaladas | el que las use |
+
+  Lo que no esté instalado se apunta en `README.md` ("Skills opcionales") y
+  se le dice al humano cómo instalarlo.
+
+## 5. Diseño
+
+Si hay interfaz, `/direccion-visual` justo después (o antes de la primera
+feature con pantallas). Decide el aspecto (paleta, tipografía, densidad,
+movimiento) sobre las librerías ya elegidas aquí; si el aspecto pide
+cambiar una (otra librería de componentes, de animación), vuelve a su fila
+del mapa y a su ADR.
+
+## 6. Aprobación final
+
+Antes de pedirla, comprueba:
+
+- ninguna fila abierta en `progress/arranque.md` (decidida, aplazada con
+  disparador, o "no aplica");
+- ningún hueco por rellenar fuera de `HARNESS.md` (el `grep` del paso 2 de
+  la sección 3);
+- los documentos no se contradicen entre sí (lo que dice `CLAUDE.md`,
+  los ADR, "Stack y librerías", las convenciones y `init.sh`);
+- `F00` tiene sus supuestos de riesgo y la primera feature de producto se
+  puede especificar con lo decidido, sin preguntas de arquitectura
+  pendientes.
+
+Enseña al humano un resumen de una pantalla: decisiones por bloque (con las
+revisables y su disparador), documentos escritos y lo que queda de la
+sección 3 de `HARNESS.md` (gitleaks, CI, demostrar que cada paso de
+`init.sh` sabe fallar, primer commit). **Con su sí explícito**, añade
+`Estado: APROBADO` (fecha) a `progress/arranque.md`; desde ahí `state.py`
+despacha la primera feature. Si luego cambia una decisión de base, se
+vuelve a su fila del mapa y a su ADR (leader, "Skills").
 ~~~~~~~
 
 ### `.claude/skills/auditoria-seguridad/SKILL.md`
@@ -1222,14 +1706,112 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
 
 ## Si no: lanzar una auditoría nueva
 
-1. Confirma con el humano (es una ejecución cara sobre todo el repo).
+1. Confirma con el humano (es una ejecución cara sobre todo el repo) y elige
+   con él el motor; los dos primeros orquestan muchos agentes y solo
+   funcionan desde la sesión principal, nunca desde un subagente:
+   - **`security-audit`** (Cloudflare), si está instalada: modo auditoría
+     completa, perfil `quick` o `standard` y presupuesto de agentes
+     acordados con el humano. Su salida va fuera del repo
+     (`~/security-audit-skill/<repo>/run-<N>`, déjala ahí).
+   - **`/insecure-defaults:audit`** (Trail of Bits), si está instalado: más
+     barato y acotado a configuraciones inseguras por defecto (secretos de
+     respaldo, credenciales por defecto, modos que fallan abiertos, CORS
+     `*`, debug). Puede acompañar a cualquiera de los otros dos.
+   - **`security_reviewer` en modo auditoría**: el de siempre, si no hay
+     ninguna de las anteriores o el humano prefiere un solo agente.
 2. Crea `progress/audits/<AAAA-MM-DD>/` (`-2` si ya existe una ese día).
-3. Lanza `security_reviewer` con: "Modo auditoría. Carpeta
+3. Con `security_reviewer`, lánzalo con: "Modo auditoría. Carpeta
    `progress/audits/<fecha>/`. Revisa el repositorio entero contra su estado
    actual (ver tu sección 'Modo auditoría'). Escribe `informe.md` (≤ 200
-   líneas) y, si hace falta, `evidencia.md`."
+   líneas) y, si hace falta, `evidencia.md`." Con las otras, escribe tú
+   `informe.md` (≤ 200 líneas) a partir de su informe: hallazgos
+   confirmados con gravedad y `archivo:línea`, los pendientes de validar
+   aparte, y la ruta del informe original en `evidencia.md`.
 4. Línea en `progress/metrics.csv` con `feature = audit` e `it = <fecha>`.
 5. Vuelve al primer apartado para dar destino a los hallazgos.
+~~~~~~~
+
+### `.claude/skills/direccion-visual/SKILL.md`
+
+~~~~~~~ fichero=.claude/skills/direccion-visual/SKILL.md
+---
+name: direccion-visual
+description: Decide la direccion visual del proyecto (paleta, tipografia, componentes, iconos, graficos, movimiento) con el humano y deja docs/<scope>/direccion-visual.md y una maqueta aprobada. Antes de la primera feature con pantallas, o para redisenar. Solo la sesion principal (leader).
+---
+
+# Dirección visual
+
+Lección del piloto: la paleta salió de páginas de marketing y de la paleta
+por defecto de Tailwind (índigo, Inter, todo en tarjetas iguales), quedó
+congelada como `R<n>` de la spec y las pantallas "se notaban hechas con IA".
+Nadie con criterio de diseño decidió nada, y nadie miró la app renderizada
+hasta que lo hizo el humano.
+
+Se hace una vez, en la sesión principal (tiene las skills de diseño y puede
+enseñar la maqueta), y se repite solo para rediseñar.
+
+## 1. Contexto
+
+- Lee `CLAUDE.md` y `docs/<scope>/conventions.md`: qué es, quién lo usa,
+  con qué frecuencia (herramienta diaria u ocasional), en qué dispositivo y
+  con qué stack de interfaz.
+- **Si ya hay interfaz**, captúrala (MCP de Playwright) e invoca
+  `redesign-existing-projects` para listar los patrones genéricos que tiene.
+
+## 2. Preguntas (5-8, cada una con recomendación)
+
+Tono (denso y tranquilo, editorial, expresivo…), referentes que le gustan y
+que no, claro/oscuro, densidad, **presupuesto de movimiento** (ninguno, solo
+respuesta a acciones, una transición por vista…), librería de componentes
+(invoca `pick-ui-library`), iconos, gráficos si hay datos, fuentes (con
+licencia y servidas en local si hay CSP).
+
+## 3. Propuesta
+
+Invoca `frontend-design:frontend-design` y `frontend-design-direction`;
+usa `ui-ux-pro-max` (`--design-system`, y `--domain color` o `typography`)
+para paletas y parejas de fuentes. Redacta:
+
+- 4-6 colores con nombre y hex, en claro y oscuro, con su contraste;
+- tipografías y sus papeles, escala;
+- concepto de layout con un boceto ASCII y la densidad;
+- principios: qué hace única a esta interfaz y qué se evita.
+
+**Revísala contra los valores por defecto** antes de enseñarla (lista de
+`frontend-design`: acento índigo o violeta, tarjetas iguales con la misma
+sombra, crema con serif y terracota, negro con verde ácido, etiquetas en
+mayúsculas…). Lo que salga igual que para cualquier otro proyecto, se
+cambia y se dice por qué. Una alternativa contrastada, como mucho.
+
+## 4. Maqueta
+
+Un HTML estático con la pantalla principal y datos verosímiles (incluido un
+caso de peor caso: nombre largo, lista vacía) en
+`docs/<scope>/direccion-visual/maqueta.html`. Captúrala en claro y oscuro y
+enséñasela al humano. Como mucho tres vueltas; luego se decide.
+
+## 5. Qué deja escrito
+
+`docs/<scope>/direccion-visual.md` (≤ 150 líneas), que leen
+`implementer_ui`, `reviewer` y `spec_author`:
+
+- propósito y tono; tokens (tabla claro/oscuro); tipografía; layout y
+  densidad;
+- componentes: librería y reglas (p. ej. nada de tarjetas dentro de
+  tarjetas);
+- iconos y gráficos;
+- **movimiento**: qué se anima, qué no, duraciones;
+- **prohibido**: los valores por defecto descartados en el paso 3;
+- las capturas aprobadas, en `docs/<scope>/direccion-visual/`.
+
+Además:
+- `docs/<scope>/conventions.md` tiene el comando del **modo de datos falsos**
+  y el juego de **peor caso** (`plantillas/stack/conventions-web.md`); si
+  aún no existen, va como `acceptance` de la primera feature con interfaz.
+- Si se eligió la API View Transitions con React, propón precargar
+  `vercel-react-view-transitions` en el `implementer_ui`.
+- Entrada en `docs/CHANGELOG.md` (es un cambio en `docs/`), con el
+  "Aprobado por" del humano.
 ~~~~~~~
 
 ### `.claude/skills/retrospectiva/SKILL.md`
@@ -1266,6 +1848,14 @@ regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
   y el fallo que previene no aparece en ningún veredicto. Quitarla lo decide
   el humano, con su entrada en el CHANGELOG.
 - **Coste por rol y por feature** (tokens y minutos).
+- **Skills**: la columna `skills` de `metrics.csv` dice cuáles se
+  invocaron de verdad. Una precargada que nunca cambia nada en los
+  veredictos es candidata a quitar; una que se invoca a menudo, a precargar.
+- **Coste fijo del contexto** (método de `context-budget` de ECC): cada
+  turno de cada agente relee las definiciones, las skills precargadas, el
+  listado de skills (`skillOverrides` de `.claude/settings.json` lo
+  recorta) y los esquemas de herramientas MCP no diferidas. Estímalo
+  (palabras × 1,3) y propón recortes con su ahorro.
 - **Instrucciones**: `/doctor prompt-audit` (skill de serie de Claude Code,
   v2.1.283+, según code.claude.com/docs/en/commands, consultado el
   2026-10-03; si no puedes lanzarla tú, pídesela al humano) sobre
@@ -1280,13 +1870,22 @@ regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
   features cerradas desde la última carpeta de `progress/audits/`, o una
   fase cerrada), propónsela al humano y lánzala (`/auditoria-seguridad`)
   solo con su sí: es cara.
+- **Decisiones revisables**: en `docs/adr/`, las que dicen "revisable"
+  con su disparador. Si el disparador ya se cumplió (la fase cerró, el
+  volumen llegó), propón al humano revisarla.
 - **Atajos**: busca la etiqueta `ATAJO:` (`docs/principios.md`) en el
   código. Para cada uno: mantener, pagarlo ya o convertirlo en feature.
 - **Sobreingeniería**, solo si el humano lo pide (recorre el repo entero):
-  lanza `explorer` con el encargo "código que sobra: abstracciones con una
-  sola implementación, código muerto, lo que ya hace la librería estándar o
-  una dependencia instalada". Escribe `progress/explore_sobreingenieria.md`;
-  aquí va solo su resumen.
+  `/ponytail-audit` si está instalada (devuelve una lista ordenada de qué
+  borrar o simplificar); si no, lanza `explorer` con el encargo "código que
+  sobra: abstracciones con una sola implementación, código muerto, lo que
+  ya hace la librería estándar o una dependencia instalada". El resultado va
+  a `progress/explore_sobreingenieria.md`; aquí, solo su resumen.
+- **Código frente a specs**, al cerrar una fase y solo con el sí del humano
+  (lanza un agente por requisito: es cara):
+  `/spec-to-code-compliance:spec-compliance` sobre las specs de la fase. Sus
+  divergencias confirmadas se tratan como hallazgos de auditoría (feature
+  nueva o línea de `acceptance`).
 
 ## 3. El producto (solo lo sabe el humano)
 
@@ -1520,7 +2119,8 @@ Dónde está cada regla: `docs/README.md`.
 
 ## Dónde vive cada pieza, y por qué
 
-<!-- Cada fila resuelve una restricción concreta. Borra las que no apliquen. -->
+<!-- Cada fila resuelve una restricción concreta. Borra las que no apliquen.
+Alternativas descartadas y cuándo revisar cada decisión: docs/adr/. -->
 | Pieza | Dónde | Por qué ahí |
 |---|---|---|
 | <RELLENAR: API> | <servicio> | <restricción que resuelve> |
@@ -1598,6 +2198,37 @@ Formato:
 - Cómo se medirá: <qué mirar en metrics.csv o en los veredictos, si aplica>
 ```
 
+## 2026-10-10 — Interfaz con dirección visual y capturas; skills precargadas
+- Ficheros: docs/specs.md, docs/verification.md, docs/README.md,
+  docs/architecture.md, docs/adr/README.md (nuevo)
+- Antes → ahora: decisiones de arquitectura repartidas en `CLAUDE.md` sin
+  alternativas ni disparador de revisión, y la primera spec podía empezar
+  con el stack a medio decidir → `/arranque` guiado por el humano (mapa de
+  todas las decisiones técnicas, investigación solo la que él apruebe),
+  ADR en `docs/adr/`, "Stack y librerías" en `docs/architecture.md` como
+  lista de dependencias aprobadas, y `state.py` devuelve `ARRANQUE` hasta
+  que el humano lo aprueba;
+  el aspecto se fijaba como `R<n>` de cada spec y nadie veía
+  la interfaz renderizada → dirección visual única en
+  `docs/<scope>/direccion-visual.md` (skill `/direccion-visual`), tramos
+  `(interfaz)` hechos por el `implementer_ui` con capturas que el `reviewer`
+  revisa; skills precargadas por rol (`skills:`) en vez de "opcionales"
+- Por qué: piloto (Gestor, 17 features): 0 invocaciones de skills de diseño
+  en 110 ejecuciones del implementer, interfaces "hechas con IA" (paleta
+  índigo y tarjetas por defecto) y fallos visuales encontrados por el humano
+  (F03 T8, F09, InvestmentsPanel)
+- Aprobado por: <humano>
+- Propagado a: .claude/agents/ (implementer_ui nuevo, implementer,
+  reviewer, security_reviewer, spec_author, explorer, leader),
+  .claude/skills/ (arranque y direccion-visual nuevas, auditoria-seguridad,
+  retrospectiva), .claude/settings.json (skillOverrides, guard_config),
+  scripts/ (state.py, skills.py, agent_tokens.py, guard_config.py,
+  guard_secrets.py),
+  specs/_plantilla/tasks.md, plantillas/stack/conventions-web.md,
+  harness.json, README.md, HARNESS.md
+- Cómo se medirá: columna `skills` de metrics.csv; rechazos del reviewer
+  por capturas frente a fallos visuales que encuentre el humano después
+
 ## 2026-10-03 — Hotfix sin excepción "urgente" y etiqueta ATAJO:
 - Ficheros: docs/specs.md, docs/principios.md
 - Antes → ahora: hotfix "delante si es urgente" → siempre justo tras la
@@ -1632,6 +2263,10 @@ No contiene reglas: dice dónde está cada una. Cada rol lee solo lo suyo.
 | ¿Proceso SDD y formato de las specs? | `docs/specs.md` |
 | ¿Cómo se demuestra que algo funciona? ¿Pruebas con servicios reales? | `docs/verification.md` |
 | ¿Convenciones de código? | `docs/<stack>/conventions.md` del scope activo, **solo ese** |
+| ¿Por qué la arquitectura es así? ¿Cuándo se revisa? | `docs/adr/` |
+| ¿Aspecto de la interfaz? | `docs/<stack>/direccion-visual.md` (skill `/direccion-visual`) |
+| ¿Qué skills usa cada rol? | `skills:` de cada `.claude/agents/<rol>.md`; las nuevas o ausentes, `scripts/skills.py` |
+| ¿Primer uso del harness? | skill `/arranque` |
 | ¿Cuándo está terminada una feature? | `CHECKPOINTS.md` |
 | ¿Qué cambió en las reglas y por qué? | `docs/CHANGELOG.md` |
 | ¿Qué hace cada rol? | `.claude/agents/<rol>.md` |
@@ -1639,6 +2274,22 @@ No contiene reglas: dice dónde está cada una. Cada rol lee solo lo suyo.
 | ¿Coste de cada agente y causa de cada rechazo? | `progress/metrics.csv` |
 | ¿Retrospectiva? | skill `/retrospectiva` |
 | ¿Por qué el harness es así? ¿Cómo se reconstruye? | `HARNESS.md` (ningún agente lo carga al trabajar) |
+~~~~~~~
+
+### `docs/adr/README.md`
+
+~~~~~~~ fichero=docs/adr/README.md
+# Decisiones de arquitectura (ADR)
+
+Una por decisión de arquitectura: contexto, decisión, alternativas
+descartadas y por qué, consecuencias, y si es **fija** o **revisable** (con
+su disparador). Las primeras las deja `/arranque`; las siguientes, la skill
+`architecture-decision-records` cuando el humano cambia o toma una decisión
+de ese calibre. Una decisión sustituida no se borra: pasa a "sustituida por
+ADR-NNNN". Cada ADR nuevo o cambiado lleva su entrada en `docs/CHANGELOG.md`.
+
+| ADR | Título | Estado | Revisable cuando | Fecha |
+|-----|--------|--------|------------------|-------|
 ~~~~~~~
 
 ### `docs/architecture.md`
@@ -1651,6 +2302,16 @@ No contiene reglas: dice dónde está cada una. Cada rol lee solo lo suyo.
 <RELLENAR. Por defecto, **monolito modular**: un proceso por despliegue,
 dividido en módulos que se llaman por funciones. Un servicio nuevo carga con
 la prueba: qué problema paga la latencia y el despliegue extra.>
+
+## Stack y librerías <!-- ajuste-2026-10-10 -->
+
+La deja `/arranque`. Es la lista de dependencias aprobadas: lo que no esté
+aquí pide permiso al humano. Las decisiones grandes, con su ADR en
+`docs/adr/`.
+
+| Pieza | Elección y versión | Para qué | Alternativa descartada | ADR |
+|---|---|---|---|---|
+| <RELLENAR> | | | | |
 
 ## Módulos y fronteras que no se cruzan
 
@@ -1856,9 +2517,16 @@ implementer *anexa* y nunca sobrescribe.
 
 **`tasks.md` — los pasos.** `T1`, `T2`… con sus `R<n>`; no repite el diseño.
 Con varios stacks o capas, agrupadas en **tramos** en orden de dependencia:
-cada tramo es una IT aprobada antes del siguiente. Si hay servicios reales,
+cada tramo es una IT aprobada antes del siguiente. El tramo que crea o
+cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
+`implementer_ui`, con capturas. <!-- ajuste-2026-10-10 --> Si hay servicios reales,
 la última es la **prueba humana**, con `ÚNICA TASK CON SERVICIOS REALES` en
 su cabecera. Mapa inverso `R<n> → T<n>` al final.
+
+**El aspecto no es un `R<n>`**: colores, tipografía, componentes y
+movimiento salen de `docs/<scope>/direccion-visual.md` (skill
+`/direccion-visual`); la spec la cita y solo fija lo propio de sus
+pantallas. <!-- ajuste-2026-10-10 -->
 
 **Tamaño**: ~400 líneas entre los tres (≈ 6-8 k tokens). Cada cosa se dice
 una vez, se cita `archivo:línea` en vez de copiar código y no hay
@@ -1959,6 +2627,20 @@ que dice proteger.
 - **Revertir solo la línea de producción**: si hace falta revertir también
   el test o el arnés, el test no protegía nada.
 
+## Interfaz: capturas <!-- ajuste-2026-10-10 -->
+
+Los tests de interfaz (jsdom y similares) no ven el resultado: un texto
+cortado, una columna desalineada o un diálogo vacío pasan en verde. En cada
+tramo `(interfaz)`:
+
+- el `implementer_ui` arranca el **modo de datos falsos** (normal y peor
+  caso), captura cada pantalla tocada (claro/oscuro, 1280 y 390 px, ~8 como
+  mucho) en `progress/<F>/IT<n>/capturas/` y las lista en `impl.md`
+  (`## Capturas`);
+- el `reviewer` las abre y bloquea **solo por fallos que se ven** (cortado,
+  solapado, desalineado, contraste, peor caso roto, contradicción con
+  `docs/<scope>/direccion-visual.md`). El gusto va a observaciones.
+
 ## Dobles de test
 
 - **El doble prueba al llamador, no al adaptador.** Cada método nuevo de un
@@ -2025,8 +2707,22 @@ La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
 ~~~~~~~ fichero=feature_list.json
 [
   {
+    "id": "F00",
+    "title": "Andamiaje y supuestos de riesgo (modo ligero)",
+    "status": "pending",
+    "sdd": false,
+    "scope": ["<stack-a>", "<stack-b>"],
+    "acceptance": [
+      "Cada scope creado con el generador oficial de su framework y las versiones de 'Stack y librerias' (docs/architecture.md), sin dependencias fuera de esa lista",
+      "<scope>/init.sh ejecuta tests, lint, formato, tipos, build, secretos y auditoria de dependencias, y se ha demostrado que cada paso sabe fallar (evidence.md)",
+      "Un 'hola mundo' cruza la arquitectura de punta a punta (p. ej. interfaz -> API -> datos) y lo cubre un test",
+      "<Cada supuesto de riesgo de progress/arranque.md, comprobado con una prueba minima; si alguno falla, se para y se vuelve a su fila del mapa>",
+      "El CI pasa con bash init.sh --all"
+    ]
+  },
+  {
     "id": "F01",
-    "title": "<Primera feature: la mas pequena que demuestre la arquitectura de punta a punta>",
+    "title": "<Primera feature de producto: la mas pequena que aporte valor sobre el andamiaje>",
     "status": "pending",
     "sdd": true,
     "scope": ["<stack-a>"],
@@ -2044,7 +2740,22 @@ La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
 {
   "proyecto": "<NOMBRE_DEL_PROYECTO>",
   "scopes": ["<stack-a>", "<stack-b>"],
-  "secretos": ["<NOMBRE_DE_VARIABLE_SECRETA_1>", "<NOMBRE_DE_VARIABLE_SECRETA_2>"]
+  "secretos": ["<NOMBRE_DE_VARIABLE_SECRETA_1>", "<NOMBRE_DE_VARIABLE_SECRETA_2>"],
+  "skills_revisadas": [
+    "frontend-design:frontend-design",
+    "ponytail:ponytail",
+    "ponytail:ponytail-audit",
+    "ponytail:ponytail-review",
+    "ponytail:ponytail-debt",
+    "ponytail:ponytail-gain",
+    "ponytail:ponytail-help",
+    "spec-to-code-compliance:spec-to-code-compliance",
+    "skill-creator:skill-creator",
+    "feature-dev:feature-dev",
+    "code-review:code-review",
+    "supabase:supabase",
+    "supabase:supabase-postgres-best-practices"
+  ]
 }
 ~~~~~~~
 
@@ -2103,6 +2814,53 @@ done
 echo "TODO OK"
 ~~~~~~~
 
+### `plantillas/arranque.md`
+
+~~~~~~~ fichero=plantillas/arranque.md
+# Arranque
+
+<!-- Copiar a progress/arranque.md al empezar /arranque. state.py no
+despacha ninguna feature hasta que la linea de estado diga APROBADO: no la
+traduzcas ni la cambies de formato. -->
+
+Estado: en curso
+
+## Producto
+
+<5-10 líneas: qué es, para quién, primera versión y lo que no entra,
+dispositivos ahora y más adelante, datos y su sensibilidad, peso de la
+interfaz, presupuesto, preferencias y vetos del humano.>
+
+## Mapa de decisiones
+
+Modo: **obvia** (se acepta en bloque) · **elegir** (2-3 opciones, decide el
+humano) · **investigar** (solo con su sí y su coste dicho) · **no aplica**.
+Borra las filas que no apliquen; añade las que falten.
+
+| Bloque | Decisión | Propuesta | Modo | Decidido | Fija / revisable (cuándo) | ADR |
+|---|---|---|---|---|---|---|
+| Plataforma | tipo de app, empaquetado, sin conexión | | | | | |
+| Arquitectura | forma, capas y fronteras, dónde vive cada pieza | | | | | |
+| Backend | lenguaje y versión, framework, API y contratos, validación, errores, segundo plano | | | | | |
+| Datos | almacenamiento, acceso u ORM, migraciones y formatos, copias | | | | | |
+| Seguridad | autenticación y autorización, secretos, zonas sensibles | | | | | |
+| Frontend | framework, enrutado, estado y caché, formularios, estilos, componentes, iconos, animación, gráficos, i18n, accesibilidad | | | | | |
+| Calidad | tests por capa, lint, formato, tipos, auditoría de dependencias | | | | | |
+| Operación | build, CI, despliegue y ramas, entornos, logs, coste | | | | | |
+
+## Supuestos de riesgo
+
+Los 2-3 que, si fallan, obligan a cambiar una decisión de base. Los
+comprueba F00 antes de escribir producto.
+
+1. <supuesto> — cómo se comprueba — fila del mapa afectada
+
+## Bloques cerrados
+
+<Una línea por bloque al cerrarlo: fecha y qué se decidió. Tras cada uno se
+puede hacer /clear: este fichero basta para seguir.>
+~~~~~~~
+
 ### `plantillas/stack/conventions-web.md`
 
 ~~~~~~~ fichero=plantillas/stack/conventions-web.md
@@ -2112,12 +2870,18 @@ echo "TODO OK"
 docs/<stack>/conventions.md lo que aplique; cada punto salió de una
 iteración rechazada en un proyecto real. -->
 
-- **Cada spec que crea pantallas define su aspecto.** Una pantalla sin
-  estilos no está terminada (un reset CSS puede dejar los campos de un
-  formulario invisibles). No dejar el diseño para una feature final: una
-  feature aprobada funcionalmente puede reabrirse si el humano rechaza el
-  aspecto. Base visual común (paleta, tipografía, componentes) en una carpeta
-  que cada spec reutiliza.
+- **La base visual vive en `docs/<stack>/direccion-visual.md`** (skill
+  `/direccion-visual`, antes de la primera pantalla); cada spec la cita y
+  define solo lo propio de sus pantallas. Una pantalla sin estilos no está
+  terminada (un reset CSS puede dejar los campos de un formulario
+  invisibles). No dejar el diseño para una feature final: una feature
+  aprobada funcionalmente puede reabrirse si el humano rechaza el aspecto.
+- **Modo de datos falsos**: un comando (`<RELLENAR: p. ej. pnpm dev:demo>`)
+  arranca la interfaz sin backend ni datos reales, con dos juegos: normal y
+  **peor caso** (nombres largos e irrompibles, lista vacía, un solo
+  elemento, cifras enormes y negativas, texto en otro idioma). Con él hace
+  sus capturas el `implementer_ui`. Lección: los fallos visuales los
+  encontraba el humano con sus datos reales.
 - **Nunca un spinner indefinido**: todo estado de espera dice **qué** se
   espera y **por qué** (servicio dormido, proceso desconectado, motivo real
   del fallo). Los estados raros legítimos, sin explicar, parecen fallos.
@@ -2279,7 +3043,7 @@ Observaciones abiertas, que no bloquean: <…>.
 ### `progress/metrics.csv`
 
 ~~~~~~~ fichero=progress/metrics.csv
-fecha,feature,it,rol,tokens,minutos,veredicto,causa
+fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills
 ~~~~~~~
 
 ### `progress/para_la_plantilla.md`
@@ -2298,6 +3062,123 @@ la plantilla cuando toque.
 
 ~~~~~~~ fichero=scripts/__init__.py
 
+~~~~~~~
+
+### `scripts/agent_tokens.py`
+
+~~~~~~~ fichero=scripts/agent_tokens.py
+#!/usr/bin/env python3
+"""Consumo real de un subagente, por ejecucion, leido de su transcript.
+
+El `subagent_tokens` que devuelve la herramienta Agent es el tamano del
+contexto al terminar, no lo gastado: en una reanudacion arrastra todo lo
+anterior y no cuenta las relecturas de cache. Leccion: sumarlo daba un total
+que no cuadraba con nada (piloto, 2026-10-03).
+
+    bash scripts/py.sh scripts/agent_tokens.py <agent_id>
+    bash scripts/py.sh scripts/agent_tokens.py <agent_id> --run 3
+    bash scripts/py.sh scripts/agent_tokens.py --file <transcript.jsonl>
+
+Una ejecucion termina en su llamada a SubagentHandback; la siguiente
+empieza en la entrada posterior (el encargo o el SendMessage que la
+reanuda). Por cada ejecucion imprime `run,inicio,minutos,tokens,cache_read,skills`:
+- tokens = input + cache_creation + output (lo nuevo de esa ejecucion);
+- cache_read = relecturas de cache (la mayor parte del gasto real);
+- skills = las invocadas con la herramienta Skill, separadas por `|`. Las
+  precargadas (`skills:` del agente) no aparecen: no se invocan. Leccion:
+  la linea "Skills usadas" que escribia cada agente mezclaba lo invocado con
+  "criterio aplicado a mano" y no servia para medir.
+Cada mensaje de la API se cuenta una vez (el transcript lo repite por bloque).
+"""
+import json
+import sys
+from datetime import datetime
+from pathlib import Path
+
+
+def _hora(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
+def _usos_de_herramienta(entrada: dict, nombre: str) -> list[dict]:
+    contenido = (entrada.get("message") or {}).get("content") or []
+    if not isinstance(contenido, list):
+        return []
+    return [b for b in contenido if b.get("type") == "tool_use" and b.get("name") == nombre]
+
+
+def _es_mensaje(entrada: dict) -> bool:
+    """Texto que llega al agente (encargo, reanudacion), no un resultado de herramienta."""
+    if entrada.get("type") == "assistant":
+        return True  # sin mensaje previo visible, la ejecucion empieza al primer paso
+    contenido = (entrada.get("message") or {}).get("content")
+    if entrada.get("type") != "user" or contenido is None:
+        return False
+    return isinstance(contenido, str) or any(b.get("type") != "tool_result" for b in contenido)
+
+
+def ejecuciones(lineas) -> list[dict]:
+    """Agrupa el transcript en ejecuciones y suma su uso."""
+    runs, usos, skills, inicio, fin = [], {}, {}, None, None
+
+    def cerrar():
+        if usos:
+            u = usos.values()
+            runs.append({
+                "inicio": inicio, "fin": fin,
+                "tokens": sum(x.get("input_tokens", 0) + x.get("cache_creation_input_tokens", 0)
+                              + x.get("output_tokens", 0) for x in u),
+                "cache_read": sum(x.get("cache_read_input_tokens", 0) for x in u),
+                "skills": list(skills.values()),
+            })
+
+    for linea in lineas:
+        try:
+            e = json.loads(linea)
+        except ValueError:
+            continue
+        ts = e.get("timestamp")
+        m = e.get("message") or {}
+        # Empieza en el encargo o el SendMessage, no en el resultado del
+        # handback anterior: si no, los minutos cuentan la espera entre medias.
+        if ts and not inicio and _es_mensaje(e):
+            inicio = ts
+        if ts and inicio:
+            fin = ts
+        if m.get("usage"):
+            usos[m.get("id") or len(usos)] = m["usage"]  # ultima entrada de cada mensaje
+        for b in _usos_de_herramienta(e, "Skill"):
+            skills[b.get("id") or len(skills)] = str((b.get("input") or {}).get("skill", "?"))
+        if _usos_de_herramienta(e, "SubagentHandback"):
+            cerrar()
+            usos, skills, inicio, fin = {}, {}, None, None
+    cerrar()  # ejecucion sin handback (cortada o en curso)
+    return runs
+
+
+def _transcript(agent_id: str) -> Path:
+    raiz = Path.home() / ".claude" / "projects"
+    hallados = sorted(raiz.glob(f"*/*/subagents/agent-{agent_id}*.jsonl"),
+                      key=lambda p: p.stat().st_mtime)
+    if not hallados:
+        sys.exit(f"Sin transcript para agent-{agent_id} en {raiz}")
+    return hallados[-1]
+
+
+def main(argv: list[str]) -> int:
+    run = int(argv[argv.index("--run") + 1]) if "--run" in argv else None
+    ruta = Path(argv[argv.index("--file") + 1]) if "--file" in argv else _transcript(argv[0])
+    print("run,inicio,minutos,tokens,cache_read,skills")
+    for i, r in enumerate(ejecuciones(ruta.read_text(encoding="utf-8").splitlines()), 1):
+        if run in (None, i):
+            minutos = round((_hora(r["fin"]) - _hora(r["inicio"])).total_seconds() / 60)
+            print(f"{i},{r['inicio'][:19]},{minutos},{r['tokens']},{r['cache_read']},"
+                  f"{'|'.join(r['skills'])}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
 ~~~~~~~
 
 ### `scripts/check_docs_changelog.sh`
@@ -2323,11 +3204,98 @@ if [ -n "$docs" ] && ! printf '%s\n' "$cambios" | grep -qx 'docs/CHANGELOG\.md';
 fi
 ~~~~~~~
 
+### `scripts/guard_config.py`
+
+~~~~~~~ fichero=scripts/guard_config.py
+#!/usr/bin/env python3
+"""PreToolUse (Edit|Write|MultiEdit): pide confirmacion al humano antes de
+cambiar la configuracion de lint, formato, tipos o del propio harness.
+
+Un agente atascado en un check tiende a relajar la regla (un `ignore`, un
+`strict: false`) en vez de arreglar el codigo, y el diff lo esconde entre
+muchos cambios. Idea del hook config-protection de ECC; aqui no bloquea:
+devuelve "ask", porque a veces el cambio es legitimo y lo aprueba el humano.
+
+Crear un fichero nuevo no pregunta (el montaje los crea). Cambiar el texto
+por la shell (sed, cat >) no pasa por aqui.
+ATAJO: solo Edit/Write · si un agente lo esquiva por la shell, anadir esos
+patrones a guard_secrets.py.
+
+Si la entrada no se entiende, deja pasar: un fallo de este hook no debe
+impedir editar codigo (el de secretos, en cambio, falla cerrado).
+"""
+import json
+import re
+import sys
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
+_NOMBRES = re.compile(
+    r"(\.?eslintrc(\.\w+)?|eslint\.config\.\w+|\.?prettierrc(\.\w+)?|prettier\.config\.\w+"
+    r"|tsconfig(\.[\w-]+)?\.json|biome\.jsonc?|\.?ruff\.toml|\.?mypy\.ini|\.flake8|\.pylintrc"
+    r"|pytest\.ini|setup\.cfg|\.golangci\.\w+|\.stylelintrc(\.\w+)?|\.gitleaks\.toml"
+    r"|vitest\.config\.\w+|jest\.config\.\w+)", re.I)
+# En pyproject.toml solo preocupa la configuracion de herramientas, no las
+# dependencias ni la version.
+_PYPROJECT = re.compile(r"\[tool\.|^\s*(ignore|extend-ignore|select|per-file-ignores|strict"
+                        r"|disable_error_code|ignore_missing_imports|addopts|filterwarnings)\s*=",
+                        re.M)
+
+
+def _del_harness(ruta: Path) -> bool:
+    try:
+        rel = ruta.resolve().relative_to(RAIZ).as_posix()
+    except ValueError:
+        return False
+    return (rel.startswith((".githooks/", ".github/workflows/"))
+            or rel in {".claude/settings.json", "init.sh"})
+
+
+def motivo(entrada: dict) -> str | None:
+    datos = entrada.get("tool_input") or {}
+    ruta = Path(datos.get("file_path") or "")
+    if not ruta.name or not ruta.is_file():
+        return None
+    if _del_harness(ruta):
+        return "es configuracion del harness (la decide el humano)"
+    if _NOMBRES.fullmatch(ruta.name):
+        return "es configuracion de lint, formato, tipos o tests"
+    if ruta.name == "pyproject.toml":
+        texto = " ".join(str(datos.get(k, "")) for k in ("old_string", "new_string", "content"))
+        texto += " ".join(str(e.get(k, "")) for e in datos.get("edits") or []
+                          for k in ("old_string", "new_string"))
+        if _PYPROJECT.search(texto):
+            return "toca la configuracion de herramientas de pyproject.toml"
+    return None
+
+
+def main() -> int:
+    try:
+        entrada = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace").lstrip("﻿"))
+    except ValueError:
+        return 0
+    razon = motivo(entrada) if isinstance(entrada, dict) else None
+    if razon:
+        print(json.dumps({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "ask",
+            "permissionDecisionReason": (
+                f"scripts/guard_config.py: el fichero {razon}. Si un check falla, "
+                "arregla el codigo; relajar la regla lo aprueba el humano."),
+        }}, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+~~~~~~~
+
 ### `scripts/guard_secrets.py`
 
 ~~~~~~~ fichero=scripts/guard_secrets.py
 #!/usr/bin/env python3
-"""PreToolUse (Bash|PowerShell): bloquea comandos que pueden sacar un secreto.
+"""PreToolUse (Bash|PowerShell): bloquea comandos que pueden sacar un secreto
+o saltarse el pre-commit.
 
 Los permisos `deny` de settings.json cubren Read/Grep/Edit, pero para la
 shell solo comparan prefijos de texto: `type backend\\.env`, `Get-Content`
@@ -2335,6 +3303,10 @@ o `$env:MI_TOKEN` los esquivan. Este hook mira el comando entero.
 
 Los nombres de los secretos salen de `harness.json` ("secretos"), para que
 no haya una segunda lista que se desincronice.
+
+El pre-commit es la ultima puerta antes de que un secreto exista en un
+commit: `--no-verify`, `commit -n` o un `core.hooksPath` distinto de
+`.githooks` lo apagan sin dejar rastro (idea del hook block-no-verify de ECC).
 
 Exit 2 = bloqueado; el motivo va por stderr y lo lee el agente.
 """
@@ -2415,6 +3387,45 @@ def motivo(comando: str) -> str | None:
     return None
 
 
+def salta_el_pre_commit(comando: str) -> bool:
+    """Por tokens, no por texto: un mensaje de commit que mencione --no-verify pasa."""
+    try:
+        lexer = shlex.shlex(comando, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+    except ValueError:
+        # Comillas sin cerrar: se mira el texto entero, aunque sobre-bloquee.
+        return bool(re.search(r"--no-verify|core\.hookspath", comando, re.I))
+    tramo: list[str] = []
+    for t in tokens + [";"]:
+        if t and set(t) <= set(";&|()"):
+            if _tramo_salta(tramo):
+                return True
+            tramo = []
+        else:
+            tramo.append(t)
+    return False
+
+
+def _tramo_salta(tramo: list[str]) -> bool:
+    if "git" not in (Path(t).stem.lower() for t in tramo[:3]):
+        return False
+    bajos = [t.lower() for t in tramo]
+    if "--no-verify" in bajos or ("commit" in bajos and "-n" in bajos):
+        return True
+    if "core.hookspath" in bajos and ("--unset" in bajos or "--unset-all" in bajos):
+        return True
+    for i, t in enumerate(bajos):
+        valor = None
+        if t.startswith("core.hookspath="):
+            valor = t.split("=", 1)[1]
+        elif t == "core.hookspath" and i + 1 < len(bajos):
+            valor = bajos[i + 1]
+        if valor is not None and valor.strip("/\\") != ".githooks":
+            return True
+    return False
+
+
 def main() -> int:
     try:
         # lstrip: algunas shells de Windows anteponen un BOM al reenviar stdin.
@@ -2425,6 +3436,12 @@ def main() -> int:
         # Falla cerrado: una entrada que no se entiende no se da por segura.
         print("Bloqueado por scripts/guard_secrets.py: entrada del hook ilegible.",
               file=sys.stderr)
+        return 2
+    if salta_el_pre_commit(comando):
+        print("Bloqueado por scripts/guard_secrets.py: el comando se salta el "
+              "pre-commit (--no-verify, commit -n o core.hooksPath distinto de "
+              ".githooks). Si un hook falla, arregla la causa; si sobra, lo "
+              "decide el humano.", file=sys.stderr)
         return 2
     razon = motivo(comando)
     if razon is None:
@@ -2588,6 +3605,14 @@ echo
 echo "=== progress/current.md (primeras 80 lineas) ==="
 if [ -f progress/current.md ]; then head -n 80 progress/current.md; else echo "(no existe)"; fi
 
+# Solo si hay algo: una skill sin clasificar o una precargada que falta.
+SKILLS="$($PY scripts/skills.py 2>/dev/null || true)"
+if [ -n "$SKILLS" ]; then
+  echo
+  echo "=== skills.py ==="
+  echo "$SKILLS"
+fi
+
 FEATURE="$(printf '%s' "$ESTADO" | $PY -c \
   'import json,sys; print(json.load(sys.stdin).get("feature",""))' 2>/dev/null || true)"
 [ -z "$FEATURE" ] && exit 0
@@ -2603,6 +3628,127 @@ done
 exit 0
 ~~~~~~~
 
+### `scripts/skills.py`
+
+~~~~~~~ fichero=scripts/skills.py
+#!/usr/bin/env python3
+"""Skills instaladas que el harness aun no ha clasificado, y las que le faltan.
+
+Una skill nueva no se usa sola: nadie la precarga y ningun agente sabe que
+existe. Una precargada que falta tampoco avisa: Claude Code se la salta sin
+error. Leccion: en el piloto ningun subagente invoco una skill bajo demanda
+en 110 ejecuciones; solo la precarga (`skills:` del agente) es fiable.
+
+    bash scripts/py.sh scripts/skills.py          # texto, vacio si no hay nada
+    bash scripts/py.sh scripts/skills.py --json
+
+Clasificada = la precarga algun agente, tiene estado en `skillOverrides` de
+`.claude/settings.json` (o `settings.local.json`), o esta en
+`skills_revisadas` de `harness.json`: las de plugin, a las que
+`skillOverrides` no llega, tanto si las usa una skill del harness como si
+se descartaron. Las de `.claude/skills/` del proyecto son del harness y no
+cuentan.
+"""
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
+
+
+def _config() -> Path:
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+
+
+def _json(ruta: Path) -> dict:
+    try:
+        return json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _nombre(skill_md: Path) -> str:
+    try:
+        cabecera = skill_md.read_text(encoding="utf-8").split("---")[1]
+    except (OSError, IndexError, UnicodeDecodeError):
+        return skill_md.parent.name
+    m = re.search(r"^name:\s*(\S+)", cabecera, re.M)
+    return m.group(1).strip("'\"") if m else skill_md.parent.name
+
+
+def _de_plugin(raiz: Path, plugin: str) -> set[str]:
+    return {f"{plugin}:{_nombre(p)}" for p in raiz.glob("skills/*/SKILL.md")}
+
+
+def instaladas() -> set[str]:
+    """Skills de usuario, plugins del directorio de skills y plugins activos."""
+    config, nombres = _config(), set()
+    for d in sorted((config / "skills").glob("*")):
+        manifiesto = d / ".claude-plugin" / "plugin.json"
+        if manifiesto.is_file():
+            nombres |= _de_plugin(d, _json(manifiesto).get("name") or d.name)
+        elif (d / "SKILL.md").is_file():
+            nombres.add(_nombre(d / "SKILL.md"))
+    activos = dict(_json(config / "settings.json").get("enabledPlugins") or {})
+    for f in ("settings.json", "settings.local.json"):
+        activos.update(_json(RAIZ / ".claude" / f).get("enabledPlugins") or {})
+    instalados = _json(config / "plugins" / "installed_plugins.json").get("plugins") or {}
+    for clave, entradas in instalados.items():
+        if activos.get(clave) and entradas:
+            ruta = Path(entradas[0].get("installPath", ""))
+            nombres |= _de_plugin(ruta, clave.split("@")[0])
+    return nombres
+
+
+def precargadas() -> dict[str, set[str]]:
+    """skill -> agentes que la precargan (lista `skills:` del frontmatter)."""
+    usos: dict[str, set[str]] = {}
+    for agente in (RAIZ / ".claude" / "agents").glob("*.md"):
+        partes = agente.read_text(encoding="utf-8").split("---")
+        bloque = re.search(r"^skills:\s*\n((?:[ \t]+-.*\n?)+)", partes[1] if len(partes) > 2 else "", re.M)
+        for linea in (bloque.group(1).splitlines() if bloque else []):
+            usos.setdefault(linea.strip().lstrip("-").strip().strip("'\""), set()).add(agente.stem)
+    return usos
+
+
+def clasificadas() -> set[str]:
+    nombres = set(precargadas())
+    for f in ("settings.json", "settings.local.json"):
+        nombres |= set(_json(RAIZ / ".claude" / f).get("skillOverrides") or {})
+    nombres |= set(_json(RAIZ / "harness.json").get("skills_revisadas") or [])
+    nombres |= {_nombre(p) for p in (RAIZ / ".claude" / "skills").glob("*/SKILL.md")}
+    return nombres
+
+
+def informe() -> dict[str, list[str]]:
+    hay = instaladas()
+    return {
+        "nuevas": sorted(hay - clasificadas()),
+        "ausentes": sorted(f"{s} ({', '.join(sorted(a))})"
+                           for s, a in precargadas().items() if s not in hay),
+    }
+
+
+def main(argv: list[str]) -> int:
+    datos = informe()
+    if "--json" in argv:
+        print(json.dumps(datos, ensure_ascii=False))
+        return 0
+    if datos["nuevas"]:
+        print("Skills nuevas sin clasificar (propon al humano un rol o descartarlas): "
+              + ", ".join(datos["nuevas"]))
+    if datos["ausentes"]:
+        print("Skills precargadas que no estan instaladas (Claude Code las ignora): "
+              + ", ".join(datos["ausentes"]))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
+~~~~~~~
+
 ### `scripts/state.py`
 
 ~~~~~~~ fichero=scripts/state.py
@@ -2614,8 +3760,9 @@ disco (feature_list.json, specs/<F>/tasks.md y progress/<F>/IT<n>/): no hay
 ningun estado aparte que mantener sincronizado.
 
 Los marcadores que lee son fijos (HARNESS.md, "Marcadores"): la linea
-`Veredicto: APPROVED|CHANGES_REQUESTED`, el encabezado `## Sabotajes` y
-`SERVICIOS REALES` en la cabecera de la task humana.
+`Veredicto: APPROVED|CHANGES_REQUESTED`, el encabezado `## Sabotajes`,
+`SERVICIOS REALES` en la cabecera de la task humana y `Estado: APROBADO` en
+`progress/arranque.md`.
 """
 import json
 import re
@@ -2630,6 +3777,7 @@ _SABOTAJES = re.compile(r"^#{2,3}\s*Sabotajes\b", re.M)
 # Con o sin negrita: una task sin `**` no puede quedar fuera del recuento.
 _TASK_ABIERTA = re.compile(r"^\s*[-*]\s+\[ \]\s*\**\s*T\d+.*$", re.M)
 _TASK_HUMANA = ("SERVICIOS REALES", "PRUEBA REAL")
+_ARRANQUE_APROBADO = re.compile(r"^\W*Estado\W*APROBADO\b", re.M | re.I)
 
 
 def _leer(ruta: Path) -> str:
@@ -2690,6 +3838,13 @@ def next_action() -> dict:
 
 
 def _despacho() -> dict:
+    # Del arranque salen los documentos que guian todo lo demas: sin el
+    # aprobado no se escribe ninguna spec. Leccion: el stack decidido a
+    # medias obligo a cambiar de framework a mitad de la primera feature.
+    arranque = ROOT / "progress" / "arranque.md"
+    if not (arranque.is_file() and _ARRANQUE_APROBADO.search(_leer(arranque))):
+        return {"action": "ARRANQUE"}
+
     features = json.loads(_leer(ROOT / "feature_list.json"))
     activa = next((f for f in features if f["status"] != "done"), None)
     if activa is None:
@@ -2819,8 +3974,11 @@ capas, un tramo por bloque, en orden de dependencia; cada tramo es una IT.
 - [ ] **T1 — <título>** (TDD). <Qué se prueba primero y qué se implementa.> → R1, R2
 - [ ] **T2 — Test del adaptador real** con cliente grabador: filtros exactos, valores escritos, ramas de lectura. → R3
 
-## Tramo B — <siguiente>
+## Tramo B — <siguiente> (interfaz)
 - [ ] **T3 — <título>**. <…> → R4
+
+<!-- "(interfaz)" en la cabecera de un tramo que crea o cambia pantallas: lo
+hace el implementer_ui (capturas incluidas). Quítalo si el tramo no las toca. -->
 
 ## Cierre
 - [ ] **T4 — ÚNICA TASK CON SERVICIOS REALES · la ejecuta el humano.** Aviso: conecta con <servicios>. Pasos en orden ejecutable, resultado esperado de cada uno, ningún secreto pegado. → humo de R1, R3
@@ -2835,6 +3993,46 @@ un marcador que lee scripts/state.py: no la traduzcas. -->
 | R1, R2 | T1, T4 |
 | R3 | T2, T4 |
 | R4 | T3 |
+~~~~~~~
+
+### `tests/test_agent_tokens.py`
+
+~~~~~~~ fichero=tests/test_agent_tokens.py
+import json
+import sys
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "scripts"))
+import agent_tokens  # noqa: E402
+
+
+def _l(**e):
+    return json.dumps(e)
+
+
+def _uso(msg_id, ts, entrada, cache, bloques=()):
+    return _l(type="assistant", timestamp=ts, message={
+        "id": msg_id, "content": list(bloques),
+        "usage": {"input_tokens": entrada, "output_tokens": 1, "cache_read_input_tokens": cache}})
+
+
+def test_separa_ejecuciones_y_cuenta_cada_mensaje_una_vez():
+    lineas = [
+        _l(type="user", timestamp="2026-10-10T10:00:00Z", message={"content": "encargo"}),
+        _uso("a", "2026-10-10T10:01:00Z", 10, 100),
+        # El transcript repite el mensaje por bloque: se cuenta una vez.
+        _uso("a", "2026-10-10T10:01:00Z", 10, 100,
+             [{"type": "tool_use", "id": "t1", "name": "Skill", "input": {"skill": "migration"}}]),
+        _uso("b", "2026-10-10T10:05:00Z", 5, 50,
+             [{"type": "tool_use", "id": "t2", "name": "SubagentHandback", "input": {}}]),
+        _l(type="user", timestamp="2026-10-10T11:00:00Z", message={"content": "reanuda"}),
+        _uso("c", "2026-10-10T11:02:00Z", 7, 70),
+    ]
+    r1, r2 = agent_tokens.ejecuciones(lineas)
+    assert (r1["tokens"], r1["cache_read"], r1["skills"]) == (17, 150, ["migration"])
+    assert (r2["tokens"], r2["cache_read"], r2["skills"]) == (8, 70, [])
+    assert r2["inicio"] == "2026-10-10T11:00:00Z"
 ~~~~~~~
 
 ### `tests/test_docs_changelog.py`
@@ -2953,6 +4151,74 @@ def test_como_mucho_una_feature_en_curso():
     assert len(en_curso) <= 1, en_curso
 ~~~~~~~
 
+### `tests/test_guard_config.py`
+
+~~~~~~~ fichero=tests/test_guard_config.py
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "scripts"))
+import guard_config  # noqa: E402
+
+
+@pytest.fixture
+def repo(tmp_path, monkeypatch):
+    monkeypatch.setattr(guard_config, "RAIZ", tmp_path)
+    for f in ("eslint.config.js", "web/tsconfig.app.json", "ruff.toml", "pyproject.toml",
+              ".claude/settings.json", ".githooks/pre-commit", "src/app.py", "web/vite.config.ts"):
+        (tmp_path / f).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / f).write_text("x", encoding="utf-8")
+    return tmp_path
+
+
+def _entrada(ruta, **datos):
+    return {"tool_name": "Edit", "tool_input": {"file_path": str(ruta), **datos}}
+
+
+@pytest.mark.parametrize("fichero", ["eslint.config.js", "web/tsconfig.app.json", "ruff.toml",
+                                     ".claude/settings.json", ".githooks/pre-commit"])
+def test_pregunta_antes_de_tocar_configuracion(repo, fichero):
+    assert guard_config.motivo(_entrada(repo / fichero)) is not None
+
+
+@pytest.mark.parametrize("fichero", ["src/app.py", "web/vite.config.ts"])
+def test_el_codigo_no_pregunta(repo, fichero):
+    assert guard_config.motivo(_entrada(repo / fichero)) is None
+
+
+def test_crear_un_fichero_nuevo_no_pregunta(repo):
+    assert guard_config.motivo(_entrada(repo / "web" / "eslint.config.mjs")) is None
+
+
+def test_pyproject_solo_pregunta_si_toca_herramientas(repo):
+    py = repo / "pyproject.toml"
+    assert guard_config.motivo(_entrada(py, old_string="version = \"1\"", new_string="version = \"2\"")) is None
+    assert guard_config.motivo(_entrada(py, old_string="strict = true", new_string="strict = false"))
+    assert guard_config.motivo(_entrada(py, edits=[{"old_string": "x", "new_string": "[tool.ruff]"}]))
+
+
+def _hook(entrada: str):
+    return subprocess.run([sys.executable, str(RAIZ / "scripts/guard_config.py")],
+                          input=entrada.encode("utf-8"), capture_output=True, text=False)
+
+
+def test_el_hook_devuelve_ask():
+    r = _hook(json.dumps(_entrada(RAIZ / ".claude/settings.json")))
+    salida = json.loads(r.stdout.decode("utf-8"))
+    assert r.returncode == 0
+    assert salida["hookSpecificOutput"]["permissionDecision"] == "ask"
+
+
+def test_el_hook_deja_pasar_si_la_entrada_es_ilegible():
+    r = _hook("no es json")
+    assert r.returncode == 0 and r.stdout == b""
+~~~~~~~
+
 ### `tests/test_guard_secrets.py`
 
 ~~~~~~~ fichero=tests/test_guard_secrets.py
@@ -3066,6 +4332,43 @@ def test_lanzador_con_python_ejecuta():
     r = subprocess.run([BASH, str(RAIZ / "scripts/py.sh"), "-c", "print(6*7)"],
                        env={**os.environ, "PYTHON": sys.executable}, capture_output=True, text=True)
     assert r.returncode == 0 and "42" in r.stdout
+
+
+SALTAN_EL_PRE_COMMIT = [
+    "git commit --no-verify -m x",
+    "git commit -n -m x",
+    "git push --no-verify",
+    "git -c core.hooksPath=/dev/null commit -m x",
+    "git config core.hooksPath .git/hooks",
+    "git config --unset core.hooksPath",
+    "cd app && git commit --no-verify -m x",
+    "git.exe commit --no-verify -m x",
+]
+
+RESPETAN_EL_PRE_COMMIT = [
+    "git commit -m x",
+    # Leccion: mirar el texto entero bloqueaba un mensaje que lo mencionaba.
+    'git commit -m "docs: bloquear --no-verify"',
+    "git config core.hooksPath .githooks",
+    "git push -n",
+    "git log -n 5",
+    "echo --no-verify",
+]
+
+
+@pytest.mark.parametrize("comando", SALTAN_EL_PRE_COMMIT)
+def test_bloquea_saltarse_el_pre_commit(comando):
+    assert guard_secrets.salta_el_pre_commit(comando)
+
+
+@pytest.mark.parametrize("comando", RESPETAN_EL_PRE_COMMIT)
+def test_permite_git_normal(comando):
+    assert not guard_secrets.salta_el_pre_commit(comando)
+
+
+def test_hook_bloquea_no_verify_con_codigo_2():
+    r = _hook(json.dumps({"tool_input": {"command": "git commit --no-verify -m x"}}))
+    assert r.returncode == 2 and b"pre-commit" in r.stderr
 ~~~~~~~
 
 ### `tests/test_harness_bundle.py`
@@ -3183,19 +4486,20 @@ def test_un_scope_sin_init_sh_falla_en_vez_de_saltarselo():
 
 ~~~~~~~ fichero=tests/test_settings.py
 import json
+import sys
 import subprocess
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 AGENTES = {"leader", "spec_author", "explorer",
-           "implementer", "reviewer", "security_reviewer"}
+           "implementer", "implementer_ui", "reviewer", "security_reviewer"}
 
 
 def test_settings_es_json_valido():
     json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))
 
 
-def test_existen_los_seis_agentes_y_solo_esos():
+def test_existen_los_siete_agentes_y_solo_esos():
     presentes = {p.stem for p in (RAIZ / ".claude/agents").glob("*.md")}
     assert presentes == AGENTES
 
@@ -3206,7 +4510,7 @@ def test_los_agentes_declaran_modelo():
         assert texto.startswith("---"), nombre
         cabecera = texto.split("---")[1]
         assert "model:" in cabecera, nombre
-        if nombre != "implementer":
+        if nombre not in {"implementer", "implementer_ui"}:
             # Los roles que no escriben codigo declaran tools explicitamente.
             assert "tools:" in cabecera, nombre
 
@@ -3232,6 +4536,7 @@ def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
         assert "Veredicto: CHANGES_REQUESTED" in _agente(revisor), revisor
     assert "## Sabotajes" in _agente("implementer")
     assert "SERVICIOS REALES" in _agente("spec_author")
+    assert "Estado: APROBADO" in (RAIZ / ".claude/skills/arranque/SKILL.md").read_text(encoding="utf-8")
 
 
 def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
@@ -3240,6 +4545,9 @@ def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
     guardia = hooks["PreToolUse"][0]["hooks"][0]["command"]
     assert "scripts/py.sh" in guardia and "guard_secrets.py" in guardia
     assert "compact" in hooks["SessionStart"][0]["matcher"]
+    config = next(h for h in hooks["PreToolUse"] if "Edit" in h["matcher"])
+    assert "scripts/py.sh" in config["hooks"][0]["command"]
+    assert "guard_config.py" in config["hooks"][0]["command"]
 
 
 def test_commit_y_push_piden_confirmacion():
@@ -3275,6 +4583,113 @@ def test_los_sh_versionados_son_ejecutables():
         modo, *_, ruta = linea.split()
         if ruta.endswith(".sh") or ruta.startswith(".githooks/"):
             assert modo == "100755", f"{ruta} sin bit de ejecucion (git update-index --chmod=+x)"
+
+
+def test_ninguna_skill_precargada_esta_oculta_del_todo():
+    # Leccion (comprobado 2026-10-10): con "user-invocable-only" u "off" en
+    # skillOverrides la precarga deja de funcionar en silencio; "name-only"
+    # recorta el listado y la conserva.
+    sys.path.insert(0, str(RAIZ / "scripts"))
+    import skills
+    overrides = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8")).get(
+        "skillOverrides", {})
+    for skill in skills.precargadas():
+        assert overrides.get(skill, "on") in {"on", "name-only"}, skill
+
+
+def test_implementer_ui_remite_al_implementer_y_hace_capturas():
+    ui = _agente("implementer_ui")
+    assert ".claude/agents/implementer.md" in ui and "## Capturas" in ui
+    assert "Capturas" in _agente("reviewer")
+    assert "implementer_ui" in _agente("leader")
+~~~~~~~
+
+### `tests/test_skills.py`
+
+~~~~~~~ fichero=tests/test_skills.py
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "scripts"))
+import skills  # noqa: E402
+
+
+def _skill(carpeta: Path, nombre: str) -> None:
+    carpeta.mkdir(parents=True)
+    (carpeta / "SKILL.md").write_text(f"---\nname: {nombre}\ndescription: x\n---\n", encoding="utf-8")
+
+
+@pytest.fixture
+def entorno(tmp_path, monkeypatch):
+    config, proyecto = tmp_path / "config", tmp_path / "proyecto"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+    monkeypatch.setattr(skills, "RAIZ", proyecto)
+    (proyecto / ".claude" / "agents").mkdir(parents=True)
+    (proyecto / ".claude" / "agents" / "implementer.md").write_text(
+        "---\nname: implementer\nmodel: sonnet\nskills:\n  - precargada\n  - falta\n---\n"
+        "# implementer\n---\nskills:\n  - no-es-frontmatter\n", encoding="utf-8")
+    (proyecto / ".claude" / "settings.json").write_text(
+        json.dumps({"skillOverrides": {"oculta": "user-invocable-only"}}), encoding="utf-8")
+    (proyecto / "harness.json").write_text(
+        json.dumps({"skills_revisadas": ["plug:revisada"]}), encoding="utf-8")
+    _skill(proyecto / ".claude" / "skills" / "arranque", "arranque")
+    for nombre in ("precargada", "oculta", "nueva"):
+        _skill(config / "skills" / nombre, nombre)
+    # Carpeta con nombre distinto del de su SKILL.md: manda el `name:`.
+    _skill(config / "skills" / "carpeta-rara", "con-nombre")
+    # Plugin del directorio de skills.
+    plugin_dir = config / "skills" / "mi-plugin"
+    (plugin_dir / ".claude-plugin").mkdir(parents=True)
+    (plugin_dir / ".claude-plugin" / "plugin.json").write_text('{"name": "mi-plugin"}', encoding="utf-8")
+    _skill(plugin_dir / "skills" / "audita", "audita")
+    # Plugins instalados: uno activo y otro no.
+    for clave, nombre in (("plug@m", "revisada"), ("plug@m", "otra"), ("apagado@m", "x")):
+        _skill(tmp_path / "cache" / clave.split("@")[0] / "skills" / nombre, nombre)
+    (config / "plugins").mkdir(parents=True)
+    (config / "plugins" / "installed_plugins.json").write_text(json.dumps({"plugins": {
+        "plug@m": [{"installPath": str(tmp_path / "cache" / "plug")}],
+        "apagado@m": [{"installPath": str(tmp_path / "cache" / "apagado")}],
+    }}), encoding="utf-8")
+    (config / "settings.json").write_text(
+        json.dumps({"enabledPlugins": {"plug@m": True, "apagado@m": False}}), encoding="utf-8")
+    return proyecto
+
+
+def test_informa_de_las_nuevas_y_de_las_ausentes(entorno):
+    datos = skills.informe()
+    assert datos["nuevas"] == ["con-nombre", "mi-plugin:audita", "nueva", "plug:otra"]
+    assert datos["ausentes"] == ["falta (implementer)"]
+
+
+def test_solo_lee_las_skills_del_frontmatter(entorno):
+    assert "no-es-frontmatter" not in skills.precargadas()
+
+
+def test_un_plugin_desactivado_en_el_proyecto_no_cuenta(entorno):
+    (entorno / ".claude" / "settings.json").write_text(
+        json.dumps({"enabledPlugins": {"plug@m": False}}), encoding="utf-8")
+    assert "plug:otra" not in skills.informe()["nuevas"]
+
+
+def test_sin_nada_que_decir_no_imprime_nada(entorno, capsys):
+    (entorno / "harness.json").write_text(json.dumps({"skills_revisadas": [
+        "plug:revisada", "plug:otra", "mi-plugin:audita", "nueva", "con-nombre"]}), encoding="utf-8")
+    (entorno / ".claude" / "agents" / "implementer.md").write_text(
+        "---\nname: implementer\nskills:\n  - precargada\n---\n", encoding="utf-8")
+    skills.main([])
+    assert capsys.readouterr().out == ""
+
+
+def test_la_plantilla_no_precarga_nada_raro():
+    # Cada skill precargada en la plantilla figura en el README, que es donde
+    # el usuario mira que instalar.
+    readme = (RAIZ / "README.md").read_text(encoding="utf-8")
+    for skill in skills.precargadas():
+        assert f"`{skill}`" in readme, skill
 ~~~~~~~
 
 ### `tests/test_state.py`
@@ -3293,9 +4708,12 @@ F = {"id": "F01", "title": "t", "status": "in_progress", "sdd": True, "scope": [
 IMPL = ("progress/F01/IT1/impl.md", "informe\n## Sabotajes\nN/A: solo texto")
 
 
-def _preparar(tmp_path, monkeypatch, features, ficheros=()):
+ARRANQUE = ("progress/arranque.md", "# Arranque\nEstado: APROBADO\n")
+
+
+def _preparar(tmp_path, monkeypatch, features, ficheros=(), arranque=ARRANQUE):
     (tmp_path / "feature_list.json").write_text(json.dumps(features), encoding="utf-8")
-    for ruta, contenido in ficheros:
+    for ruta, contenido in ([arranque] if arranque else []) + list(ficheros):
         f = tmp_path / ruta
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(contenido, encoding="utf-8")
@@ -3478,6 +4896,17 @@ def test_modo_ligero_mantiene_los_dos_vetos(tmp_path, monkeypatch):
         IMPL, ("progress/F01/IT1/review.md", "Veredicto: APPROVED"),
     ])
     assert state.next_action()["action"] == "LANZAR_SECURITY_REVIEWER"
+
+
+@pytest.mark.parametrize("arranque", [None, ("progress/arranque.md", "Estado: en curso")])
+def test_sin_arranque_aprobado_no_se_escribe_ninguna_spec(tmp_path, monkeypatch, arranque):
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "pending"}], arranque=arranque)
+    assert state.next_action()["action"] == "ARRANQUE"
+
+
+def test_con_arranque_aprobado_se_despacha_normal(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "pending"}])
+    assert state.next_action()["action"] == "LANZAR_SPEC_AUTHOR"
 ~~~~~~~
 
 <!-- FIN FICHEROS -->

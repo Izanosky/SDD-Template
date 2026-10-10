@@ -6,8 +6,9 @@ disco (feature_list.json, specs/<F>/tasks.md y progress/<F>/IT<n>/): no hay
 ningun estado aparte que mantener sincronizado.
 
 Los marcadores que lee son fijos (HARNESS.md, "Marcadores"): la linea
-`Veredicto: APPROVED|CHANGES_REQUESTED`, el encabezado `## Sabotajes` y
-`SERVICIOS REALES` en la cabecera de la task humana.
+`Veredicto: APPROVED|CHANGES_REQUESTED`, el encabezado `## Sabotajes`,
+`SERVICIOS REALES` en la cabecera de la task humana y `Estado: APROBADO` en
+`progress/arranque.md`.
 """
 import json
 import re
@@ -22,6 +23,7 @@ _SABOTAJES = re.compile(r"^#{2,3}\s*Sabotajes\b", re.M)
 # Con o sin negrita: una task sin `**` no puede quedar fuera del recuento.
 _TASK_ABIERTA = re.compile(r"^\s*[-*]\s+\[ \]\s*\**\s*T\d+.*$", re.M)
 _TASK_HUMANA = ("SERVICIOS REALES", "PRUEBA REAL")
+_ARRANQUE_APROBADO = re.compile(r"^\W*Estado\W*APROBADO\b", re.M | re.I)
 
 
 def _leer(ruta: Path) -> str:
@@ -82,6 +84,13 @@ def next_action() -> dict:
 
 
 def _despacho() -> dict:
+    # Del arranque salen los documentos que guian todo lo demas: sin el
+    # aprobado no se escribe ninguna spec. Leccion: el stack decidido a
+    # medias obligo a cambiar de framework a mitad de la primera feature.
+    arranque = ROOT / "progress" / "arranque.md"
+    if not (arranque.is_file() and _ARRANQUE_APROBADO.search(_leer(arranque))):
+        return {"action": "ARRANQUE"}
+
     features = json.loads(_leer(ROOT / "feature_list.json"))
     activa = next((f for f in features if f["status"] != "done"), None)
     if activa is None:

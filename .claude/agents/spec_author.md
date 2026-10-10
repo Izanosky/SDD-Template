@@ -35,8 +35,16 @@ scope, **solo ese**. Si necesitas explorar el repositorio a fondo, pide al
   caracteres de control, duplicado, servicio externo caído o lento.
 - **Seguridad obligatoria**: si toca input, auth, datos sensibles o acceso a
   datos, `R<n>` de seguridad verificables aunque el `acceptance` no los pida.
+  Si llevas precargada `prd-securability-enhancement` (la añade `/arranque`
+  en proyectos con usuarios o servidor), úsala para elegirlos contra ASVS.
 - **Tramos**: con varios stacks o capas, `tasks.md` agrupa las tasks por
-  tramo en orden de dependencia (lo que otros consumen, primero).
+  tramo en orden de dependencia (lo que otros consumen, primero). El tramo
+  que crea o cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
+  `implementer_ui`.
+- **El aspecto no va en `R<n>`**: colores, tipografía y componentes salen de
+  `docs/<scope>/direccion-visual.md`; la spec la cita y solo añade lo propio
+  de sus pantallas. Lección: con los tokens congelados como requisito, el
+  diseño no podía mejorar sin enmendar specs.
 - **Las tasks no explican el harness** ni afirman lo que hace `init.sh`.
 - **Task humana** (si hay servicios reales): la última, con
   `ÚNICA TASK CON SERVICIOS REALES` en su cabecera; pasos en orden

@@ -7,8 +7,11 @@ capas, un tramo por bloque, en orden de dependencia; cada tramo es una IT.
 - [ ] **T1 — <título>** (TDD). <Qué se prueba primero y qué se implementa.> → R1, R2
 - [ ] **T2 — Test del adaptador real** con cliente grabador: filtros exactos, valores escritos, ramas de lectura. → R3
 
-## Tramo B — <siguiente>
+## Tramo B — <siguiente> (interfaz)
 - [ ] **T3 — <título>**. <…> → R4
+
+<!-- "(interfaz)" en la cabecera de un tramo que crea o cambia pantallas: lo
+hace el implementer_ui (capturas incluidas). Quítalo si el tramo no las toca. -->
 
 ## Cierre
 - [ ] **T4 — ÚNICA TASK CON SERVICIOS REALES · la ejecuta el humano.** Aviso: conecta con <servicios>. Pasos en orden ejecutable, resultado esperado de cada uno, ningún secreto pegado. → humo de R1, R3

@@ -12,7 +12,8 @@ Dónde está cada regla: `docs/README.md`.
 
 ## Dónde vive cada pieza, y por qué
 
-<!-- Cada fila resuelve una restricción concreta. Borra las que no apliquen. -->
+<!-- Cada fila resuelve una restricción concreta. Borra las que no apliquen.
+Alternativas descartadas y cuándo revisar cada decisión: docs/adr/. -->
 | Pieza | Dónde | Por qué ahí |
 |---|---|---|
 | <RELLENAR: API> | <servicio> | <restricción que resuelve> |
