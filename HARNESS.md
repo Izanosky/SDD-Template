@@ -329,7 +329,8 @@ Detalle en `docs/specs.md`.
 ```
 pending ──spec_author──> spec_ready ──HUMANO──> in_progress ──IT1..ITn──> done
                                                     │
-               implementer (TDD + sabotajes) → reviewer → security_reviewer
+   tramo intermedio:  implementer (mutantes en zonas críticas) → reviewer
+   último tramo:      implementer → reviewer ‖ security_reviewer (en paralelo)
 ```
 
 - **Spec**: `requirements.md` (EARS), `design.md` (cómo, descartes,
@@ -337,11 +338,22 @@ pending ──spec_author──> spec_ready ──HUMANO──> in_progress ─�
   humana al final). Unas 400 líneas.
 - **Puerta humana**: el leader resume las decisiones abiertas con su
   recomendación; solo el humano aprueba.
-- **Iteración**: la crea el leader. Un rechazo abre otra. Un rechazo de
-  seguridad re-verifica ambos vetos, porque un arreglo de seguridad puede
-  romper lo aprobado.
+- **Iteración**: la crea el leader. Un rechazo abre otra. En el último
+  tramo cualquier rechazo re-verifica ambos vetos, porque un arreglo puede
+  romper lo que el otro aprobó; si el arreglo solo toca tests, las dos
+  revisiones son acotadas.
 - **Tramos**: con varios stacks o capas, una IT por tramo, en orden de
-  dependencia.
+  dependencia, **dos como mucho**. En los intermedios solo veta el
+  reviewer; el security_reviewer revisa la feature entera en el último, en
+  paralelo. Lección del piloto: pasaba en cada tramo (46 veces) y rechazó
+  2, siempre esperando al reviewer.
+- **Mutantes con el mismo criterio**: en las zonas críticas (las fija
+  `/arranque`), el implementer pasa la herramienta de mutantes del stack
+  antes de entregar y el reviewer repite el mismo comando; fuera de ellas,
+  tests de comportamiento y un test flojo es una observación. Lección: 42
+  de 44 primeras entregas rechazadas, casi todas por un mutante que el
+  implementer no había probado; las IT de corrección fueron el 37 % del
+  tiempo y el 41 % de los tokens.
 - **Correcciones de texto al cerrar**: un fallo que es solo texto no cuesta
   una iteración.
 - **Cierre**: `done`, más un resumen en `history.md` redactado por el
@@ -372,13 +384,16 @@ Algoritmo completo (cada paso con su test en `tests/test_state.py`):
 4. Se toma la IT más alta. Sin `impl.md` → `REANUDAR_IMPLEMENTER`.
 5. Sin encabezado `## Sabotajes` en `impl.md` ni en `evidence.md` →
    `DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES`.
-6. Sin línea `Veredicto:` en `review.md` → `LANZAR_REVIEWER`; con
-   `CHANGES_REQUESTED` → `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER`.
-7. Lo mismo con `security.md` → `LANZAR_SECURITY_REVIEWER` o
-   `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY`.
-8. Ambos `APPROVED` y quedan tasks `- [ ] T<n>` que no son la humana →
-   `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO`.
-9. Si no → `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` (paso 7 del implementer).
+6. **Tramo intermedio** (quedan tasks `- [ ] T<n>` que no son la humana):
+   sin `Veredicto:` en `review.md` → `LANZAR_REVIEWER`; con
+   `CHANGES_REQUESTED` → `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER`;
+   con `APPROVED` → `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO`.
+7. **Último tramo** (o modo ligero): algún `CHANGES_REQUESTED` →
+   `CREAR_IT<n+1>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY`; ninguno de
+   los dos veredictos → `LANZAR_REVIEWER_Y_SECURITY` (en paralelo); falta
+   uno → `LANZAR_REVIEWER` o `LANZAR_SECURITY_REVIEWER`.
+8. Ambos `APPROVED` → `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` (paso 7 del
+   implementer).
 
 Además, `audits_pending` lista las carpetas de `progress/audits/` sin
 `cambios.md`.
@@ -431,13 +446,18 @@ Cuatro capas para secretos (detalle en `docs/security.md`):
 - Lo caro es **leer y verificar**, y sobre todo **las iteraciones**. Una
   iteración evitada ahorra más que cualquier recorte de texto.
 - Palancas, por orden de impacto:
-  1. autocomprobación con sabotajes antes de entregar;
+  1. el mismo criterio de mutantes para implementer y reviewer, solo en
+     zonas críticas (y re-revisión acotada si el arreglo solo toca tests);
   2. specs con tope de tamaño;
   3. modo ligero y arreglos pequeños;
   4. correcciones de texto al cerrar;
   5. reanudar en lugar de relanzar;
   6. tramos;
-  7. cierre con modelo barato y resumen redactado.
+  7. cierre con modelo barato y resumen redactado;
+  8. security_reviewer una vez por feature y en paralelo;
+  9. `init.sh --rapido` en las vueltas de implementer y reviewer;
+  10. `/clear` tras cerrar cada feature (el estado está en disco) y métricas
+      escritas por un hook, no por la sesión principal.
 - **No escribas en `docs/` lo que el modelo ya sabe** (patrones de diseño,
   SOLID, convenciones estándar del lenguaje). Cada línea se paga en cada
   ejecución de tres roles.
@@ -590,6 +610,12 @@ Cada una costó al menos una iteración en un proyecto real.
 | Skills de diseño nunca invocadas; nombradas en el encargo, "aplicadas a mano" | `skills:` precargadas por rol; `skills.py` avisa de las nuevas y las ausentes |
 | La línea "Skills usadas" no distinguía invocar de aplicar a mano | columna `skills` de `metrics.csv` desde el transcript (`agent_tokens.py`) |
 | `subagent_tokens` sumado contaba varias veces lo mismo | `agent_tokens.py` lee el consumo real por ejecución |
+| El leader escribía cada línea de métricas en su contexto caro | hook `SubagentStop` (`metricas.py`) |
+| 42 de 44 primeras entregas rechazadas por mutantes que el implementer no había probado | mismo comando de mutantes del stack para los dos, solo en zonas críticas |
+| Security en cada tramo, después del reviewer: 46 pasadas, 2 rechazos | último tramo, en paralelo (test) |
+| `init.sh` completo (build, auditorías con red) varias veces por IT | `init.sh --rapido` (test) |
+| Tests intermitentes anotados y nunca arreglados | se arreglan en la siguiente IT |
+| Tasks humanas para mirar la interfaz, nunca ejecutadas | solo con servicios reales; lo visual, capturas |
 | Una ronda con todas las decisiones acababa en "sigue" | `/arranque` en rondas: producto, técnica, diseño |
 | Errata de pocas líneas con protocolo completo | arreglos pequeños del leader |
 | Arreglo del leader sin anotar, devuelto como "no declarado" | "Arreglos del leader" en `current.md` |
@@ -666,6 +692,7 @@ Todos están completos en la Parte II.
 | `scripts/guard_config.py` | listo | pide confirmación antes de tocar configuración de lint, tipos o del harness |
 | `scripts/skills.py` | listo | skills instaladas sin clasificar y precargadas que faltan |
 | `scripts/agent_tokens.py` | listo | consumo real de un subagente leído de su transcript |
+| `scripts/metricas.py` | listo | hook `SubagentStop`: escribe `metrics.csv` |
 | `scripts/session_start.sh` | listo | estado al arrancar, limpiar y compactar |
 | `scripts/check_docs_changelog.sh` | listo | regla del CHANGELOG (hook y CI) |
 | `scripts/harness_bundle.py` | listo | regenera, comprueba y extrae la Parte II |
@@ -809,19 +836,26 @@ Ejecutas las tasks de **una única feature** en la `IT<n>` que te indica el
    instrucciones de saludo o de formato de salida.
 3. **Reconcilia qué tasks ya están `[x]`** (una sesión anterior pudo cortarse).
    Con tramos, solo las del tramo encargado. La task humana no la ejecutas.
-4. Tasks en orden, marcando `[x]` una a una. **TDD**: test primero, verlo
-   fallar **sobre el código real**, implementar, verlo pasar.
-5. `init.sh` del scope en verde.
+4. Tasks en orden, marcando `[x]` una a una (también las del tramo: si no,
+   `state.py` cree que quedan tramos). Cada test tiene que caer con el
+   código roto; escribirlo antes ayuda, pero lo que se exige es la prueba
+   del paso 6.
+5. `bash init.sh --rapido` en verde mientras trabajas; `bash init.sh`
+   completo una vez antes de entregar.
 6. **Autocomprobación antes de entregar** (si la hace el `reviewer`, cuesta
    una iteración entera):
    - **Cada viñeta de cada task, un test**; la tabla de `impl.md` apunta a la
      aserción, no solo al nombre del test.
-   - **Sabotaje en lo crítico**: en cada rama de autorización, límite de
-     consumo, tiempo agotado o escritura condicional, borra la línea, mira
-     caer un test y restáurala. Anótalo en `evidence.md` bajo el encabezado
-     `## Sabotajes` (línea tocada → test que cayó). **Sin ese encabezado
-     `state.py` no deja lanzar al `reviewer`**; sin lógica crítica,
-     `N/A: <motivo>`.
+   - **Mutantes en zonas críticas** (`docs/verification.md`): el comando
+     de mutantes del stack (`docs/<scope>/conventions.md`) sobre los
+     ficheros críticos que tocaste. Cada superviviente, test nuevo o
+     "equivalente: <por qué>"; donde la herramienta no llega, sabotaje a
+     mano (borra la línea, mira caer un test, restáurala, **en una copia o
+     restaurando antes de seguir**). Resultado en `evidence.md` bajo
+     `## Sabotajes`: comando, muertos/supervivientes y qué hiciste con
+     cada uno. **Sin ese encabezado `state.py` no deja lanzar al
+     `reviewer`**; si la IT no toca zonas críticas, `N/A: <motivo>`.
+     Es el mismo comando que repetirá el reviewer.
    - **El nombre del test no promete más de lo que comprueba.**
    - **El adaptador real, no solo el falso**: cada método nuevo que habla con
      la base de datos u otro servicio tiene tests en sus bordes (0 filas,
@@ -975,11 +1009,13 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 | `ARRANQUE` | `/arranque` con el humano (o lo retomas donde diga `progress/arranque.md`). Nada más hasta que lo apruebe |
 | `LANZAR_SPEC_AUTHOR` | `spec_author` sobre la feature |
 | `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste |
-| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
+| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Apuntas en `progress/current.md` "Base de <F>: <git rev-parse HEAD>" (el security_reviewer revisa desde ahí), creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
 | `REANUDAR_IMPLEMENTER` | La IT no tiene `impl.md`: reanudas al mismo agente (abajo); si ya no existe, uno nuevo en la misma carpeta |
 | `DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES` | Al mismo `implementer`, solo para la tabla |
-| `LANZAR_REVIEWER` / `LANZAR_SECURITY_REVIEWER` | Sobre la misma `IT<n>`, en ese orden |
-| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER[_Y_SECURITY]` | Nueva carpeta, `implementer` con los cambios pedidos; después `reviewer` (y `security_reviewer`): un arreglo de seguridad puede romper lo aprobado |
+| `LANZAR_REVIEWER` / `LANZAR_SECURITY_REVIEWER` | El que falta, sobre la misma `IT<n>` |
+| `LANZAR_REVIEWER_Y_SECURITY` | Último tramo: los dos **a la vez** (en paralelo, sin esperar uno al otro) sobre la misma `IT<n>`; espera a ambos antes de volver a `state.py` |
+| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER` | Tramo intermedio rechazado: nueva carpeta, `implementer` con los cambios pedidos; después `reviewer` |
+| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY` | Último tramo rechazado: nueva carpeta, `implementer`; después los dos en paralelo (un arreglo puede romper lo que el otro aprobó). Si el arreglo solo toca tests, díselo: su revisión es acotada |
 | `CREAR_IT<n>_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO` | Nueva carpeta para el tramo siguiente de `tasks.md`; díselo al `implementer` y a los revisores |
 | `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` | Cierre (ver "Modelos") |
 | `TODO_HECHO` | Propones `/retrospectiva` |
@@ -992,7 +1028,12 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
   para dar destino a los hallazgos.
 - Tras cerrar una feature: si van **4 o más** cerradas desde la última
   carpeta de `progress/audits/`, o se cerró una fase, propón la auditoría.
-  Sin el sí del humano, no.
+  Sin el sí del humano, no. Y **propón `/clear`**: el estado está en disco y
+  el hook lo vuelve a inyectar. Lección: en el piloto la sesión principal
+  acumulaba 16-24 M de lecturas de caché por sesión, más que los revisores.
+- Un test intermitente visto por cualquier agente: lo apuntas en
+  `current.md` y va en el encargo de la siguiente IT (arreglarlo o ponerlo
+  en cuarentena con su motivo).
 
 ## Agente que vuelve sin terminar
 
@@ -1016,17 +1057,14 @@ feature.
 
 ## Métricas
 
-Al terminar cada agente, una línea en `progress/metrics.csv`:
-`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`.
-`veredicto` solo en revisores; `causa` solo en rechazos: `codigo`, `tests`
-(código bien, tests flojos), `spec` u `otro`. Una reanudación es otra línea.
-
-`tokens`, `cache_read`, `minutos` y `skills` (las invocadas, no las
-precargadas) salen de `bash scripts/py.sh scripts/agent_tokens.py
-<agent_id> --run <n>` (n = nº de ejecución de ese agente: 1 al lanzarlo, +1
-por cada reanudación), **nunca** del `subagent_tokens` del resultado de
-Agent: ese es el tamaño del contexto al terminar, arrastra las ejecuciones
-anteriores y no cuenta las relecturas de caché.
+Las escribe solo el hook `SubagentStop` (`scripts/metricas.py`): una línea
+por ejecución en `progress/metrics.csv`
+(`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`),
+con el consumo real leído del transcript y el veredicto y la causa de
+`review.md` o `security.md`. **No las escribes tú**; solo corriges una
+línea mal atribuida (p. ej. una auditoría). Nunca uses el `subagent_tokens`
+del resultado de Agent: es el tamaño del contexto al terminar, no lo
+gastado.
 
 ## Skills
 
@@ -1101,22 +1139,25 @@ skills:
 # reviewer
 
 Apruebas o rechazas funcionalmente. **Nunca editas código.** Eres la única
-puerta funcional: el `security_reviewer` (que va siempre después de ti) solo
-mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
+puerta funcional: el `security_reviewer` (solo en el último tramo, en
+paralelo contigo) solo mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
 
 ## Qué verificas
 
 1. **Cada `R<n>` tiene un test que lo cubre de verdad** (que afirme algo
-   sobre el resultado), comprobado con **mutantes**: rompe el código en una
-   copia temporal, nunca en el repo (quitar un filtro, invertir una
-   condición, relajar una validación). Mutante que sobrevive = test que
-   falta. Casos que se escapan: falsos que no respetan los límites reales
-   del servicio; arneses que pisan con un literal lo que dicen proteger;
-   tests que comparan un literal que el código ya no usa; comprobaciones por
-   prefijo engañables (`http://localhost.evil.com`).
-2. **La tabla `## Sabotajes`**: repites al menos uno.
+   sobre el resultado).
+2. **Zonas críticas** (`docs/verification.md`): repites **el mismo comando
+   de mutantes** que dejó el implementer en `## Sabotajes` y juzgas cada
+   superviviente (test que falta, o equivalente de verdad). Añade a mano,
+   en una copia y nunca en el repo, solo lo que la herramienta no puede
+   mutar: un filtro de consulta, una comprobación por prefijo engañable
+   (`http://localhost.evil.com`), un falso que no respeta los límites del
+   servicio, un arnés que pisa con un literal lo que dice proteger.
+   **Fuera de las zonas críticas**, un test flojo va a observaciones, no a
+   rechazo, salvo que un `R<n>` no tenga ningún test.
 3. Tasks marcadas y realmente hechas (la humana puede quedar abierta).
-4. **`init.sh` en verde, ejecutado por ti.**
+4. **`bash init.sh --rapido` en verde, ejecutado por ti** (el completo lo
+   corre el security_reviewer).
 5. `docs/architecture.md`, `docs/principios.md`, el `conventions.md` del
    scope y los bloques funcional y de escalabilidad de `CHECKPOINTS.md`, uno
    a uno.
@@ -1137,8 +1178,11 @@ mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
    Lo que sea gusto y la spec no pide va a observaciones que no bloquean: no
    cuesta una iteración.
 
-En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca;
-**la verificación no se reduce**.
+En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca.
+**Re-revisión acotada**: si tu rechazo anterior fue solo por `tests` y el
+diff de esta IT solo añade o cambia tests, verificas lo pedido (cada
+superviviente citado ahora muere) e `init.sh --rapido`, y nada más. Si el
+diff toca producción, revisión completa.
 
 ## Qué escribes
 
@@ -1147,7 +1191,9 @@ exactamente:
 
 `Veredicto: APPROVED` o `Veredicto: CHANGES_REQUESTED`
 
-(`state.py` solo lee esa línea). Cada afirmación con su cita
+(`state.py` solo lee esa línea). Con `CHANGES_REQUESTED`, otra línea
+propia `Causa: codigo`, `tests` (código bien, tests flojos), `spec` u
+`otro` (la lee el hook de métricas). Cada afirmación con su cita
 (`archivo:línea`, test, salida): "`jobs.py:34` acepta cualquier cadena; `R3`
 exige lista blanca", no "falta validación".
 
@@ -1186,16 +1232,23 @@ Veto **independiente y bloqueante**. **Nunca editas código.** Eres la
 
 ## Cuándo entras
 
-**Solo después de un `APPROVED` del `reviewer`** en la misma `IT<n>`
-(auditar código que aún puede cambiar es trabajo tirado). Si tu última
-revisión fue varias iteraciones atrás, revisas todo lo cambiado desde
-entonces.
+En el **último tramo** de la feature (o en modo ligero), **en paralelo con
+el `reviewer`** sobre la misma `IT<n>`: no lo esperas. Revisas **la feature
+entera**: el diff desde su commit base (lo apunta el leader en
+`progress/current.md`) más los ficheros nuevos sin seguimiento. Lección: en
+el piloto pasabas en cada tramo (46 veces) y rechazaste 2.
+
+En `n > 1`, si el diff de la IT solo cambia tests, lo confirmas en pocas
+líneas (sigue sin tocar producción, `init.sh` completo en verde) y
+apruebas; si toca producción, revisas lo cambiado desde tu última
+revisión.
 
 ## Protocolo
 
 1. `docs/security.md` y los `R<n>` de seguridad de la spec. Si no hay ninguno
    y la feature toca input, auth o datos, eso ya es un hallazgo.
-2. Ejecuta `init.sh` y **verifica** la salida del escáner de secretos y de la
+2. Ejecuta `bash init.sh` **completo** (eres el único rol que lo hace en
+   cada IT final) y **verifica** la salida del escáner de secretos y de la
    auditoría de dependencias (no la repites a mano).
 3. A mano, lo que ningún escáner cubre (lista en `docs/security.md`).
 4. **La configuración y las instrucciones también son código**: config del
@@ -1228,7 +1281,9 @@ exactamente:
 
 `Veredicto: APPROVED` o `Veredicto: CHANGES_REQUESTED`
 
-(`state.py` solo lee esa línea). Cada hallazgo con `archivo:línea`. Las
+(`state.py` solo lee esa línea). Con `CHANGES_REQUESTED`, otra línea
+propia `Causa: codigo` u `otro` (la lee el hook de métricas). Cada hallazgo
+con `archivo:línea`. Las
 observaciones que no bloquean van aparte y dicen **por qué** no bloquean.
 Tu criterio no se ajusta al del `reviewer`; eres el único dueño del bloque de
 seguridad de `CHECKPOINTS.md`, y tus hallazgos **nunca** se rebajan a
@@ -1298,7 +1353,9 @@ scope, **solo ese**. Si necesitas explorar el repositorio a fondo, pide al
   Si llevas precargada `prd-securability-enhancement` (la añade `/arranque`
   en proyectos con usuarios o servidor), úsala para elegirlos contra ASVS.
 - **Tramos**: con varios stacks o capas, `tasks.md` agrupa las tasks por
-  tramo en orden de dependencia (lo que otros consumen, primero). El tramo
+  tramo en orden de dependencia (lo que otros consumen, primero). **Dos
+  como mucho** (lógica y datos; interfaz) salvo que haya más stacks: cada
+  tramo es otro ciclo de implementación y revisión. El tramo
   que crea o cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
   `implementer_ui`.
 - **El aspecto no va en `R<n>`**: colores, tipografía y componentes salen de
@@ -1306,7 +1363,8 @@ scope, **solo ese**. Si necesitas explorar el repositorio a fondo, pide al
   de sus pantallas. Lección: con los tokens congelados como requisito, el
   diseño no podía mejorar sin enmendar specs.
 - **Las tasks no explican el harness** ni afirman lo que hace `init.sh`.
-- **Task humana** (si hay servicios reales): la última, con
+- **Task humana**, solo si hay servicios reales (mirar la interfaz no lo
+  es: lo cubren las capturas): la última, con
   `ÚNICA TASK CON SERVICIOS REALES` en su cabecera; pasos en orden
   ejecutable, resultado esperado de cada uno, ningún secreto.
 - **Dependencias nuevas** nunca se dan por aprobadas: pregunta con una
@@ -1402,6 +1460,11 @@ ante un bloqueo real, y lo dices en una línea.
       {
         "matcher": "startup|resume|clear|compact",
         "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/session_start.sh\"" }]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/py.sh\" \"$CLAUDE_PROJECT_DIR/scripts/metricas.py\" || true" }]
       }
     ],
     "PreToolUse": [
@@ -1554,7 +1617,7 @@ las que no), en orden de dependencia:
 | Datos | almacenamiento o base de datos, ORM o acceso, migraciones y versionado de formatos, copias de seguridad |
 | Seguridad | autenticación y autorización, secretos, riesgos propios y zonas sensibles |
 | Frontend | framework, enrutado, estado y caché de datos, formularios, estilos, librería de componentes, iconos, animación, gráficos, i18n, accesibilidad |
-| Calidad | tests por capa (unidad, integración, extremo a extremo), lint, formato, tipos, auditoría de dependencias |
+| Calidad | tests por capa (unidad, integración, extremo a extremo), lint, formato, tipos, auditoría de dependencias, **zonas críticas** (dinero, datos, permisos, parsers…) y la **herramienta de mutantes** del stack para ellas |
 | Operación | build, CI, despliegue y ramas, entornos, logs y errores, coste |
 
 Cada fila con una **propuesta** y un **modo**:
@@ -1620,7 +1683,7 @@ Actualiza `progress/arranque.md` al cerrar cada bloque.
   con el toolchain y el cambio de stack, y necesitó 11 IT.
 - `harness.json` (scopes, secretos), el resto de `CLAUDE.md` (la tabla
   "Dónde vive cada pieza" enlaza a los ADR), `docs/security.md`,
-  `docs/verification.md`, `docs/<scope>/conventions.md` y
+  `docs/verification.md` (con las zonas críticas), `docs/<scope>/conventions.md` y
   `<scope>/init.sh` desde `plantillas/stack/`, las zonas sensibles de
   `.claude/agents/leader.md` y la entrada de `docs/CHANGELOG.md`.
 - **Skills según el stack**, propuestas al humano; con su sí, en `skills:`
@@ -1727,7 +1790,9 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
    `informe.md` (≤ 200 líneas) a partir de su informe: hallazgos
    confirmados con gravedad y `archivo:línea`, los pendientes de validar
    aparte, y la ruta del informe original en `evidencia.md`.
-4. Línea en `progress/metrics.csv` con `feature = audit` e `it = <fecha>`.
+4. La línea de `progress/metrics.csv` la escribe el hook de métricas con
+   `feature = audit`; con los motores de la sesión principal no hay
+   subagente que la dispare: apúntala tú (`it = <fecha>`).
 5. Vuelve al primer apartado para dar destino a los hallazgos.
 ~~~~~~~
 
@@ -2198,6 +2263,32 @@ Formato:
 - Cómo se medirá: <qué mirar en metrics.csv o en los veredictos, si aplica>
 ```
 
+## 2026-10-10 — Menos iteraciones: mutantes por stack, vetos al final y en paralelo
+- Ficheros: docs/verification.md, docs/specs.md
+- Antes → ahora: mutantes a criterio de cada rol en todo el código → la
+  herramienta de mutantes del stack, en zonas críticas, con el mismo comando
+  para implementer y reviewer (fuera de ellas, un test flojo es una
+  observación); TDD obligatorio → rojo demostrado por el mutante o el
+  sabotaje; security_reviewer en cada tramo y después del reviewer → solo en
+  el último tramo, en paralelo, sobre la feature entera; re-revisión
+  completa siempre → acotada si el arreglo solo toca tests; `init.sh`
+  completo en cada vuelta → `--rapido` para implementer y reviewer; tramos
+  sin límite → dos como mucho; tests intermitentes anotados → se arreglan
+  en la siguiente IT; task humana para mirar la interfaz → solo con
+  servicios reales
+- Por qué: piloto (Gestor): 42 de 44 primeras entregas rechazadas (31 por
+  `tests`); IT de corrección = 37 % del tiempo y 41 % de los tokens;
+  security 46 pasadas y 2 rechazos (131 min, 2,8 M tokens); 8 tests
+  intermitentes sin arreglar; 9 features seguidas sin task humana
+- Aprobado por: <humano>
+- Propagado a: scripts/state.py (vetos por tramo), scripts/metricas.py
+  (hook SubagentStop: el leader ya no escribe métricas), init.sh y
+  plantillas/stack/ (--rapido, comando de mutantes), .claude/agents/
+  (implementer, reviewer, security_reviewer, spec_author, leader),
+  .claude/skills/arranque, plantillas/arranque.md, HARNESS.md
+- Cómo se medirá: primeras entregas aprobadas, IT por feature y tokens por
+  feature en metrics.csv frente al piloto
+
 ## 2026-10-10 — Interfaz con dirección visual y capturas; skills precargadas
 - Ficheros: docs/specs.md, docs/verification.md, docs/README.md,
   docs/architecture.md, docs/adr/README.md (nuevo)
@@ -2517,7 +2608,10 @@ implementer *anexa* y nunca sobrescribe.
 
 **`tasks.md` — los pasos.** `T1`, `T2`… con sus `R<n>`; no repite el diseño.
 Con varios stacks o capas, agrupadas en **tramos** en orden de dependencia:
-cada tramo es una IT aprobada antes del siguiente. El tramo que crea o
+cada tramo es una IT aprobada antes del siguiente. **Dos tramos como mucho**
+(típicamente lógica y datos, después interfaz), salvo que haya más stacks:
+cada tramo es otro ciclo de implementación y revisión. <!-- ajuste-2026-10-10 -->
+El tramo que crea o
 cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
 `implementer_ui`, con capturas. <!-- ajuste-2026-10-10 --> Si hay servicios reales,
 la última es la **prueba humana**, con `ÚNICA TASK CON SERVICIOS REALES` en
@@ -2561,8 +2655,13 @@ la IT aparece una decisión de diseño de verdad, se pasa a `"sdd": true`.
 
 - Cada vuelta vive en `progress/<F>/IT<n>/` (la crea el leader). El número de
   carpetas es el contador de intentos.
-- `CHANGES_REQUESTED` → nueva IT. Un rechazo de seguridad re-verifica
-  **ambos** vetos.
+- **Los vetos**: en un tramo intermedio, solo el reviewer; en el último
+  tramo (o en modo ligero), reviewer y security_reviewer **en paralelo**
+  sobre la misma IT, y el security_reviewer revisa la feature entera desde
+  su commit base. Lección: en el piloto el security_reviewer pasó en cada
+  tramo (46 veces) y rechazó 2. <!-- ajuste-2026-10-10 -->
+- `CHANGES_REQUESTED` → nueva IT. En el último tramo, cualquier rechazo
+  re-verifica **ambos** vetos (acotados si el arreglo solo toca tests).
 - **Correcciones de texto al cerrar**: si el único problema es texto en
   `specs/` o `progress/`, el reviewer aprueba y lista cada corrección
   literal; se aplican en el cierre. Nunca para código, tests, dependencias
@@ -2616,16 +2715,43 @@ que con cierta configuración no comprueba nada; un test que compara un
 literal que el código ya no usa; un arnés que pisa con un literal el valor
 que dice proteger.
 
-## TDD, sabotajes y mutantes
+## Zonas críticas y mutantes <!-- ajuste-2026-10-10 -->
 
-- **TDD**: test primero, verlo fallar **sobre el código real** (no con un
-  script que imita el código viejo), implementar, verlo pasar.
-- **Sabotajes** (implementer): borrar la línea crítica, ver caer un test,
-  restaurar; encabezado `## Sabotajes` en `evidence.md`. `state.py` lo exige.
-- **Mutantes** (reviewer): romper el código en una copia temporal y exigir
-  que un test caiga. Mutante que sobrevive = test que falta.
+Lección del piloto: el reviewer rechazó 42 de 44 primeras entregas, casi
+siempre por un mutante que sobrevivía en una línea que el implementer no
+había saboteado; las IT de corrección fueron el 37 % del tiempo. Los dos
+usaban criterios distintos, y el mismo rigor en dinero que en una animación.
+
+**Zonas críticas** (las fija `/arranque`): <RELLENAR: p. ej. dinero y
+cálculos, escritura de datos y migraciones, autenticación y permisos,
+parsers y validación de entrada externa>.
+
+- **En zonas críticas, la herramienta de mutantes del stack** (decidida en
+  `/arranque`, comando en `docs/<scope>/conventions.md`) sobre los ficheros
+  críticos tocados en la IT. La pasa el implementer antes de entregar y la
+  repite el reviewer: **el mismo comando, el mismo criterio**. Cada
+  superviviente acaba en un test nuevo o en "equivalente: <por qué>". Donde
+  la herramienta no llega (una consulta, un filtro, configuración), un
+  sabotaje a mano: borrar la línea, ver caer un test, restaurar.
+- **Fuera de las zonas críticas**, un test de comportamiento por viñeta de
+  cada task. Un test flojo ahí es una observación del reviewer, no un
+  rechazo, salvo que un `R<n>` se quede sin ningún test.
+- Resultado en `evidence.md`, encabezado `## Sabotajes` (`state.py` lo
+  exige): comando, muertos/supervivientes y qué se hizo con cada
+  superviviente; `N/A: <motivo>` si la IT no toca zonas críticas.
+- **Rojo sobre el código real**: lo exigible es que el test caiga con el
+  código roto, y eso lo demuestran el mutante o el sabotaje. Escribir el
+  test antes es recomendable, no obligatorio (en el piloto no se cumplió y
+  no era lo que protegía).
 - **Revertir solo la línea de producción**: si hace falta revertir también
   el test o el arnés, el test no protegía nada.
+
+## Tests intermitentes
+
+Un test que falla a veces es un fallo, no ruido: el leader lo apunta y se
+arregla (o se pone en cuarentena con su motivo) en la siguiente IT de la
+feature en curso. Lección: en el piloto se anotaron ocho y nadie los
+arregló; cada uno costó repeticiones y desconfianza en los resultados.
 
 ## Interfaz: capturas <!-- ajuste-2026-10-10 -->
 
@@ -2660,7 +2786,14 @@ tramo `(interfaz)`:
   leader no abre `evidence.md`; los revisores, solo para cuestionar una
   prueba.
 - En `n > 1` se reduce el **contexto** (cambios pedidos, diff, ficheros
-  tocados), nunca el trabajo: `init.sh` completo y checkpoints uno a uno.
+  tocados). **Re-revisión acotada**: si el rechazo anterior fue solo por
+  `tests` y el diff de esta IT solo añade o cambia tests, se verifica lo
+  pedido (cada superviviente citado ahora muere) y `init.sh --rapido`; si
+  el diff toca producción, revisión completa.
+  <!-- ajuste-2026-10-10 -->
+- `init.sh --rapido` (tests, lint, formato, tipos) en las vueltas del
+  implementer y del reviewer; `init.sh` completo (build, secretos,
+  auditoría de dependencias) en el security_reviewer, el cierre y el CI.
 
 ## Portabilidad local ↔ CI
 
@@ -2680,6 +2813,12 @@ resultado registrado. <RELLENAR: casos propios, p. ej. comportamiento en un
 dispositivo físico.> Nunca se declara verificado sin más.
 
 ## Pruebas con servicios reales (task humana)
+
+Solo si la feature conecta con servicios reales (despliegue, pagos, correo,
+APIs externas). Mirar la interfaz no es una task humana: lo cubren las
+capturas. Lección: en el piloto, nueve features seguidas se cerraron sin
+ejecutar su task humana, que el reviewer había revisado en cada IT1.
+<!-- ajuste-2026-10-10 -->
 
 La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
 
@@ -2717,6 +2856,7 @@ La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
       "<scope>/init.sh ejecuta tests, lint, formato, tipos, build, secretos y auditoria de dependencias, y se ha demostrado que cada paso sabe fallar (evidence.md)",
       "Un 'hola mundo' cruza la arquitectura de punta a punta (p. ej. interfaz -> API -> datos) y lo cubre un test",
       "<Cada supuesto de riesgo de progress/arranque.md, comprobado con una prueba minima; si alguno falla, se para y se vuelve a su fila del mapa>",
+      "El comando de mutantes de docs/<scope>/conventions.md corre sobre un fichero de una zona critica",
       "El CI pasa con bash init.sh --all"
     ]
   },
@@ -2767,15 +2907,25 @@ La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
 #   ./init.sh            el scope de la feature activa (scripts/state.py)
 #   ./init.sh --all      todos los scopes de harness.json
 #   ./init.sh --dry-run  solo anuncia el scope
+#   ./init.sh --rapido   tests, lint, formato y tipos; sin build, secretos ni
+#                        auditoria de dependencias (combinable con --all)
 set -euo pipefail
 cd "$(dirname "$0")"
 
 DRY=0
 ALL=0
-case "${1:-}" in
-  --dry-run) DRY=1 ;;
-  --all)     ALL=1 ;;
-esac
+# Leccion: cada agente ejecutaba init.sh completo varias veces por IT, con
+# install, build y auditorias que van a la red. Las vueltas del implementer
+# y del reviewer usan --rapido; el completo, el security_reviewer, el cierre
+# y el CI.
+export HARNESS_RAPIDO=""
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY=1 ;;
+    --all)     ALL=1 ;;
+    --rapido)  HARNESS_RAPIDO=1 ;;
+  esac
+done
 
 # El interprete lo elige scripts/py.sh (python3/python/py, el que arranque).
 PY="bash scripts/py.sh"
@@ -2792,7 +2942,7 @@ if [ -z "$SCOPES" ]; then
   exit 0
 fi
 
-echo "Scope activo: $SCOPES"
+echo "Scope activo: $SCOPES${HARNESS_RAPIDO:+ (rapido)}"
 [ "$DRY" -eq 1 ] && exit 0
 
 # Un stack sin init.sh se BLOQUEA, no se salta. Saltarlo daria un "TODO OK"
@@ -2845,7 +2995,7 @@ Borra las filas que no apliquen; añade las que falten.
 | Datos | almacenamiento, acceso u ORM, migraciones y formatos, copias | | | | | |
 | Seguridad | autenticación y autorización, secretos, zonas sensibles | | | | | |
 | Frontend | framework, enrutado, estado y caché, formularios, estilos, componentes, iconos, animación, gráficos, i18n, accesibilidad | | | | | |
-| Calidad | tests por capa, lint, formato, tipos, auditoría de dependencias | | | | | |
+| Calidad | tests por capa, lint, formato, tipos, auditoría de dependencias, **zonas críticas** y **herramienta de mutantes** para ellas | | | | | |
 | Operación | build, CI, despliegue y ramas, entornos, logs, coste | | | | | |
 
 ## Supuestos de riesgo
@@ -2929,6 +3079,10 @@ La configuración de las herramientas manda; esto explica el porqué.
 ## Herramientas
 <Tests · lint · formato · tipos · build · auditoría, con el comando.
 Casos donde el comprobador se queda corto y cómo se acota.>
+<Mutantes (zonas críticas, docs/verification.md): herramienta del stack y
+el comando para unos ficheros concretos, p. ej. `uv run mutmut run
+--paths-to-mutate <ficheros>`, `npx stryker run --mutate <ficheros>`,
+`cargo mutants --file <fichero>`. Lo usan implementer y reviewer igual.>
 
 ## Idioma
 <Código en … / prosa en … / nombres de test que describen comportamiento.>
@@ -2982,6 +3136,9 @@ echo "==> tests";        echo "<COMANDO_DE_TESTS>"         ; false  # sustituir 
 echo "==> lint";         echo "<COMANDO_DE_LINT>"
 echo "==> formato";      echo "<COMANDO_DE_FORMATO_EN_MODO_CHECK>"
 echo "==> tipos";        echo "<COMANDO_DE_TIPOS_QUE_FALLE_DE_VERDAD>"
+# Con `init.sh --rapido` (HARNESS_RAPIDO=1) se para aqui: lo de abajo es lento
+# o va a la red, y lo ejecutan el security_reviewer, el cierre y el CI.
+if [ -n "${HARNESS_RAPIDO:-}" ]; then echo "STACK OK (rapido)"; exit 0; fi
 echo "==> build";        echo "<COMANDO_DE_BUILD_SI_APLICA>"
 echo "==> secretos";     gitleaks detect --no-git --redact --config "$RAIZ/.gitleaks.toml" --source .
 echo "==> dependencias"; echo "<AUDITORIA_DE_DEPENDENCIAS_CON_UMBRAL>"
@@ -3079,9 +3236,9 @@ que no cuadraba con nada (piloto, 2026-10-03).
     bash scripts/py.sh scripts/agent_tokens.py <agent_id> --run 3
     bash scripts/py.sh scripts/agent_tokens.py --file <transcript.jsonl>
 
-Una ejecucion termina en su llamada a SubagentHandback; la siguiente
-empieza en la entrada posterior (el encargo o el SendMessage que la
-reanuda). Por cada ejecucion imprime `run,inicio,minutos,tokens,cache_read,skills`:
+Una ejecucion termina en su llamada a SubagentHandback o cuando llega otro
+mensaje al agente (el SendMessage que la reanuda): las versiones recientes
+de Claude Code no escriben SubagentHandback en el transcript. Por cada ejecucion imprime `run,inicio,minutos,tokens,cache_read,skills`:
 - tokens = input + cache_creation + output (lo nuevo de esa ejecucion);
 - cache_read = relecturas de cache (la mayor parte del gasto real);
 - skills = las invocadas con la herramienta Skill, separadas por `|`. Las
@@ -3139,6 +3296,9 @@ def ejecuciones(lineas) -> list[dict]:
             continue
         ts = e.get("timestamp")
         m = e.get("message") or {}
+        if e.get("type") == "user" and _es_mensaje(e) and usos:
+            cerrar()  # mensaje nuevo tras trabajo ya hecho: otra ejecucion
+            usos, skills, inicio, fin = {}, {}, None, None
         # Empieza en el encargo o el SendMessage, no en el resultado del
         # handback anterior: si no, los minutos cuentan la espera entre medias.
         if ts and not inicio and _es_mensaje(e):
@@ -3561,6 +3721,92 @@ if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
 ~~~~~~~
 
+### `scripts/metricas.py`
+
+~~~~~~~ fichero=scripts/metricas.py
+#!/usr/bin/env python3
+"""SubagentStop: anade a progress/metrics.csv la linea de la ejecucion que
+acaba de terminar.
+
+Antes la escribia el leader a mano tras cada agente: una llamada a
+agent_tokens.py y una edicion por ejecucion, en el contexto mas caro de
+todos (la sesion principal releia cada paso). Claude Code lanza este hook en
+cada ejecucion de un subagente, tambien al reanudarlo con SendMessage, con
+`agent_type` y `agent_transcript_path` (comprobado el 2026-10-10).
+
+- feature e IT: las que despacha state.py (IT 0 para spec_author y
+  explorer); con una auditoria pendiente, feature `audit`.
+- veredicto y causa: las lineas `Veredicto:` y `Causa:` de review.md o
+  security.md de esa IT.
+
+Nunca falla hacia fuera: un SubagentStop con codigo 2 impediria que el
+subagente terminara. Los errores van a stderr y el hook sale con 0.
+"""
+import csv
+import json
+import re
+import sys
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "scripts"))
+import agent_tokens  # noqa: E402
+import state  # noqa: E402
+
+_CAUSA = re.compile(r"^\W*Causa\W*(codigo|tests|spec|otro)\b", re.M | re.I)
+_REVISORES = {"reviewer": "review.md", "security_reviewer": "security.md"}
+
+
+def _roles() -> set[str]:
+    return {p.stem for p in (RAIZ / ".claude" / "agents").glob("*.md")} - {"leader"}
+
+
+def fila(entrada: dict) -> list[str] | None:
+    rol = entrada.get("agent_type") or ""
+    transcript = Path(entrada.get("agent_transcript_path") or "")
+    if rol not in _roles() or not transcript.is_file():
+        return None
+    runs = agent_tokens.ejecuciones(transcript.read_text(encoding="utf-8").splitlines())
+    if not runs:
+        return None
+    r = runs[-1]
+    estado = state.next_action()
+    feature = estado.get("feature", "-")
+    if estado.get("audits_pending") and rol == "security_reviewer":
+        feature, it = "audit", estado["audits_pending"][-1]
+    elif rol in {"spec_author", "explorer"}:
+        it = 0
+    else:
+        it = state._ultima_iteracion(feature) if feature != "-" else 0
+    veredicto = causa = ""
+    if rol in _REVISORES and feature not in {"-", "audit"}:
+        ruta = RAIZ / "progress" / feature / f"IT{it}" / _REVISORES[rol]
+        texto = ruta.read_text(encoding="utf-8", errors="replace") if ruta.is_file() else ""
+        m = state._VEREDICTO.search(texto)
+        veredicto = m.group(1).upper() if m else ""
+        c = _CAUSA.search(texto) if veredicto == "CHANGES_REQUESTED" else None
+        causa = c.group(1).lower() if c else ""
+    minutos = round((agent_tokens._hora(r["fin"]) - agent_tokens._hora(r["inicio"])).total_seconds() / 60)
+    return [r["inicio"][:10], feature, str(it), rol, str(r["tokens"]), str(r["cache_read"]),
+            str(minutos), veredicto, causa, "|".join(r["skills"])]
+
+
+def main() -> int:
+    try:
+        entrada = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace").lstrip("﻿"))
+        linea = fila(entrada)
+        if linea:
+            with (RAIZ / "progress" / "metrics.csv").open("a", encoding="utf-8", newline="") as f:
+                csv.writer(f, lineterminator="\n").writerow(linea)
+    except Exception as e:  # noqa: BLE001 - un fallo aqui no debe bloquear al subagente
+        print(f"metricas.py: {e}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+~~~~~~~
+
 ### `scripts/py.sh`
 
 ~~~~~~~ fichero=scripts/py.sh
@@ -3878,21 +4124,30 @@ def _despacho() -> dict:
     review = _veredicto(fid, it, "review.md")
     security = _veredicto(fid, it, "security.md")
 
-    if review is None:
-        return {**base, "action": "LANZAR_REVIEWER"}
-    if review == "CHANGES_REQUESTED":
-        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
-    if security is None:
-        return {**base, "action": "LANZAR_SECURITY_REVIEWER"}
-    if security == "CHANGES_REQUESTED":
-        # Un fix de seguridad puede alterar comportamiento ya aprobado
-        # funcionalmente, asi que se re-verifica el reviewer ANTES que seguridad.
+    # Tramo intermedio: solo el veto funcional. Leccion: en el piloto el
+    # security_reviewer paso 46 veces (una por tramo) y rechazo 2; revisa la
+    # feature entera al final.
+    if _tasks_pendientes(fid):
+        if review is None:
+            return {**base, "action": "LANZAR_REVIEWER"}
+        if review == "CHANGES_REQUESTED":
+            return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
+        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
+
+    # Ultimo tramo (o modo ligero): los dos vetos, en paralelo, sobre la misma
+    # IT. Cualquier rechazo re-verifica ambos: un arreglo puede romper lo que
+    # el otro aprobo.
+    if "CHANGES_REQUESTED" in (review, security):
         return {
             **base,
             "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY",
         }
-    if _tasks_pendientes(fid):
-        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
+    if review is None and security is None:
+        return {**base, "action": "LANZAR_REVIEWER_Y_SECURITY"}
+    if review is None:
+        return {**base, "action": "LANZAR_REVIEWER"}
+    if security is None:
+        return {**base, "action": "LANZAR_SECURITY_REVIEWER"}
     return {**base, "action": "LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE"}
 
 
@@ -4033,6 +4288,23 @@ def test_separa_ejecuciones_y_cuenta_cada_mensaje_una_vez():
     assert (r1["tokens"], r1["cache_read"], r1["skills"]) == (17, 150, ["migration"])
     assert (r2["tokens"], r2["cache_read"], r2["skills"]) == (8, 70, [])
     assert r2["inicio"] == "2026-10-10T11:00:00Z"
+
+
+def test_sin_handback_un_mensaje_nuevo_abre_otra_ejecucion():
+    # Leccion (2026-10-10): las versiones recientes no escriben
+    # SubagentHandback; una reanudacion se sumaba a la ejecucion anterior.
+    lineas = [
+        _l(type="user", timestamp="2026-10-10T10:00:00Z", message={"content": "encargo"}),
+        _uso("a", "2026-10-10T10:01:00Z", 10, 100),
+        _l(type="user", timestamp="2026-10-10T10:01:30Z",
+           message={"content": [{"type": "tool_result", "content": "ok"}]}),
+        _uso("b", "2026-10-10T10:02:00Z", 5, 50),
+        _l(type="user", timestamp="2026-10-10T10:30:00Z", message={"content": "reanuda"}),
+        _uso("c", "2026-10-10T10:31:00Z", 7, 70),
+    ]
+    r1, r2 = agent_tokens.ejecuciones(lineas)
+    assert (r1["tokens"], r1["cache_read"]) == (17, 150)
+    assert (r2["tokens"], r2["inicio"]) == (8, "2026-10-10T10:30:00Z")
 ~~~~~~~
 
 ### `tests/test_docs_changelog.py`
@@ -4480,6 +4752,88 @@ def test_un_scope_sin_init_sh_falla_en_vez_de_saltarselo():
     r = _init("--all")
     assert r.returncode != 0
     assert "FALTA" in r.stderr
+
+
+def test_rapido_se_anuncia_y_se_combina_con_dry_run():
+    r = _init("--rapido", "--dry-run")
+    assert r.returncode == 0, r.stderr
+    if "Scope activo" in r.stdout:
+        assert "(rapido)" in r.stdout
+
+
+def test_la_plantilla_de_stack_corta_lo_lento_en_modo_rapido():
+    texto = (RAIZ / "plantillas/stack/init.sh").read_text(encoding="utf-8")
+    corte = texto.index("HARNESS_RAPIDO")
+    for paso in ("==> build", "==> secretos", "==> dependencias"):
+        assert texto.index(paso) > corte, paso
+~~~~~~~
+
+### `tests/test_metricas.py`
+
+~~~~~~~ fichero=tests/test_metricas.py
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "scripts"))
+import metricas  # noqa: E402
+import state  # noqa: E402
+
+
+def _transcript(ruta: Path) -> Path:
+    lineas = [
+        {"type": "user", "timestamp": "2026-10-10T10:00:00Z", "message": {"content": "encargo"}},
+        {"type": "assistant", "timestamp": "2026-10-10T10:04:00Z", "message": {
+            "id": "a", "content": [], "usage": {"input_tokens": 10, "output_tokens": 2,
+                                                "cache_read_input_tokens": 300}}},
+    ]
+    ruta.write_text("\n".join(json.dumps(x) for x in lineas), encoding="utf-8")
+    return ruta
+
+
+@pytest.fixture
+def repo(tmp_path, monkeypatch):
+    for rol in ("leader", "implementer", "reviewer", "spec_author"):
+        (tmp_path / ".claude" / "agents").mkdir(parents=True, exist_ok=True)
+        (tmp_path / ".claude" / "agents" / f"{rol}.md").write_text("---\n---\n", encoding="utf-8")
+    (tmp_path / "progress" / "F01" / "IT2").mkdir(parents=True)
+    (tmp_path / "progress" / "arranque.md").write_text("Estado: APROBADO\n", encoding="utf-8")
+    (tmp_path / "feature_list.json").write_text(json.dumps([{
+        "id": "F01", "status": "in_progress", "sdd": True, "scope": ["a"]}]), encoding="utf-8")
+    monkeypatch.setattr(metricas, "RAIZ", tmp_path)
+    monkeypatch.setattr(state, "ROOT", tmp_path)
+    return tmp_path
+
+
+def test_fila_del_reviewer_con_veredicto_y_causa(repo):
+    (repo / "progress/F01/IT2/review.md").write_text(
+        "Veredicto: CHANGES_REQUESTED\nCausa: tests\n", encoding="utf-8")
+    fila = metricas.fila({"agent_type": "reviewer",
+                          "agent_transcript_path": str(_transcript(repo / "t.jsonl"))})
+    assert fila == ["2026-10-10", "F01", "2", "reviewer", "12", "300", "4",
+                    "CHANGES_REQUESTED", "tests", ""]
+
+
+def test_spec_author_va_en_la_it_0(repo):
+    fila = metricas.fila({"agent_type": "spec_author",
+                          "agent_transcript_path": str(_transcript(repo / "t.jsonl"))})
+    assert fila[1:4] == ["F01", "0", "spec_author"]
+
+
+def test_agentes_ajenos_al_harness_no_se_apuntan(repo):
+    assert metricas.fila({"agent_type": "Explore",
+                          "agent_transcript_path": str(_transcript(repo / "t.jsonl"))}) is None
+
+
+def test_el_hook_nunca_bloquea_al_subagente():
+    # Un SubagentStop con codigo 2 impediria que el subagente terminara.
+    r = subprocess.run([sys.executable, str(RAIZ / "scripts/metricas.py")],
+                       input=b"no es json", capture_output=True)
+    assert r.returncode == 0
 ~~~~~~~
 
 ### `tests/test_settings.py`
@@ -4534,6 +4888,7 @@ def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
     for revisor in ("reviewer", "security_reviewer"):
         assert "Veredicto: APPROVED" in _agente(revisor), revisor
         assert "Veredicto: CHANGES_REQUESTED" in _agente(revisor), revisor
+        assert "`Causa: codigo`" in _agente(revisor), revisor  # la lee metricas.py
     assert "## Sabotajes" in _agente("implementer")
     assert "SERVICIOS REALES" in _agente("spec_author")
     assert "Estado: APROBADO" in (RAIZ / ".claude/skills/arranque/SKILL.md").read_text(encoding="utf-8")
@@ -4754,12 +5109,38 @@ def test_sabotajes_en_evidence_cuentan(tmp_path, monkeypatch):
         ("progress/F01/IT1/impl.md", "informe"),
         ("progress/F01/IT1/evidence.md", "## Sabotajes\n| linea | test |"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
 
 
-def test_impl_sin_review_lanza_reviewer(tmp_path, monkeypatch):
+def test_ultimo_tramo_lanza_los_dos_vetos_en_paralelo(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [IMPL])
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
+
+
+def test_ultimo_tramo_con_security_hecho_lanza_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F],
+              [IMPL, ("progress/F01/IT1/security.md", "Veredicto: APPROVED")])
     assert state.next_action()["action"] == "LANZAR_REVIEWER"
+
+
+TRAMO_PENDIENTE = ("specs/F01/tasks.md", "- [x] **T1 — a**\n- [ ] **T2 — b**\n")
+
+
+def test_tramo_intermedio_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [IMPL, TRAMO_PENDIENTE])
+    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+
+
+def test_tramo_intermedio_aprobado_sigue_sin_security(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [
+        IMPL, TRAMO_PENDIENTE, ("progress/F01/IT1/review.md", "Veredicto: APPROVED")])
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"
+
+
+def test_tramo_intermedio_rechazado_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [
+        IMPL, TRAMO_PENDIENTE, ("progress/F01/IT1/review.md", "Veredicto: CHANGES_REQUESTED")])
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
 
 
 def test_review_approved_sin_security_lanza_security(tmp_path, monkeypatch):
@@ -4768,10 +5149,10 @@ def test_review_approved_sin_security_lanza_security(tmp_path, monkeypatch):
     assert state.next_action()["action"] == "LANZAR_SECURITY_REVIEWER"
 
 
-def test_review_rechazado_crea_siguiente_it(tmp_path, monkeypatch):
+def test_review_rechazado_en_el_ultimo_tramo_reverifica_ambos(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F],
               [IMPL, ("progress/F01/IT1/review.md", "Veredicto: CHANGES_REQUESTED")])
-    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
+    assert state.next_action()["action"] ==         "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY"
 
 
 def test_security_rechazado_reverifica_ambos(tmp_path, monkeypatch):
@@ -4857,7 +5238,7 @@ def test_sin_linea_de_veredicto_no_hay_veredicto(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [
         IMPL, ("progress/F01/IT1/review.md", "Borrador: todo parece APPROVED"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
 
 
 def test_task_de_tramo_sin_negrita_cuenta_como_pendiente(tmp_path, monkeypatch):

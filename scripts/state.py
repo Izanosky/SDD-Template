@@ -124,21 +124,30 @@ def _despacho() -> dict:
     review = _veredicto(fid, it, "review.md")
     security = _veredicto(fid, it, "security.md")
 
-    if review is None:
-        return {**base, "action": "LANZAR_REVIEWER"}
-    if review == "CHANGES_REQUESTED":
-        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
-    if security is None:
-        return {**base, "action": "LANZAR_SECURITY_REVIEWER"}
-    if security == "CHANGES_REQUESTED":
-        # Un fix de seguridad puede alterar comportamiento ya aprobado
-        # funcionalmente, asi que se re-verifica el reviewer ANTES que seguridad.
+    # Tramo intermedio: solo el veto funcional. Leccion: en el piloto el
+    # security_reviewer paso 46 veces (una por tramo) y rechazo 2; revisa la
+    # feature entera al final.
+    if _tasks_pendientes(fid):
+        if review is None:
+            return {**base, "action": "LANZAR_REVIEWER"}
+        if review == "CHANGES_REQUESTED":
+            return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
+        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
+
+    # Ultimo tramo (o modo ligero): los dos vetos, en paralelo, sobre la misma
+    # IT. Cualquier rechazo re-verifica ambos: un arreglo puede romper lo que
+    # el otro aprobo.
+    if "CHANGES_REQUESTED" in (review, security):
         return {
             **base,
             "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY",
         }
-    if _tasks_pendientes(fid):
-        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
+    if review is None and security is None:
+        return {**base, "action": "LANZAR_REVIEWER_Y_SECURITY"}
+    if review is None:
+        return {**base, "action": "LANZAR_REVIEWER"}
+    if security is None:
+        return {**base, "action": "LANZAR_SECURITY_REVIEWER"}
     return {**base, "action": "LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE"}
 
 

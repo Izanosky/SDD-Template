@@ -10,9 +10,9 @@ que no cuadraba con nada (piloto, 2026-10-03).
     bash scripts/py.sh scripts/agent_tokens.py <agent_id> --run 3
     bash scripts/py.sh scripts/agent_tokens.py --file <transcript.jsonl>
 
-Una ejecucion termina en su llamada a SubagentHandback; la siguiente
-empieza en la entrada posterior (el encargo o el SendMessage que la
-reanuda). Por cada ejecucion imprime `run,inicio,minutos,tokens,cache_read,skills`:
+Una ejecucion termina en su llamada a SubagentHandback o cuando llega otro
+mensaje al agente (el SendMessage que la reanuda): las versiones recientes
+de Claude Code no escriben SubagentHandback en el transcript. Por cada ejecucion imprime `run,inicio,minutos,tokens,cache_read,skills`:
 - tokens = input + cache_creation + output (lo nuevo de esa ejecucion);
 - cache_read = relecturas de cache (la mayor parte del gasto real);
 - skills = las invocadas con la herramienta Skill, separadas por `|`. Las
@@ -70,6 +70,9 @@ def ejecuciones(lineas) -> list[dict]:
             continue
         ts = e.get("timestamp")
         m = e.get("message") or {}
+        if e.get("type") == "user" and _es_mensaje(e) and usos:
+            cerrar()  # mensaje nuevo tras trabajo ya hecho: otra ejecucion
+            usos, skills, inicio, fin = {}, {}, None, None
         # Empieza en el encargo o el SendMessage, no en el resultado del
         # handback anterior: si no, los minutos cuentan la espera entre medias.
         if ts and not inicio and _es_mensaje(e):

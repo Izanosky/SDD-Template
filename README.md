@@ -138,6 +138,7 @@ MIT); ejecuta código descargado, así que con versión de más de 7 días.
 bash scripts/py.sh scripts/state.py   # qué feature toca y qué acción (JSON)
 bash init.sh                          # verifica el scope de la feature activa
 bash init.sh --all                    # verifica todos los stacks (lo usa el CI)
+bash init.sh --rapido                 # solo tests, lint, formato y tipos (vueltas de trabajo)
 bash scripts/py.sh scripts/skills.py  # skills sin clasificar o que faltan
 bash scripts/py.sh scripts/agent_tokens.py <agent_id> --run <n>   # consumo real de un agente
 bash scripts/py.sh -m pytest tests/ -q   # tests del harness

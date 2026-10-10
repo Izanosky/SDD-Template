@@ -28,11 +28,13 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 | `ARRANQUE` | `/arranque` con el humano (o lo retomas donde diga `progress/arranque.md`). Nada más hasta que lo apruebe |
 | `LANZAR_SPEC_AUTHOR` | `spec_author` sobre la feature |
 | `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste |
-| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
+| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Apuntas en `progress/current.md` "Base de <F>: <git rev-parse HEAD>" (el security_reviewer revisa desde ahí), creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
 | `REANUDAR_IMPLEMENTER` | La IT no tiene `impl.md`: reanudas al mismo agente (abajo); si ya no existe, uno nuevo en la misma carpeta |
 | `DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES` | Al mismo `implementer`, solo para la tabla |
-| `LANZAR_REVIEWER` / `LANZAR_SECURITY_REVIEWER` | Sobre la misma `IT<n>`, en ese orden |
-| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER[_Y_SECURITY]` | Nueva carpeta, `implementer` con los cambios pedidos; después `reviewer` (y `security_reviewer`): un arreglo de seguridad puede romper lo aprobado |
+| `LANZAR_REVIEWER` / `LANZAR_SECURITY_REVIEWER` | El que falta, sobre la misma `IT<n>` |
+| `LANZAR_REVIEWER_Y_SECURITY` | Último tramo: los dos **a la vez** (en paralelo, sin esperar uno al otro) sobre la misma `IT<n>`; espera a ambos antes de volver a `state.py` |
+| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER` | Tramo intermedio rechazado: nueva carpeta, `implementer` con los cambios pedidos; después `reviewer` |
+| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY` | Último tramo rechazado: nueva carpeta, `implementer`; después los dos en paralelo (un arreglo puede romper lo que el otro aprobó). Si el arreglo solo toca tests, díselo: su revisión es acotada |
 | `CREAR_IT<n>_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO` | Nueva carpeta para el tramo siguiente de `tasks.md`; díselo al `implementer` y a los revisores |
 | `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` | Cierre (ver "Modelos") |
 | `TODO_HECHO` | Propones `/retrospectiva` |
@@ -45,7 +47,12 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
   para dar destino a los hallazgos.
 - Tras cerrar una feature: si van **4 o más** cerradas desde la última
   carpeta de `progress/audits/`, o se cerró una fase, propón la auditoría.
-  Sin el sí del humano, no.
+  Sin el sí del humano, no. Y **propón `/clear`**: el estado está en disco y
+  el hook lo vuelve a inyectar. Lección: en el piloto la sesión principal
+  acumulaba 16-24 M de lecturas de caché por sesión, más que los revisores.
+- Un test intermitente visto por cualquier agente: lo apuntas en
+  `current.md` y va en el encargo de la siguiente IT (arreglarlo o ponerlo
+  en cuarentena con su motivo).
 
 ## Agente que vuelve sin terminar
 
@@ -69,17 +76,14 @@ feature.
 
 ## Métricas
 
-Al terminar cada agente, una línea en `progress/metrics.csv`:
-`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`.
-`veredicto` solo en revisores; `causa` solo en rechazos: `codigo`, `tests`
-(código bien, tests flojos), `spec` u `otro`. Una reanudación es otra línea.
-
-`tokens`, `cache_read`, `minutos` y `skills` (las invocadas, no las
-precargadas) salen de `bash scripts/py.sh scripts/agent_tokens.py
-<agent_id> --run <n>` (n = nº de ejecución de ese agente: 1 al lanzarlo, +1
-por cada reanudación), **nunca** del `subagent_tokens` del resultado de
-Agent: ese es el tamaño del contexto al terminar, arrastra las ejecuciones
-anteriores y no cuenta las relecturas de caché.
+Las escribe solo el hook `SubagentStop` (`scripts/metricas.py`): una línea
+por ejecución en `progress/metrics.csv`
+(`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`),
+con el consumo real leído del transcript y el veredicto y la causa de
+`review.md` o `security.md`. **No las escribes tú**; solo corriges una
+línea mal atribuida (p. ej. una auditoría). Nunca uses el `subagent_tokens`
+del resultado de Agent: es el tamaño del contexto al terminar, no lo
+gastado.
 
 ## Skills
 

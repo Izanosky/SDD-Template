@@ -17,6 +17,32 @@ Formato:
 - Cómo se medirá: <qué mirar en metrics.csv o en los veredictos, si aplica>
 ```
 
+## 2026-10-10 — Menos iteraciones: mutantes por stack, vetos al final y en paralelo
+- Ficheros: docs/verification.md, docs/specs.md
+- Antes → ahora: mutantes a criterio de cada rol en todo el código → la
+  herramienta de mutantes del stack, en zonas críticas, con el mismo comando
+  para implementer y reviewer (fuera de ellas, un test flojo es una
+  observación); TDD obligatorio → rojo demostrado por el mutante o el
+  sabotaje; security_reviewer en cada tramo y después del reviewer → solo en
+  el último tramo, en paralelo, sobre la feature entera; re-revisión
+  completa siempre → acotada si el arreglo solo toca tests; `init.sh`
+  completo en cada vuelta → `--rapido` para implementer y reviewer; tramos
+  sin límite → dos como mucho; tests intermitentes anotados → se arreglan
+  en la siguiente IT; task humana para mirar la interfaz → solo con
+  servicios reales
+- Por qué: piloto (Gestor): 42 de 44 primeras entregas rechazadas (31 por
+  `tests`); IT de corrección = 37 % del tiempo y 41 % de los tokens;
+  security 46 pasadas y 2 rechazos (131 min, 2,8 M tokens); 8 tests
+  intermitentes sin arreglar; 9 features seguidas sin task humana
+- Aprobado por: <humano>
+- Propagado a: scripts/state.py (vetos por tramo), scripts/metricas.py
+  (hook SubagentStop: el leader ya no escribe métricas), init.sh y
+  plantillas/stack/ (--rapido, comando de mutantes), .claude/agents/
+  (implementer, reviewer, security_reviewer, spec_author, leader),
+  .claude/skills/arranque, plantillas/arranque.md, HARNESS.md
+- Cómo se medirá: primeras entregas aprobadas, IT por feature y tokens por
+  feature en metrics.csv frente al piloto
+
 ## 2026-10-10 — Interfaz con dirección visual y capturas; skills precargadas
 - Ficheros: docs/specs.md, docs/verification.md, docs/README.md,
   docs/architecture.md, docs/adr/README.md (nuevo)

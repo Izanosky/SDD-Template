@@ -10,6 +10,7 @@
       "<scope>/init.sh ejecuta tests, lint, formato, tipos, build, secretos y auditoria de dependencias, y se ha demostrado que cada paso sabe fallar (evidence.md)",
       "Un 'hola mundo' cruza la arquitectura de punta a punta (p. ej. interfaz -> API -> datos) y lo cubre un test",
       "<Cada supuesto de riesgo de progress/arranque.md, comprobado con una prueba minima; si alguno falla, se para y se vuelve a su fila del mapa>",
+      "El comando de mutantes de docs/<scope>/conventions.md corre sobre un fichero de una zona critica",
       "El CI pasa con bash init.sh --all"
     ]
   },

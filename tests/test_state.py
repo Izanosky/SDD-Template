@@ -57,12 +57,38 @@ def test_sabotajes_en_evidence_cuentan(tmp_path, monkeypatch):
         ("progress/F01/IT1/impl.md", "informe"),
         ("progress/F01/IT1/evidence.md", "## Sabotajes\n| linea | test |"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
 
 
-def test_impl_sin_review_lanza_reviewer(tmp_path, monkeypatch):
+def test_ultimo_tramo_lanza_los_dos_vetos_en_paralelo(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [IMPL])
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
+
+
+def test_ultimo_tramo_con_security_hecho_lanza_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F],
+              [IMPL, ("progress/F01/IT1/security.md", "Veredicto: APPROVED")])
     assert state.next_action()["action"] == "LANZAR_REVIEWER"
+
+
+TRAMO_PENDIENTE = ("specs/F01/tasks.md", "- [x] **T1 — a**\n- [ ] **T2 — b**\n")
+
+
+def test_tramo_intermedio_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [IMPL, TRAMO_PENDIENTE])
+    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+
+
+def test_tramo_intermedio_aprobado_sigue_sin_security(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [
+        IMPL, TRAMO_PENDIENTE, ("progress/F01/IT1/review.md", "Veredicto: APPROVED")])
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"
+
+
+def test_tramo_intermedio_rechazado_solo_reviewer(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [F], [
+        IMPL, TRAMO_PENDIENTE, ("progress/F01/IT1/review.md", "Veredicto: CHANGES_REQUESTED")])
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
 
 
 def test_review_approved_sin_security_lanza_security(tmp_path, monkeypatch):
@@ -71,10 +97,10 @@ def test_review_approved_sin_security_lanza_security(tmp_path, monkeypatch):
     assert state.next_action()["action"] == "LANZAR_SECURITY_REVIEWER"
 
 
-def test_review_rechazado_crea_siguiente_it(tmp_path, monkeypatch):
+def test_review_rechazado_en_el_ultimo_tramo_reverifica_ambos(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F],
               [IMPL, ("progress/F01/IT1/review.md", "Veredicto: CHANGES_REQUESTED")])
-    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
+    assert state.next_action()["action"] ==         "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY"
 
 
 def test_security_rechazado_reverifica_ambos(tmp_path, monkeypatch):
@@ -160,7 +186,7 @@ def test_sin_linea_de_veredicto_no_hay_veredicto(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [
         IMPL, ("progress/F01/IT1/review.md", "Borrador: todo parece APPROVED"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
 
 
 def test_task_de_tramo_sin_negrita_cuenta_como_pendiente(tmp_path, monkeypatch):

@@ -54,5 +54,7 @@ que entró por otro lado, una ruta vieja que no conoce un rol nuevo).
    `informe.md` (≤ 200 líneas) a partir de su informe: hallazgos
    confirmados con gravedad y `archivo:línea`, los pendientes de validar
    aparte, y la ruta del informe original en `evidencia.md`.
-4. Línea en `progress/metrics.csv` con `feature = audit` e `it = <fecha>`.
+4. La línea de `progress/metrics.csv` la escribe el hook de métricas con
+   `feature = audit`; con los motores de la sesión principal no hay
+   subagente que la dispare: apúntala tú (`it = <fecha>`).
 5. Vuelve al primer apartado para dar destino a los hallazgos.

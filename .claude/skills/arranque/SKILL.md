@@ -83,7 +83,7 @@ las que no), en orden de dependencia:
 | Datos | almacenamiento o base de datos, ORM o acceso, migraciones y versionado de formatos, copias de seguridad |
 | Seguridad | autenticación y autorización, secretos, riesgos propios y zonas sensibles |
 | Frontend | framework, enrutado, estado y caché de datos, formularios, estilos, librería de componentes, iconos, animación, gráficos, i18n, accesibilidad |
-| Calidad | tests por capa (unidad, integración, extremo a extremo), lint, formato, tipos, auditoría de dependencias |
+| Calidad | tests por capa (unidad, integración, extremo a extremo), lint, formato, tipos, auditoría de dependencias, **zonas críticas** (dinero, datos, permisos, parsers…) y la **herramienta de mutantes** del stack para ellas |
 | Operación | build, CI, despliegue y ramas, entornos, logs y errores, coste |
 
 Cada fila con una **propuesta** y un **modo**:
@@ -149,7 +149,7 @@ Actualiza `progress/arranque.md` al cerrar cada bloque.
   con el toolchain y el cambio de stack, y necesitó 11 IT.
 - `harness.json` (scopes, secretos), el resto de `CLAUDE.md` (la tabla
   "Dónde vive cada pieza" enlaza a los ADR), `docs/security.md`,
-  `docs/verification.md`, `docs/<scope>/conventions.md` y
+  `docs/verification.md` (con las zonas críticas), `docs/<scope>/conventions.md` y
   `<scope>/init.sh` desde `plantillas/stack/`, las zonas sensibles de
   `.claude/agents/leader.md` y la entrada de `docs/CHANGELOG.md`.
 - **Skills según el stack**, propuestas al humano; con su sí, en `skills:`

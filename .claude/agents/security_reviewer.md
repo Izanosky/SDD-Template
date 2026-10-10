@@ -15,16 +15,23 @@ Veto **independiente y bloqueante**. **Nunca editas código.** Eres la
 
 ## Cuándo entras
 
-**Solo después de un `APPROVED` del `reviewer`** en la misma `IT<n>`
-(auditar código que aún puede cambiar es trabajo tirado). Si tu última
-revisión fue varias iteraciones atrás, revisas todo lo cambiado desde
-entonces.
+En el **último tramo** de la feature (o en modo ligero), **en paralelo con
+el `reviewer`** sobre la misma `IT<n>`: no lo esperas. Revisas **la feature
+entera**: el diff desde su commit base (lo apunta el leader en
+`progress/current.md`) más los ficheros nuevos sin seguimiento. Lección: en
+el piloto pasabas en cada tramo (46 veces) y rechazaste 2.
+
+En `n > 1`, si el diff de la IT solo cambia tests, lo confirmas en pocas
+líneas (sigue sin tocar producción, `init.sh` completo en verde) y
+apruebas; si toca producción, revisas lo cambiado desde tu última
+revisión.
 
 ## Protocolo
 
 1. `docs/security.md` y los `R<n>` de seguridad de la spec. Si no hay ninguno
    y la feature toca input, auth o datos, eso ya es un hallazgo.
-2. Ejecuta `init.sh` y **verifica** la salida del escáner de secretos y de la
+2. Ejecuta `bash init.sh` **completo** (eres el único rol que lo hace en
+   cada IT final) y **verifica** la salida del escáner de secretos y de la
    auditoría de dependencias (no la repites a mano).
 3. A mano, lo que ningún escáner cubre (lista en `docs/security.md`).
 4. **La configuración y las instrucciones también son código**: config del
@@ -57,7 +64,9 @@ exactamente:
 
 `Veredicto: APPROVED` o `Veredicto: CHANGES_REQUESTED`
 
-(`state.py` solo lee esa línea). Cada hallazgo con `archivo:línea`. Las
+(`state.py` solo lee esa línea). Con `CHANGES_REQUESTED`, otra línea
+propia `Causa: codigo` u `otro` (la lee el hook de métricas). Cada hallazgo
+con `archivo:línea`. Las
 observaciones que no bloquean van aparte y dicen **por qué** no bloquean.
 Tu criterio no se ajusta al del `reviewer`; eres el único dueño del bloque de
 seguridad de `CHECKPOINTS.md`, y tus hallazgos **nunca** se rebajan a

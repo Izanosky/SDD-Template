@@ -32,7 +32,10 @@ implementer *anexa* y nunca sobrescribe.
 
 **`tasks.md` — los pasos.** `T1`, `T2`… con sus `R<n>`; no repite el diseño.
 Con varios stacks o capas, agrupadas en **tramos** en orden de dependencia:
-cada tramo es una IT aprobada antes del siguiente. El tramo que crea o
+cada tramo es una IT aprobada antes del siguiente. **Dos tramos como mucho**
+(típicamente lógica y datos, después interfaz), salvo que haya más stacks:
+cada tramo es otro ciclo de implementación y revisión. <!-- ajuste-2026-10-10 -->
+El tramo que crea o
 cambia pantallas lleva `(interfaz)` en su cabecera: lo hace el
 `implementer_ui`, con capturas. <!-- ajuste-2026-10-10 --> Si hay servicios reales,
 la última es la **prueba humana**, con `ÚNICA TASK CON SERVICIOS REALES` en
@@ -76,8 +79,13 @@ la IT aparece una decisión de diseño de verdad, se pasa a `"sdd": true`.
 
 - Cada vuelta vive en `progress/<F>/IT<n>/` (la crea el leader). El número de
   carpetas es el contador de intentos.
-- `CHANGES_REQUESTED` → nueva IT. Un rechazo de seguridad re-verifica
-  **ambos** vetos.
+- **Los vetos**: en un tramo intermedio, solo el reviewer; en el último
+  tramo (o en modo ligero), reviewer y security_reviewer **en paralelo**
+  sobre la misma IT, y el security_reviewer revisa la feature entera desde
+  su commit base. Lección: en el piloto el security_reviewer pasó en cada
+  tramo (46 veces) y rechazó 2. <!-- ajuste-2026-10-10 -->
+- `CHANGES_REQUESTED` → nueva IT. En el último tramo, cualquier rechazo
+  re-verifica **ambos** vetos (acotados si el arreglo solo toca tests).
 - **Correcciones de texto al cerrar**: si el único problema es texto en
   `specs/` o `progress/`, el reviewer aprueba y lista cada corrección
   literal; se aplican en el cierre. Nunca para código, tests, dependencias

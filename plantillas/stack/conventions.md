@@ -11,6 +11,10 @@ La configuración de las herramientas manda; esto explica el porqué.
 ## Herramientas
 <Tests · lint · formato · tipos · build · auditoría, con el comando.
 Casos donde el comprobador se queda corto y cómo se acota.>
+<Mutantes (zonas críticas, docs/verification.md): herramienta del stack y
+el comando para unos ficheros concretos, p. ej. `uv run mutmut run
+--paths-to-mutate <ficheros>`, `npx stryker run --mutate <ficheros>`,
+`cargo mutants --file <fichero>`. Lo usan implementer y reviewer igual.>
 
 ## Idioma
 <Código en … / prosa en … / nombres de test que describen comportamiento.>

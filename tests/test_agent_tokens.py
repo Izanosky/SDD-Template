@@ -33,3 +33,20 @@ def test_separa_ejecuciones_y_cuenta_cada_mensaje_una_vez():
     assert (r1["tokens"], r1["cache_read"], r1["skills"]) == (17, 150, ["migration"])
     assert (r2["tokens"], r2["cache_read"], r2["skills"]) == (8, 70, [])
     assert r2["inicio"] == "2026-10-10T11:00:00Z"
+
+
+def test_sin_handback_un_mensaje_nuevo_abre_otra_ejecucion():
+    # Leccion (2026-10-10): las versiones recientes no escriben
+    # SubagentHandback; una reanudacion se sumaba a la ejecucion anterior.
+    lineas = [
+        _l(type="user", timestamp="2026-10-10T10:00:00Z", message={"content": "encargo"}),
+        _uso("a", "2026-10-10T10:01:00Z", 10, 100),
+        _l(type="user", timestamp="2026-10-10T10:01:30Z",
+           message={"content": [{"type": "tool_result", "content": "ok"}]}),
+        _uso("b", "2026-10-10T10:02:00Z", 5, 50),
+        _l(type="user", timestamp="2026-10-10T10:30:00Z", message={"content": "reanuda"}),
+        _uso("c", "2026-10-10T10:31:00Z", 7, 70),
+    ]
+    r1, r2 = agent_tokens.ejecuciones(lineas)
+    assert (r1["tokens"], r1["cache_read"]) == (17, 150)
+    assert (r2["tokens"], r2["inicio"]) == (8, "2026-10-10T10:30:00Z")

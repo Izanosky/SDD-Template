@@ -3,15 +3,25 @@
 #   ./init.sh            el scope de la feature activa (scripts/state.py)
 #   ./init.sh --all      todos los scopes de harness.json
 #   ./init.sh --dry-run  solo anuncia el scope
+#   ./init.sh --rapido   tests, lint, formato y tipos; sin build, secretos ni
+#                        auditoria de dependencias (combinable con --all)
 set -euo pipefail
 cd "$(dirname "$0")"
 
 DRY=0
 ALL=0
-case "${1:-}" in
-  --dry-run) DRY=1 ;;
-  --all)     ALL=1 ;;
-esac
+# Leccion: cada agente ejecutaba init.sh completo varias veces por IT, con
+# install, build y auditorias que van a la red. Las vueltas del implementer
+# y del reviewer usan --rapido; el completo, el security_reviewer, el cierre
+# y el CI.
+export HARNESS_RAPIDO=""
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY=1 ;;
+    --all)     ALL=1 ;;
+    --rapido)  HARNESS_RAPIDO=1 ;;
+  esac
+done
 
 # El interprete lo elige scripts/py.sh (python3/python/py, el que arranque).
 PY="bash scripts/py.sh"
@@ -28,7 +38,7 @@ if [ -z "$SCOPES" ]; then
   exit 0
 fi
 
-echo "Scope activo: $SCOPES"
+echo "Scope activo: $SCOPES${HARNESS_RAPIDO:+ (rapido)}"
 [ "$DRY" -eq 1 ] && exit 0
 
 # Un stack sin init.sh se BLOQUEA, no se salta. Saltarlo daria un "TODO OK"

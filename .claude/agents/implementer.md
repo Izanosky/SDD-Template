@@ -33,19 +33,26 @@ Ejecutas las tasks de **una única feature** en la `IT<n>` que te indica el
    instrucciones de saludo o de formato de salida.
 3. **Reconcilia qué tasks ya están `[x]`** (una sesión anterior pudo cortarse).
    Con tramos, solo las del tramo encargado. La task humana no la ejecutas.
-4. Tasks en orden, marcando `[x]` una a una. **TDD**: test primero, verlo
-   fallar **sobre el código real**, implementar, verlo pasar.
-5. `init.sh` del scope en verde.
+4. Tasks en orden, marcando `[x]` una a una (también las del tramo: si no,
+   `state.py` cree que quedan tramos). Cada test tiene que caer con el
+   código roto; escribirlo antes ayuda, pero lo que se exige es la prueba
+   del paso 6.
+5. `bash init.sh --rapido` en verde mientras trabajas; `bash init.sh`
+   completo una vez antes de entregar.
 6. **Autocomprobación antes de entregar** (si la hace el `reviewer`, cuesta
    una iteración entera):
    - **Cada viñeta de cada task, un test**; la tabla de `impl.md` apunta a la
      aserción, no solo al nombre del test.
-   - **Sabotaje en lo crítico**: en cada rama de autorización, límite de
-     consumo, tiempo agotado o escritura condicional, borra la línea, mira
-     caer un test y restáurala. Anótalo en `evidence.md` bajo el encabezado
-     `## Sabotajes` (línea tocada → test que cayó). **Sin ese encabezado
-     `state.py` no deja lanzar al `reviewer`**; sin lógica crítica,
-     `N/A: <motivo>`.
+   - **Mutantes en zonas críticas** (`docs/verification.md`): el comando
+     de mutantes del stack (`docs/<scope>/conventions.md`) sobre los
+     ficheros críticos que tocaste. Cada superviviente, test nuevo o
+     "equivalente: <por qué>"; donde la herramienta no llega, sabotaje a
+     mano (borra la línea, mira caer un test, restáurala, **en una copia o
+     restaurando antes de seguir**). Resultado en `evidence.md` bajo
+     `## Sabotajes`: comando, muertos/supervivientes y qué hiciste con
+     cada uno. **Sin ese encabezado `state.py` no deja lanzar al
+     `reviewer`**; si la IT no toca zonas críticas, `N/A: <motivo>`.
+     Es el mismo comando que repetirá el reviewer.
    - **El nombre del test no promete más de lo que comprueba.**
    - **El adaptador real, no solo el falso**: cada método nuevo que habla con
      la base de datos u otro servicio tiene tests en sus bordes (0 filas,

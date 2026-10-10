@@ -47,6 +47,7 @@ def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
     for revisor in ("reviewer", "security_reviewer"):
         assert "Veredicto: APPROVED" in _agente(revisor), revisor
         assert "Veredicto: CHANGES_REQUESTED" in _agente(revisor), revisor
+        assert "`Causa: codigo`" in _agente(revisor), revisor  # la lee metricas.py
     assert "## Sabotajes" in _agente("implementer")
     assert "SERVICIOS REALES" in _agente("spec_author")
     assert "Estado: APROBADO" in (RAIZ / ".claude/skills/arranque/SKILL.md").read_text(encoding="utf-8")

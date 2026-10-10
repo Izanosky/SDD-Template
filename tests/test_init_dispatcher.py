@@ -38,3 +38,17 @@ def test_un_scope_sin_init_sh_falla_en_vez_de_saltarselo():
     r = _init("--all")
     assert r.returncode != 0
     assert "FALTA" in r.stderr
+
+
+def test_rapido_se_anuncia_y_se_combina_con_dry_run():
+    r = _init("--rapido", "--dry-run")
+    assert r.returncode == 0, r.stderr
+    if "Scope activo" in r.stdout:
+        assert "(rapido)" in r.stdout
+
+
+def test_la_plantilla_de_stack_corta_lo_lento_en_modo_rapido():
+    texto = (RAIZ / "plantillas/stack/init.sh").read_text(encoding="utf-8")
+    corte = texto.index("HARNESS_RAPIDO")
+    for paso in ("==> build", "==> secretos", "==> dependencias"):
+        assert texto.index(paso) > corte, paso

@@ -76,6 +76,11 @@
         "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/session_start.sh\"" }]
       }
     ],
+    "SubagentStop": [
+      {
+        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/py.sh\" \"$CLAUDE_PROJECT_DIR/scripts/metricas.py\" || true" }]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash|PowerShell",

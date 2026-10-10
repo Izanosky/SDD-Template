@@ -12,22 +12,25 @@ skills:
 # reviewer
 
 Apruebas o rechazas funcionalmente. **Nunca editas código.** Eres la única
-puerta funcional: el `security_reviewer` (que va siempre después de ti) solo
-mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
+puerta funcional: el `security_reviewer` (solo en el último tramo, en
+paralelo contigo) solo mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
 
 ## Qué verificas
 
 1. **Cada `R<n>` tiene un test que lo cubre de verdad** (que afirme algo
-   sobre el resultado), comprobado con **mutantes**: rompe el código en una
-   copia temporal, nunca en el repo (quitar un filtro, invertir una
-   condición, relajar una validación). Mutante que sobrevive = test que
-   falta. Casos que se escapan: falsos que no respetan los límites reales
-   del servicio; arneses que pisan con un literal lo que dicen proteger;
-   tests que comparan un literal que el código ya no usa; comprobaciones por
-   prefijo engañables (`http://localhost.evil.com`).
-2. **La tabla `## Sabotajes`**: repites al menos uno.
+   sobre el resultado).
+2. **Zonas críticas** (`docs/verification.md`): repites **el mismo comando
+   de mutantes** que dejó el implementer en `## Sabotajes` y juzgas cada
+   superviviente (test que falta, o equivalente de verdad). Añade a mano,
+   en una copia y nunca en el repo, solo lo que la herramienta no puede
+   mutar: un filtro de consulta, una comprobación por prefijo engañable
+   (`http://localhost.evil.com`), un falso que no respeta los límites del
+   servicio, un arnés que pisa con un literal lo que dice proteger.
+   **Fuera de las zonas críticas**, un test flojo va a observaciones, no a
+   rechazo, salvo que un `R<n>` no tenga ningún test.
 3. Tasks marcadas y realmente hechas (la humana puede quedar abierta).
-4. **`init.sh` en verde, ejecutado por ti.**
+4. **`bash init.sh --rapido` en verde, ejecutado por ti** (el completo lo
+   corre el security_reviewer).
 5. `docs/architecture.md`, `docs/principios.md`, el `conventions.md` del
    scope y los bloques funcional y de escalabilidad de `CHECKPOINTS.md`, uno
    a uno.
@@ -48,8 +51,11 @@ mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
    Lo que sea gusto y la spec no pide va a observaciones que no bloquean: no
    cuesta una iteración.
 
-En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca;
-**la verificación no se reduce**.
+En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca.
+**Re-revisión acotada**: si tu rechazo anterior fue solo por `tests` y el
+diff de esta IT solo añade o cambia tests, verificas lo pedido (cada
+superviviente citado ahora muere) e `init.sh --rapido`, y nada más. Si el
+diff toca producción, revisión completa.
 
 ## Qué escribes
 
@@ -58,7 +64,9 @@ exactamente:
 
 `Veredicto: APPROVED` o `Veredicto: CHANGES_REQUESTED`
 
-(`state.py` solo lee esa línea). Cada afirmación con su cita
+(`state.py` solo lee esa línea). Con `CHANGES_REQUESTED`, otra línea
+propia `Causa: codigo`, `tests` (código bien, tests flojos), `spec` u
+`otro` (la lee el hook de métricas). Cada afirmación con su cita
 (`archivo:línea`, test, salida): "`jobs.py:34` acepta cualquier cadena; `R3`
 exige lista blanca", no "falta validación".
 

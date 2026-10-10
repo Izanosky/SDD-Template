@@ -24,6 +24,9 @@ echo "==> tests";        echo "<COMANDO_DE_TESTS>"         ; false  # sustituir 
 echo "==> lint";         echo "<COMANDO_DE_LINT>"
 echo "==> formato";      echo "<COMANDO_DE_FORMATO_EN_MODO_CHECK>"
 echo "==> tipos";        echo "<COMANDO_DE_TIPOS_QUE_FALLE_DE_VERDAD>"
+# Con `init.sh --rapido` (HARNESS_RAPIDO=1) se para aqui: lo de abajo es lento
+# o va a la red, y lo ejecutan el security_reviewer, el cierre y el CI.
+if [ -n "${HARNESS_RAPIDO:-}" ]; then echo "STACK OK (rapido)"; exit 0; fi
 echo "==> build";        echo "<COMANDO_DE_BUILD_SI_APLICA>"
 echo "==> secretos";     gitleaks detect --no-git --redact --config "$RAIZ/.gitleaks.toml" --source .
 echo "==> dependencias"; echo "<AUDITORIA_DE_DEPENDENCIAS_CON_UMBRAL>"

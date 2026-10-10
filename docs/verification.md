@@ -31,16 +31,43 @@ que con cierta configuración no comprueba nada; un test que compara un
 literal que el código ya no usa; un arnés que pisa con un literal el valor
 que dice proteger.
 
-## TDD, sabotajes y mutantes
+## Zonas críticas y mutantes <!-- ajuste-2026-10-10 -->
 
-- **TDD**: test primero, verlo fallar **sobre el código real** (no con un
-  script que imita el código viejo), implementar, verlo pasar.
-- **Sabotajes** (implementer): borrar la línea crítica, ver caer un test,
-  restaurar; encabezado `## Sabotajes` en `evidence.md`. `state.py` lo exige.
-- **Mutantes** (reviewer): romper el código en una copia temporal y exigir
-  que un test caiga. Mutante que sobrevive = test que falta.
+Lección del piloto: el reviewer rechazó 42 de 44 primeras entregas, casi
+siempre por un mutante que sobrevivía en una línea que el implementer no
+había saboteado; las IT de corrección fueron el 37 % del tiempo. Los dos
+usaban criterios distintos, y el mismo rigor en dinero que en una animación.
+
+**Zonas críticas** (las fija `/arranque`): <RELLENAR: p. ej. dinero y
+cálculos, escritura de datos y migraciones, autenticación y permisos,
+parsers y validación de entrada externa>.
+
+- **En zonas críticas, la herramienta de mutantes del stack** (decidida en
+  `/arranque`, comando en `docs/<scope>/conventions.md`) sobre los ficheros
+  críticos tocados en la IT. La pasa el implementer antes de entregar y la
+  repite el reviewer: **el mismo comando, el mismo criterio**. Cada
+  superviviente acaba en un test nuevo o en "equivalente: <por qué>". Donde
+  la herramienta no llega (una consulta, un filtro, configuración), un
+  sabotaje a mano: borrar la línea, ver caer un test, restaurar.
+- **Fuera de las zonas críticas**, un test de comportamiento por viñeta de
+  cada task. Un test flojo ahí es una observación del reviewer, no un
+  rechazo, salvo que un `R<n>` se quede sin ningún test.
+- Resultado en `evidence.md`, encabezado `## Sabotajes` (`state.py` lo
+  exige): comando, muertos/supervivientes y qué se hizo con cada
+  superviviente; `N/A: <motivo>` si la IT no toca zonas críticas.
+- **Rojo sobre el código real**: lo exigible es que el test caiga con el
+  código roto, y eso lo demuestran el mutante o el sabotaje. Escribir el
+  test antes es recomendable, no obligatorio (en el piloto no se cumplió y
+  no era lo que protegía).
 - **Revertir solo la línea de producción**: si hace falta revertir también
   el test o el arnés, el test no protegía nada.
+
+## Tests intermitentes
+
+Un test que falla a veces es un fallo, no ruido: el leader lo apunta y se
+arregla (o se pone en cuarentena con su motivo) en la siguiente IT de la
+feature en curso. Lección: en el piloto se anotaron ocho y nadie los
+arregló; cada uno costó repeticiones y desconfianza en los resultados.
 
 ## Interfaz: capturas <!-- ajuste-2026-10-10 -->
 
@@ -75,7 +102,14 @@ tramo `(interfaz)`:
   leader no abre `evidence.md`; los revisores, solo para cuestionar una
   prueba.
 - En `n > 1` se reduce el **contexto** (cambios pedidos, diff, ficheros
-  tocados), nunca el trabajo: `init.sh` completo y checkpoints uno a uno.
+  tocados). **Re-revisión acotada**: si el rechazo anterior fue solo por
+  `tests` y el diff de esta IT solo añade o cambia tests, se verifica lo
+  pedido (cada superviviente citado ahora muere) y `init.sh --rapido`; si
+  el diff toca producción, revisión completa.
+  <!-- ajuste-2026-10-10 -->
+- `init.sh --rapido` (tests, lint, formato, tipos) en las vueltas del
+  implementer y del reviewer; `init.sh` completo (build, secretos,
+  auditoría de dependencias) en el security_reviewer, el cierre y el CI.
 
 ## Portabilidad local ↔ CI
 
@@ -95,6 +129,12 @@ resultado registrado. <RELLENAR: casos propios, p. ej. comportamiento en un
 dispositivo físico.> Nunca se declara verificado sin más.
 
 ## Pruebas con servicios reales (task humana)
+
+Solo si la feature conecta con servicios reales (despliegue, pagos, correo,
+APIs externas). Mirar la interfaz no es una task humana: lo cubren las
+capturas. Lección: en el piloto, nueve features seguidas se cerraron sin
+ejecutar su task humana, que el reviewer había revisado en cada IT1.
+<!-- ajuste-2026-10-10 -->
 
 La revisa el reviewer **ya en IT1** y la ejecuta el humano al final.
 
