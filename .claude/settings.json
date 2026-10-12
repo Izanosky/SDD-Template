@@ -1,4 +1,7 @@
 {
+  "env": {
+    "PONYTAIL_SUBAGENT_MATCHER": "^(?!(implementer|reviewer|security_reviewer|explorer)$)"
+  },
   "permissions": {
     "deny": [
       "Read(**/.env)",
@@ -70,5 +73,27 @@
       "PowerShell(cargo add *)",
       "PowerShell(go get *)"
     ]
+  },
+  "skillOverrides": {
+    "property-based-testing": "name-only",
+    "web-design-guidelines": "name-only",
+    "migration": "name-only",
+    "surgical-patch": "name-only",
+    "make-interfaces-feel-better": "name-only",
+    "differential-review": "name-only",
+    "supply-chain-risk-auditor": "name-only",
+    "variant-analysis": "name-only",
+    "sharp-edges": "name-only",
+    "pick-ui-library": "name-only",
+    "ui-ux-pro-max": "name-only",
+    "architecture-decision-records": "name-only",
+    "council": "name-only",
+    "security-audit": "name-only",
+    "prd-securability-enhancement": "name-only",
+    "vercel-react-best-practices": "name-only",
+    "vercel-composition-patterns": "name-only",
+    "vercel-react-view-transitions": "name-only",
+    "modern-python": "name-only",
+    "investigate-first": "name-only"
   }
 }
