@@ -368,7 +368,8 @@ Según la sección 7 de `docs/proyecto.md`:
 La lista completa está en `docs/seguridad.md`.
 
 **Dos hooks lo hacen cumplir** (`.claude/hooks/`, ideas de ECC adoptadas
-tras el piloto; necesitan Python 3.10+):
+tras el piloto; necesitan bash, que en Windows es Git Bash, y Python
+3.10+):
 
 - `guard_shell.py`, antes de cada comando de terminal, **bloquea**:
   - leer un `.env` (salvo `.env.example`), volcar el entorno o expandir un
@@ -388,7 +389,9 @@ tras el piloto; necesitan Python 3.10+):
   tiende a relajar la regla en vez de arreglar el código.*
 
 Sin Python, el lanzador bloquea los comandos de terminal en vez de
-dejarlos pasar sin vigilar.
+dejarlos pasar sin vigilar. **Sin bash, en cambio, los hooks no llegan a
+ejecutarse y nada lo avisa**: si un comando que debería bloquearse (por
+ejemplo, `cat .env`) pasa, lo primero es comprobar `bash --version`.
 
 - **Los secretos no pasan por el contexto**: no se leen `.env` ni claves,
   no se imprimen y no se copian (`.claude/settings.json` lo bloquea). Un

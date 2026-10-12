@@ -23,7 +23,8 @@ saber qué hace la aplicación**.
 ## Cómo se pregunta
 
 Con el método de la skill **`entrevista`**: rondas sobre la frontera del
-árbol de decisiones, de como mucho 4 preguntas, cada una con tu
+árbol de decisiones, de como mucho 4 preguntas **por ronda** (no en total:
+las rondas siguen hasta que no quede nada abierto), cada una con tu
 recomendación y su porqué. Los hechos los buscas tú y las decisiones las
 toma el humano. Además:
 

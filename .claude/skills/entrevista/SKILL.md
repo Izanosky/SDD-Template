@@ -21,10 +21,13 @@ son las decisiones cuyos requisitos previos ya están resueltos, es decir,
 las que se pueden preguntar ahora sin adivinar respuestas que aún no has
 oído.
 
-- Cada ronda pregunta la frontera, **como mucho 4 preguntas**. *En un
-  piloto, una ronda con todas las decisiones acabó en respuestas de
-  "sigue".* Si la frontera es más grande, empieza por lo que más condiciona
-  al resto.
+- Cada ronda pregunta la frontera, **como mucho 4 preguntas por ronda**.
+  Es un tope por ronda, **no en total**: se hacen tantas rondas como haga
+  falta, hasta que no quede ninguna decisión abierta. *En un piloto, una
+  ronda con todas las decisiones a la vez acabó en respuestas de "sigue".*
+  Si la frontera es más grande, empieza por lo que más condiciona al resto
+  y deja lo demás para las rondas siguientes. Si el humano prefiere rondas
+  más largas o más cortas, se ajusta.
 - Una pregunta que depende de otra que sigue abierta en esta ronda va a la
   ronda siguiente, no a esta.
 - Cada respuesta cambia el árbol: recalcula la frontera antes de la

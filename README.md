@@ -15,9 +15,14 @@ en el arranque o se piden después.
 ## Requisitos
 
 - [Claude Code](https://code.claude.com/) y git.
-- Python 3.10+ y bash (en Windows, Git Bash) para los hooks. Sin Python, el
-  hook bloquea los comandos de terminal en lugar de dejarlos pasar sin
-  vigilar.
+- **bash** y **Python 3.10+** para los hooks. En Windows, bash es el de
+  [Git for Windows](https://git-scm.com/download/win) (Git Bash), y tiene
+  que estar en el PATH: compruébalo con `bash --version` en la terminal
+  donde abres Claude Code.
+  - **Sin bash, los hooks no llegan a ejecutarse** y Claude Code deja pasar
+    los comandos sin vigilar, sin avisar.
+  - Sin Python (con bash), el lanzador bloquea los comandos de terminal en
+    vez de dejarlos pasar.
 - Opcional: las skills de la tabla "Skills opcionales". Si una no está
   instalada, el harness funciona igual, sin ella.
 - Opcional, para las capturas de interfaz: el plugin oficial `playwright`
@@ -43,7 +48,10 @@ en el arranque o se piden después.
 
 `/arranque` es una entrevista con el método de la skill `entrevista`:
 
-- se pregunta por rondas, de como mucho 4 preguntas;
+- se pregunta por rondas de como mucho 4 preguntas **cada una**. No es un
+  límite total: hay tantas rondas como haga falta hasta que no queda
+  ninguna decisión abierta, y si prefieres rondas más largas o más cortas,
+  lo dices;
 - en cada ronda solo entra lo que ya se puede preguntar sin adivinar
   respuestas que aún no has dado;
 - cada pregunta trae la recomendación de Claude y su porqué;
