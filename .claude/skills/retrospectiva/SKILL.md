@@ -54,8 +54,14 @@ proyectos, también para el README de la plantilla.
 
 ## 2. El código
 
-- **Atajos**: busca la etiqueta `ATAJO:` y decide con el humano, para cada
-  uno, si se mantiene, se paga ya o pasa a ser una feature.
+- **Atajos y deuda**: busca la etiqueta `ATAJO:`, más los tests
+  intermitentes, las dependencias desfasadas y lo que esté en "Pendiente".
+  Ordénalos por **(impacto + riesgo) × (6 − esfuerzo)**, cada factor del 1
+  al 5, y decide con el humano, para cada uno, si se mantiene, se paga ya o
+  pasa a ser una feature. Si `engineering:tech-debt` está instalada, úsala
+  para el inventario: clasifica la deuda en seis tipos (código,
+  arquitectura, tests, dependencias, documentación, infraestructura) y
+  propone un plan por fases que convive con las features.
 - **Decisiones revisables** de `docs/proyecto.md` cuyo disparador ya se
   cumplió.
 - **Seguridad**: si hay 4 o más features cerradas desde la última

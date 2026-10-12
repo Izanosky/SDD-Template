@@ -28,6 +28,12 @@ un fallo, dinero o datos sensibles, presupuesto, plazos.>
 | Datos | | | |
 | Despliegue | | | |
 
+### Componentes, flujo de datos y carga
+
+<Con alcance compartido o producción: diagrama en texto de las piezas y
+lo que se dicen, y la estimación de carga (usuarios, peticiones en el pico,
+volumen de datos al año).>
+
 ### Supuestos de riesgo
 
 1. <Supuesto> — cómo lo comprueba la feature de andamiaje.

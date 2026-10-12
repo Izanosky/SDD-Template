@@ -207,6 +207,8 @@ la precarga.
 | `vercel-react-best-practices`, `vercel-composition-patterns`, `vercel-react-view-transitions` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills), MIT | `implementer`, si el stack es React | las propone el arranque |
 | `modern-python` | trailofbits/skills, CC BY-SA 4.0 | `implementer`, si el stack es Python | la propone el arranque |
 | `grill-me` | [mattpocock/skills](https://github.com/mattpocock/skills), MIT | — | base de `entrevista`; no hace falta instalarla |
+| `engineering:tech-debt`, `engineering:deploy-checklist` | plugin Engineering de Anthropic ([anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins), Apache-2.0) | `/retrospectiva`; antes de desplegar en producción | sin probar. `tech-debt` clasifica y prioriza la deuda mejor que la fórmula sola; `deploy-checklist` completa nuestros puntos de despliegue |
+| `engineering:architecture`, `engineering:system-design`, `engineering:debug` | el mismo plugin | fase 4 del arranque; fallos sin causa clara | sin probar; equivalen a `architecture-decision-records`, `catalogo.md` e `investigate-first` |
 
 **Sobre la evidencia**: las skills del `reviewer` y del
 `security_reviewer` dejaron rastro en sus veredictos, así que se sabe que
@@ -223,6 +225,13 @@ en los revisores.* Si no usas ponytail, la variable no hace nada.
 `npx ecc-agentshield@<versión fijada> scan`
 ([AgentShield](https://github.com/affaan-m/agentshield), MIT). Ejecuta código
 descargado: fija una versión con más de 7 días.
+
+El plugin Engineering se instala con `claude plugin marketplace add
+anthropics/knowledge-work-plugins` y `claude plugin install
+engineering@knowledge-work-plugins`. Sus otras skills (`code-review`,
+`testing-strategy`, `documentation`, `incident-response`, `standup`) no las
+usa el harness: solapan con los revisores y la fase 7, o quedan fuera del
+flujo.
 
 **Herramientas externas** para `/direccion-visual`: tus referencias pueden
 salir de [Refero](https://refero.design/), [Mobbin](https://mobbin.com/) o
@@ -262,7 +271,13 @@ Recopiladas en las pruebas. El incidente que motivó cada una está en
 - Tras el commit, se actualizan "Estado actual" y "Pendiente", y se propone
   `/clear`.
 - Auditoría completa cada 4 features o al cerrar una fase; retrospectiva al
-  final.
+  final, con la deuda ordenada por (impacto + riesgo) × (6 − esfuerzo).
+- En producción: diagrama de componentes y estimación de carga en el
+  arranque, y antes de cada despliegue, la vuelta atrás decidida de
+  antemano.
+- Cada vuelta, con el modelo que necesita: `opus` para construir y revisar
+  a fondo, `sonnet` para las revisiones acotadas y las correcciones
+  pequeñas, `haiku` para lo mecánico.
 
 **Agentes**
 

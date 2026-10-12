@@ -124,8 +124,20 @@ producto. Apunta también las **restricciones del entorno** (memoria del
 hosting, arranque en frío, cuotas, límites de los planes), cada una con su
 fecha y su fuente.
 
+Con alcance **compartido** o **producción**, cierra la fase con:
+
+- un **diagrama de componentes y flujo de datos** en texto (qué piezas hay,
+  qué se dicen y dónde viven los datos), para que el humano vea la
+  arquitectura de un vistazo;
+- una **estimación de carga** con números aunque sean gruesos (usuarios,
+  peticiones al día o por segundo en el pico, volumen de datos al año),
+  contrastada con las restricciones del entorno. Es lo que dice si un plan
+  gratuito aguanta o si hace falta caché o escalar.
+
 Si el humano quiere dejar constancia de las decisiones de arquitectura
-como ADR, usa `architecture-decision-records`.
+como ADR, usa `engineering:architecture` o `architecture-decision-records`,
+la que esté instalada. Para un diseño de sistema con más detalle (contratos
+de API, colas, reintentos, redundancia), `engineering:system-design`.
 
 ## 5. Librerías
 

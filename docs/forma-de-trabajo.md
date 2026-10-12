@@ -206,7 +206,8 @@ Todos, con el sí del humano.
   propone primero la pregunta, las fuentes y el coste, y el resultado queda
   en `docs/investigaciones/<tema>.md`.
 - **Un fallo sin causa clara** o un test intermitente se investiga antes de
-  tocar código (`investigate-first`, si está instalada).
+  tocar código: reproducir, aislar, diagnosticar y después arreglar
+  (`engineering:debug` o `investigate-first`, si alguna está instalada).
 - **Cambiar la forma de trabajo** (sección 7 de `docs/proyecto.md`): se
   apunta con su fecha y su motivo, para que la retrospectiva pueda ver si
   sirvió.
@@ -225,11 +226,48 @@ Todos, con el sí del humano.
   lo compensa. *En la prueba mínima, con Opus, el reviewer aprobó 5 de 7
   revisiones. En el piloto, con Sonnet, 47 de 96. Entre una prueba y otra
   cambiaron también las reglas, así que es un indicio, no una prueba.*
+- **Modelo por tipo de vuelta**: el encargo lo fija con el parámetro
+  `model` de la herramienta que lanza al agente.
+  - Implementación nueva, zonas críticas y seguridad: `opus`, el de su
+    definición.
+  - Revisión acotada (el rechazo anterior fue solo por tests) y vuelta de
+    corrección pequeña fuera de las zonas críticas: `sonnet`.
+  - Tareas mecánicas, como aplicar correcciones de texto ya decididas:
+    `haiku`, con el texto redactado por la sesión principal. *Un modelo que
+    no implementó rellena los huecos con lo que suena plausible.*
 - **`maxTurns`** en cada agente pone tope al gasto: 200 el implementer, 100
   los revisores y 60 el explorer. Si un agente llega al tope, se reanuda
   (arriba), no se sube el número a ciegas.
 - **`/clear` tras cada feature** y tras cada fase del arranque: todo el
   estado está en disco.
+
+### Antes de desplegar (alcance producción)
+
+La primera vez y en cada despliegue con migraciones o cambios de
+configuración, la sesión principal repasa con el humano:
+
+- **Antes**: el commit que se va a desplegar, las migraciones en orden (las
+  que añaden, antes que el código que las usa; las que quitan, después),
+  las variables y secretos ya puestos en el entorno, y una copia de los
+  datos si la migración los toca.
+- **La vuelta atrás, decidida antes de desplegar**: qué señal la dispara
+  (errores por encima de lo normal, una comprobación que falla) y cómo se
+  hace: la versión anterior, y qué pasa con una migración ya aplicada.
+- **Durante**: primero en un entorno de pruebas si existe, con una prueba
+  rápida de los recorridos clave; en producción, gradual si la plataforma
+  lo permite.
+- **Después**: comprobar qué commit está desplegado, una prueba rápida de
+  lo que cambió, y mirar los errores y la latencia durante unos 15 minutos
+  frente a los umbrales de vuelta atrás, que se fijan con números (por
+  ejemplo, tasa de errores o latencia por encima de lo normal).
+
+Si `engineering:deploy-checklist` está instalada, genera la lista
+completa; se le añaden los tres puntos de aquí que salen de incidentes
+reales (el orden de las migraciones, los secretos ya puestos y el commit
+desplegado).
+
+Queda como pasos copiables en la "Prueba con servicios reales" de la spec,
+sin pedir nunca un secreto.
 
 ### Lecciones del proyecto
 
