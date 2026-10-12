@@ -1,6 +1,6 @@
 # Catálogo: lo que se plantearía un equipo profesional
 
-Se lee en el paso 2 de `/arranque` con perfil **compartido** o
+Se lee en la fase 3 de `/arranque` cuando el alcance es **compartido** o
 **producción**. No es una lista que cumplir: sirve para que nada importante
 se quede sin pensar por no saber que existía. El humano no tiene por qué
 conocer estos temas; tú los traes.

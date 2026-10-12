@@ -7,27 +7,12 @@
 *.pem
 *.key
 
-# Entornos y dependencias
+# Dependencias y salidas de build (anade las de tu stack)
+node_modules/
 .venv/
 venv/
-node_modules/
 __pycache__/
-*.py[cod]
-
-# Salidas de build y caches
 dist/
 build/
 coverage/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Salidas de las herramientas de mutantes (docs/verification.md): copias del
-# codigo que no se commitean ni deben recoger los tests ni el lint.
-mutants/
-.mutmut-cache
-.stryker-tmp/
-reports/mutation/
-mutants.out*/
-
-# Anadir aqui lo propio de cada stack.
+.playwright-mcp/
