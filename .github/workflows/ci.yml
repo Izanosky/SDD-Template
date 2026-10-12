@@ -1,6 +1,9 @@
 name: CI
 on: [push, pull_request]
 
+# Opcional: /arranque lo deja o lo borra segun el perfil del proyecto. Un
+# rojo aqui avisa al humano; no bloquea el trabajo del harness.
+
 # Solo verifica: nada que desplegar ni ningun secreto que leer.
 permissions:
   contents: read
@@ -21,7 +24,10 @@ jobs:
       # Toolchains de cada stack. Fijar versiones: un CI que cambia de
       # comportamiento porque alguien publico una release no verifica lo mismo
       # dos veces seguidas.
+      # Sin `version`, la action instala el ultimo uv publicado (leccion del
+      # piloto: choco con la politica de antiguedad de dependencias).
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0 (harness en Python)
+        with: { version: "0.11.21" }
       # - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       #   with: { node-version: 24, cache: npm, cache-dependency-path: <stack>/package-lock.json }
       # - <otras toolchains>
@@ -41,9 +47,10 @@ jobs:
       - name: Secretos en el historial
         run: gitleaks detect --redact --config .gitleaks.toml
 
-      # La misma regla que el pre-commit, para quien no lo active o use
-      # --no-verify. Sin base (rama nueva) no hay rango que comparar.
+      # Lo mismo que el pre-commit, y como alli solo avisa: es costumbre del
+      # harness, no una regla dura. Sin base (rama nueva) no hay rango.
       - name: docs/ con su entrada en docs/CHANGELOG.md
+        continue-on-error: true
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |

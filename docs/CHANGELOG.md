@@ -1,7 +1,7 @@
 # Cambios en docs/
 
-Una entrada por cambio, la más reciente arriba. **Obligatoria**: el
-pre-commit y el CI rechazan un cambio en `docs/` que no toque este fichero.
+Una entrada por cambio, la más reciente arriba. El pre-commit (y el CI, si
+lo hay) avisa de un cambio en `docs/` que no toque este fichero.
 Junto a la regla cambiada, la marca `<!-- ajuste-AAAA-MM-DD -->`, para que la
 retrospectiva pueda medir si sirvió.
 
@@ -16,6 +16,79 @@ Formato:
 - Propagado a: <CLAUDE.md, .claude/agents/x.md, CHECKPOINTS.md…> o "nada: <motivo>"
 - Cómo se medirá: <qué mirar en metrics.csv o en los veredictos, si aplica>
 ```
+
+## 2026-10-12 — Perfil del proyecto, CI opcional y el harness al servicio del humano
+- Ficheros: docs/CHANGELOG.md, docs/security.md, docs/README.md
+- Antes → ahora: HARNESS.md y su test viajaban al proyecto y ponían el CI
+  en rojo cada vez que se adaptaba un fichero → `/arranque` los borra en el
+  paso 0. El CI era obligatorio → lo decide el perfil (personal, compartido,
+  producción) y un rojo avisa sin bloquear. El CHANGELOG de `docs/` lo
+  exigían el pre-commit y el CI → avisan. `CLAUDE.md` separa las reglas
+  duras (no se relajan) de lo que es "por defecto" (lo cambia el humano, y
+  el leader propone cambiarlo cuando estorba). `/arranque` pasa a ser una
+  entrevista con recomendación en cada pregunta y trae `catalogo.md`
+  (caché, pooling, escalado, observabilidad…) para los perfiles compartido
+  y producción
+- Por qué: en el piloto el CI fallaba por HARNESS.md desfasado, y el
+  harness se vivía como una atadura en lugar de como una ayuda
+- Aprobado por: humano (2026-10-12)
+- Propagado a: CLAUDE.md, .claude/agents/leader.md,
+  .claude/skills/arranque/ (SKILL.md, catalogo.md), plantillas/arranque.md,
+  .githooks/pre-commit, .github/workflows/ci.yml, feature_list.json,
+  tests/test_docs_changelog.py, HARNESS.md
+- Cómo se medirá: en el próximo proyecto, número de fallos de CI o del
+  pre-commit que no fueran del producto, y preguntas del arranque que el
+  humano respondió con "no lo sé" (tienen que salir con recomendación)
+
+## 2026-10-11 — Seguridad en serie, tras el reviewer
+- Ficheros: docs/specs.md
+- Antes → ahora: en el último tramo, reviewer y security_reviewer en
+  paralelo sobre cada IT → primero el reviewer; el security_reviewer solo
+  sobre una IT que el reviewer aprobó (sigue siendo solo en el último
+  tramo). Cualquier rechazo abre una IT que vuelve a pasar por el reviewer
+- Por qué: en el piloto el reviewer rechazó 49 de 96 revisiones; en
+  paralelo, la mitad de las pasadas de seguridad (~61 k tokens cada una)
+  caían en IT que iban a rehacerse, para ganar unos 3 minutos
+- Aprobado por: autor de la plantilla
+- Propagado a: scripts/state.py (y sus tests), .claude/agents/leader.md,
+  reviewer.md, security_reviewer.md, plantillas/stack/conventions.md,
+  HARNESS.md
+- Cómo se medirá: `comparar.py`, "Pasadas del security_reviewer" por
+  feature frente a la línea base
+
+## 2026-10-11 — Foto del árbol por IT y quién ejecuta `init.sh` completo
+- Ficheros: docs/specs.md, docs/verification.md
+- Antes → ahora: el security_reviewer revisaba "desde su commit base"
+  (`git rev-parse HEAD`) → desde la foto de `IT1` (`scripts/foto.sh`, un
+  árbol de git con lo no seguido, sin commits); `init.sh` completo "en el
+  security_reviewer, el cierre y el CI" → en el implementer antes de
+  entregar (ya lo pedía su definición), el security_reviewer y el CI (el
+  cierre solo edita texto)
+- Por qué: las IT no se commitean, así que "el diff de la IT" no existía
+  (piloto F08 IT4: el reviewer no pudo comparar con IT3); la base fallaba
+  sin commits y arrastraba la feature anterior si no se había commiteado
+- Aprobado por: autor de la plantilla
+- Propagado a: .claude/agents/leader.md, reviewer.md, security_reviewer.md,
+  CHECKPOINTS.md, init.sh, HARNESS.md
+- Cómo se medirá: rechazos con causa `otro` por diffs mal leídos
+
+## 2026-10-11 — Copias, procesos y cambios de rumbo sin pisar a nadie
+- Ficheros: docs/verification.md
+- Antes → ahora: sin regla sobre el scratchpad, las copias ni los procesos
+  → cada agente en `<scratchpad>/<F>-IT<n>-<rol>/`, copias sin enlaces a
+  `node_modules`/`.venv` (o el enlace se quita antes de borrar), procesos
+  por PID (el hook bloquea matar por nombre y reescribir la historia).
+  Fuera de docs/: IT descartable con `descartada.md` y reabrir una `done`
+  como feature nueva (leader.md, state.py)
+- Por qué: piloto (Gestor): `mut.py` pisado entre agentes (F13a IT2),
+  junction a `node_modules` a un `rm -rf` de vaciarlo (F12 IT5),
+  `taskkill` de todos los `node` (F03 IT6), IT de un framework abandonado
+  sin forma de descartarla (F01 IT4), F13a reabierta a mano
+- Aprobado por: autor de la plantilla
+- Propagado a: .claude/agents/leader.md, scripts/guard_secrets.py,
+  scripts/state.py, plantillas/stack/conventions.md (carpeta de trabajo de
+  los mutantes fuera de tests y lint), .gitignore, HARNESS.md
+- Cómo se medirá: en `para_la_plantilla.md`, ningún caso nuevo de esos
 
 ## 2026-10-10 — Menos iteraciones: mutantes por stack, vetos al final y en paralelo
 - Ficheros: docs/verification.md, docs/specs.md
@@ -34,7 +107,7 @@ Formato:
   `tests`); IT de corrección = 37 % del tiempo y 41 % de los tokens;
   security 46 pasadas y 2 rechazos (131 min, 2,8 M tokens); 8 tests
   intermitentes sin arreglar; 9 features seguidas sin task humana
-- Aprobado por: <humano>
+- Aprobado por: autor de la plantilla
 - Propagado a: scripts/state.py (vetos por tramo), scripts/metricas.py
   (hook SubagentStop: el leader ya no escribe métricas), init.sh y
   plantillas/stack/ (--rapido, comando de mutantes), .claude/agents/
@@ -62,7 +135,7 @@ Formato:
   en 110 ejecuciones del implementer, interfaces "hechas con IA" (paleta
   índigo y tarjetas por defecto) y fallos visuales encontrados por el humano
   (F03 T8, F09, InvestmentsPanel)
-- Aprobado por: <humano>
+- Aprobado por: autor de la plantilla
 - Propagado a: .claude/agents/ (implementer_ui nuevo, implementer,
   reviewer, security_reviewer, spec_author, explorer, leader),
   .claude/skills/ (arranque y direccion-visual nuevas, auditoria-seguridad,
@@ -82,13 +155,13 @@ Formato:
 - Por qué: delante de la feature en curso quedaban dos en curso (rompe
   test_como_mucho_una_feature_en_curso); sin etiqueta fija la retrospectiva
   no puede encontrar los atajos
-- Aprobado por: <humano>
+- Aprobado por: autor de la plantilla
 - Propagado a: .claude/skills/auditoria-seguridad/SKILL.md,
   .claude/skills/retrospectiva/SKILL.md, HARNESS.md
 
-## <AAAA-MM-DD> — Creación de docs/ desde la plantilla
+## <RELLENAR: AAAA-MM-DD> — Creación de docs/ desde la plantilla
 - Ficheros: todos los de docs/
 - Antes → ahora: — → reglas iniciales del harness
 - Por qué: arranque del proyecto
-- Aprobado por: <humano>
+- Aprobado por: <RELLENAR: humano>
 - Propagado a: nada: es el punto de partida

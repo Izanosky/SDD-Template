@@ -18,6 +18,10 @@ busca sus líneas `Veredicto:` y abre uno concreto solo para explicar un caso
 raro (una feature con muchas IT, una causa `otro`) o para comprobar una
 regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
 
+- **Contra una línea base** (otro proyecto, o el mismo antes de un cambio):
+  `bash scripts/py.sh scripts/comparar.py <base.csv>` da primeras entregas
+  aprobadas, rechazos por causa, peso de las IT de corrección, pasadas del
+  security_reviewer, coste por feature y el implementer por modelo.
 - Iteraciones por feature y **causa de cada rechazo** (`codigo`, `tests`,
   `spec`, `otro`). Qué tipo de rechazo cuesta más tokens.
 - **Cada ajuste del CHANGELOG, si sirvió**: compara `metrics.csv` antes y
@@ -57,14 +61,14 @@ regla candidata a quitar (abajo): ahí busca el fallo que esa regla evita.
 - **Atajos**: busca la etiqueta `ATAJO:` (`docs/principios.md`) en el
   código. Para cada uno: mantener, pagarlo ya o convertirlo en feature.
 - **Sobreingeniería**, solo si el humano lo pide (recorre el repo entero):
-  `/ponytail-audit` si está instalada (devuelve una lista ordenada de qué
+  `/ponytail:ponytail-audit` si está instalada (devuelve una lista ordenada de qué
   borrar o simplificar); si no, lanza `explorer` con el encargo "código que
   sobra: abstracciones con una sola implementación, código muerto, lo que
   ya hace la librería estándar o una dependencia instalada". El resultado va
   a `progress/explore_sobreingenieria.md`; aquí, solo su resumen.
 - **Código frente a specs**, al cerrar una fase y solo con el sí del humano
   (lanza un agente por requisito: es cara):
-  `/spec-to-code-compliance:spec-compliance` sobre las specs de la fase. Sus
+  `/spec-to-code-compliance:spec-to-code-compliance` sobre las specs de la fase. Sus
   divergencias confirmadas se tratan como hallazgos de auditoría (feature
   nueva o línea de `acceptance`).
 

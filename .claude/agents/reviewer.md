@@ -7,13 +7,14 @@ maxTurns: 100
 skills:
   - property-based-testing
   - web-design-guidelines
+  - ponytail:ponytail-review
 ---
 
 # reviewer
 
 Apruebas o rechazas funcionalmente. **Nunca editas código.** Eres la única
-puerta funcional: el `security_reviewer` (solo en el último tramo, en
-paralelo contigo) solo mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
+puerta funcional: el `security_reviewer` (solo en el último tramo, después
+de tu `APPROVED`) solo mira seguridad, así que lo funcional que se te escape no lo mira nadie más.
 
 ## Qué verificas
 
@@ -42,7 +43,7 @@ paralelo contigo) solo mira seguridad, así que lo funcional que se te escape no
 8. **Tramo de interfaz**: abre las capturas de `## Capturas` en `impl.md`
    (Read las muestra). Bloqueas solo por fallos que se ven: texto cortado o
    solapado, desalineado, contraste insuficiente, un estado roto con los
-   datos de peor caso, o algo que contradice
+   datos de peor caso, valores fuera de los tokens o algo que contradice
    `docs/<scope>/direccion-visual.md`. Sin capturas y sin motivo,
    `CHANGES_REQUESTED`.
 9. **Skills precargadas, solo para verificar** lo que piden la spec,
@@ -50,8 +51,18 @@ paralelo contigo) solo mira seguridad, así que lo funcional que se te escape no
    propiedades, `web-design-guidelines` como lista objetiva de interfaz.
    Lo que sea gusto y la spec no pide va a observaciones que no bloquean: no
    cuesta una iteración.
+10. **Sobreingeniería** con `ponytail-review`, solo sobre el diff de la IT:
+   lo que reinventa la librería estándar o una dependencia ya instalada,
+   abstracciones con una sola implementación, configuración que nunca
+   cambia. Va a una sección `## Sobra` de observaciones **que no
+   bloquean**, salvo que contradiga `docs/principios.md`. Nunca cuentan
+   como sobra los tests, sabotajes o validaciones que pide el harness.
+   Ignora su formato de salida: el tuyo es `review.md`.
 
-En `n > 1` lees los cambios pedidos, el diff contra `IT<n-1>` y lo que toca.
+**Qué cambió en la IT**: `git diff "$(cat progress/<F>/IT<n>/base)"
+"$(bash scripts/foto.sh)" -- . ':!progress'` (las IT no se commitean; la
+`base` la deja el leader al crear la carpeta). En `n > 1` lees los cambios
+pedidos, ese diff y lo que toca.
 **Re-revisión acotada**: si tu rechazo anterior fue solo por `tests` y el
 diff de esta IT solo añade o cambia tests, verificas lo pedido (cada
 superviviente citado ahora muere) e `init.sh --rapido`, y nada más. Si el

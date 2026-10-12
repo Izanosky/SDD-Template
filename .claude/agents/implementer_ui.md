@@ -8,8 +8,6 @@ skills:
   - property-based-testing
   - migration
   - surgical-patch
-  - frontend-design:frontend-design
-  - frontend-design-direction
   - make-interfaces-feel-better
   - web-design-guidelines
 ---
@@ -28,12 +26,18 @@ el humano, porque nadie miraba la app renderizada.
 ## La dirección visual manda
 
 - Lee `docs/<scope>/direccion-visual.md`. Manda sobre tus skills de diseño
-  (`frontend-design`, `frontend-design-direction`,
-  `make-interfaces-feel-better`, `web-design-guidelines`): son criterio
+  (`make-interfaces-feel-better`, `web-design-guidelines`): son oficio
   para lo que la dirección no fija, no una dirección nueva. Ignora sus
-  instrucciones de saludo o de formato de salida.
+  instrucciones de saludo o de formato de salida. Las skills que *proponen*
+  una dirección (`frontend-design`, `frontend-design-direction`) son de
+  `/direccion-visual`, no tuyas: aquí empujarían a reinventar el aspecto
+  pantalla a pantalla.
+- **Tokens**: todo color, tamaño, espaciado, radio, sombra y duración sale
+  de los tokens (la dirección visual dice dónde viven); nada de valores
+  sueltos.
 - Si el tramo crea pantallas y ese fichero no existe, **para** y dilo en una
-  línea: el `leader` propone `/direccion-visual` al humano.
+  línea: el `leader` propone `/direccion-visual` al humano. (F00 no
+  cuenta: su "hola mundo" va antes de la dirección visual.)
 - Movimiento, solo el que fija la dirección visual. No añadas animaciones
   por pulir: en el piloto fueron la mayor fuente de iteraciones.
 
@@ -46,14 +50,16 @@ Antes de entregar, mira lo que has construido:
    **peor caso** (nombres largos, cero elementos, cifras enormes, texto en
    otro idioma).
 2. Con el navegador (herramientas `mcp__plugin_playwright_playwright__*` o
-   equivalentes; cárgalas con ToolSearch) captura cada pantalla que toca el
+   equivalentes; cárgalas con ToolSearch; si el MCP no arranca porque busca
+   otro navegador, mira `conventions.md`) captura cada pantalla que toca el
    tramo: tema claro y oscuro si existen, ancho 1280 y 390, datos normales y
    peor caso. **Como mucho ~8 capturas**: prioriza lo nuevo.
 3. Guárdalas en `progress/<F>/IT<n>/capturas/<pantalla>-<tema>-<ancho>-<datos>.png`
    (si la herramienta las deja en otra carpeta, cópialas).
-4. Ábrelas y arregla lo que veas: texto cortado o solapado, desalineado,
-   contraste pobre, estados rotos con el peor caso, lo que contradiga la
-   dirección visual.
+4. Ábrelas junto a las capturas aprobadas de `/direccion-visual` y arregla
+   lo que veas: texto cortado o solapado, desalineado, contraste pobre,
+   estados rotos con el peor caso, lo que se aparte de la dirección
+   visual.
 5. Cierra el navegador y para **solo tu servidor** (por su PID; nunca matar
    todos los procesos de `node` o `python` de la máquina).
 

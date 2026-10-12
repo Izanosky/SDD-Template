@@ -19,4 +19,4 @@ No contiene reglas: dice dónde está cada una. Cada rol lee solo lo suyo.
 | ¿Auditorías completas? | `progress/audits/` y la skill `/auditoria-seguridad` |
 | ¿Coste de cada agente y causa de cada rechazo? | `progress/metrics.csv` |
 | ¿Retrospectiva? | skill `/retrospectiva` |
-| ¿Por qué el harness es así? ¿Cómo se reconstruye? | `HARNESS.md` (ningún agente lo carga al trabajar) |
+| ¿Por qué el harness es así? ¿Cómo se reconstruye? | `HARNESS.md` del repo de la plantilla; en el proyecto lo borra `/arranque` (ningún agente lo carga al trabajar) |

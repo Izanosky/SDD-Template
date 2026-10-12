@@ -35,6 +35,16 @@ def _roles() -> set[str]:
     return {p.stem for p in (RAIZ / ".claude" / "agents").glob("*.md")} - {"leader"}
 
 
+def _ultima_it_escrita() -> tuple[str, int] | None:
+    its = [d for d in (RAIZ / "progress").glob("*/IT*")
+           if d.is_dir() and re.fullmatch(r"IT\d+", d.name)]
+    if not its:
+        return None
+    reciente = max(its, key=lambda d: max([f.stat().st_mtime for f in d.iterdir()]
+                                          + [d.stat().st_mtime]))
+    return reciente.parent.name, int(reciente.name[2:])
+
+
 def fila(entrada: dict) -> list[str] | None:
     rol = entrada.get("agent_type") or ""
     transcript = Path(entrada.get("agent_transcript_path") or "")
@@ -51,7 +61,9 @@ def fila(entrada: dict) -> list[str] | None:
     elif rol in {"spec_author", "explorer"}:
         it = 0
     else:
-        it = state._ultima_iteracion(feature) if feature != "-" else 0
+        # La IT que el agente acaba de escribir, no la que despacha state.py:
+        # el cierre marca `done` y state.py ya apunta a la feature siguiente.
+        feature, it = _ultima_it_escrita() or (feature, 0)
     veredicto = causa = ""
     if rol in _REVISORES and feature not in {"-", "audit"}:
         ruta = RAIZ / "progress" / feature / f"IT{it}" / _REVISORES[rol]
@@ -62,7 +74,7 @@ def fila(entrada: dict) -> list[str] | None:
         causa = c.group(1).lower() if c else ""
     minutos = round((agent_tokens._hora(r["fin"]) - agent_tokens._hora(r["inicio"])).total_seconds() / 60)
     return [r["inicio"][:10], feature, str(it), rol, str(r["tokens"]), str(r["cache_read"]),
-            str(minutos), veredicto, causa, "|".join(r["skills"])]
+            str(minutos), veredicto, causa, "|".join(r["skills"]), r["modelo"]]
 
 
 def main() -> int:

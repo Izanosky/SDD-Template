@@ -12,9 +12,15 @@ La configuración de las herramientas manda; esto explica el porqué.
 <Tests · lint · formato · tipos · build · auditoría, con el comando.
 Casos donde el comprobador se queda corto y cómo se acota.>
 <Mutantes (zonas críticas, docs/verification.md): herramienta del stack y
-el comando para unos ficheros concretos, p. ej. `uv run mutmut run
---paths-to-mutate <ficheros>`, `npx stryker run --mutate <ficheros>`,
-`cargo mutants --file <fichero>`. Lo usan implementer y reviewer igual.>
+el comando para unos ficheros concretos, p. ej. `npx stryker run --mutate
+<ficheros>`, `cargo mutants --file <fichero>`; en Python, `mutmut run`
+(3.x: ficheros en `[tool.mutmut] paths_to_mutate` de `pyproject.toml`) **no
+funciona en Windows nativo** (comprobado 2026-10-11): ahí, `cosmic-ray`
+(8.x: `cosmic-ray init cr.toml s.sqlite && cosmic-ray exec cr.toml s.sqlite
+&& cr-report s.sqlite`), que muta el fichero en sitio mientras corre:
+siempre en una copia del scope. Lo usan implementer y reviewer igual.
+Su carpeta de trabajo (`mutants/`, `.stryker-tmp/`…) fuera de la recogida
+de tests y del lint.>
 
 ## Idioma
 <Código en … / prosa en … / nombres de test que describen comportamiento.>

@@ -21,6 +21,8 @@ def test_extraer_reconstruye_el_setup_identico(tmp_path):
     esperados = [p.relative_to(RAIZ).as_posix() for p in harness_bundle.ficheros()]
     assert sorted(escritos) == sorted(esperados)
     for ruta in esperados:
+        if ruta in harness_bundle.VOLATILES:
+            continue
         original = harness_bundle._normal((RAIZ / ruta).read_text(encoding="utf-8"))
         assert (tmp_path / ruta).read_text(encoding="utf-8") == original, ruta
 
@@ -32,6 +34,18 @@ def test_un_cambio_sin_regenerar_se_detecta(tmp_path, monkeypatch):
                      encoding="utf-8")
     monkeypatch.setattr(harness_bundle, "GUIA", copia)
     assert harness_bundle.main(["--check"]) == 1
+
+
+def test_lo_vivo_de_progress_no_desfasa_el_documento(tmp_path, monkeypatch):
+    # Leccion del piloto: cada linea de metrics.csv dejaba HARNESS.md desfasado.
+    # Un disco distinto de la semilla equivale a una semilla distinta del disco.
+    copia = tmp_path / "HARNESS.md"
+    copia.write_text((RAIZ / "HARNESS.md").read_text(encoding="utf-8")
+                     .replace("fichero=progress/metrics.csv\n",
+                              "fichero=progress/metrics.csv\nlinea de otro proyecto\n", 1),
+                     encoding="utf-8")
+    monkeypatch.setattr(harness_bundle, "GUIA", copia)
+    assert harness_bundle.main(["--check"]) == 0
 
 
 def test_solo_entra_el_harness_y_nunca_lo_ignorado(tmp_path, monkeypatch):

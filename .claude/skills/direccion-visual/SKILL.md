@@ -1,78 +1,85 @@
 ---
 name: direccion-visual
-description: Decide la direccion visual del proyecto (paleta, tipografia, componentes, iconos, graficos, movimiento) con el humano y deja docs/<scope>/direccion-visual.md y una maqueta aprobada. Antes de la primera feature con pantallas, o para redisenar. Solo la sesion principal (leader).
+description: Decide con el humano la direccion visual del proyecto (librerias de interfaz, tokens, tipografia, movimiento) a partir de referencias reales que aporta el humano y de tres direcciones comparadas, y deja docs/<scope>/direccion-visual.md, los tokens en el stack y las capturas aprobadas. Tras F00 y antes de la primera feature con pantallas, o para redisenar. Solo la sesion principal (leader).
 ---
 
 # Dirección visual
 
-Lección del piloto: la paleta salió de páginas de marketing y de la paleta
-por defecto de Tailwind (índigo, Inter, todo en tarjetas iguales), quedó
-congelada como `R<n>` de la spec y las pantallas "se notaban hechas con IA".
-Nadie con criterio de diseño decidió nada, y nadie miró la app renderizada
-hasta que lo hizo el humano.
+Lecciones:
+- Piloto: la paleta salió de páginas de marketing y de los valores por
+  defecto (índigo, Inter, tarjetas iguales) y las pantallas "se notaban
+  hechas con IA".
+- Banco de pruebas (2026-10-11): con "evita lo genérico" como único
+  criterio salió una propuesta distinta pero amateur (fuente rara en todo,
+  cifras en monoespaciada, fondo tintado, muchos colores saturados).
+  Faltaban un listón y opciones entre las que elegir.
 
-Se hace una vez, en la sesión principal (tiene las skills de diseño y puede
-enseñar la maqueta), y se repite solo para rediseñar.
+Va **después de F00** (el framework ya está instalado) y antes de la
+primera feature con pantallas; se repite solo para rediseñar. Objetivo:
+**profesional antes que original**. Lo distintivo, en uno o dos detalles;
+el resto, contención.
 
-## 1. Contexto
+## 1. Contexto, primero para el humano
 
-- Lee `CLAUDE.md` y `docs/<scope>/conventions.md`: qué es, quién lo usa,
-  con qué frecuencia (herramienta diaria u ocasional), en qué dispositivo y
-  con qué stack de interfaz.
-- **Si ya hay interfaz**, captúrala (MCP de Playwright) e invoca
-  `redesign-existing-projects` para listar los patrones genéricos que tiene.
+Lee `CLAUDE.md`, `progress/arranque.md` y el `acceptance` de la primera
+feature con interfaz. **Antes de preguntar**, cuéntale en 3-4 líneas qué es
+el producto, qué pantallas vienen y qué queda fuera. Si ya hay interfaz,
+captúrala.
 
-## 2. Preguntas (5-8, cada una con recomendación)
+## 2. Referencias: las aporta el humano
 
-Tono (denso y tranquilo, editorial, expresivo…), referentes que le gustan y
-que no, claro/oscuro, densidad, **presupuesto de movimiento** (ninguno, solo
-respuesta a acciones, una transición por vista…), librería de componentes
-(invoca `pick-ui-library`), iconos, gráficos si hay datos, fuentes (con
-licencia y servidas en local si hay CSP).
+**Sin referencias no se propone nada.** Pídele 3-6 capturas de productos
+reales que le parezcan profesionales y del mismo tipo (sector, plataforma,
+densidad): de Refero, Mobbin o apps que use. Las guarda en
+`docs/<scope>/direccion-visual/referencias/`. Si el MCP de Refero está
+conectado, puedes proponerle candidatas, pero elige él.
 
-## 3. Propuesta
+De cada una, una línea: qué se toma (escala tipográfica, espaciado, cuánto
+color y dónde, cómo muestra cifras y listas, densidad) y qué no.
 
-Invoca `frontend-design:frontend-design` y `frontend-design-direction`;
-usa `ui-ux-pro-max` (`--design-system`, y `--domain color` o `typography`)
-para paletas y parejas de fuentes. Redacta:
+## 3. Preguntas, pocas y con recomendación
 
-- 4-6 colores con nombre y hex, en claro y oscuro, con su contraste;
-- tipografías y sus papeles, escala;
-- concepto de layout con un boceto ASCII y la densidad;
-- principios: qué hace única a esta interfaz y qué se evita.
+Tono, claro/oscuro, densidad, cuánto movimiento y las **librerías de
+interfaz**: componentes, iconos, animación y fuentes (licencia; servidas en
+local si hay CSP). El arranque fijó el framework; estas se eligen aquí, con
+las referencias delante (`pick-ui-library`). Cada dependencia, con el sí
+del humano y a "Stack y librerías" de `docs/architecture.md`.
 
-**Revísala contra los valores por defecto** antes de enseñarla (lista de
-`frontend-design`: acento índigo o violeta, tarjetas iguales con la misma
-sombra, crema con serif y terracota, negro con verde ácido, etiquetas en
-mayúsculas…). Lo que salga igual que para cualquier otro proyecto, se
-cambia y se dice por qué. Una alternativa contrastada, como mucho.
+## 4. Tres direcciones, y elige el humano
 
-## 4. Maqueta
+- **Con Google Stitch** (stitch.withgoogle.com, a mano, lo maneja el
+  humano): redacta un prompt por dirección para la pantalla principal, con
+  contenido real (normal y peor caso), las referencias como imágenes y las
+  restricciones. Tres direcciones de verdad distintas (densidad, jerarquía,
+  uso del color), no tres paletas. El humano elige y guarda en
+  `docs/<scope>/direccion-visual/stitch/` las capturas y el `DESIGN.md` de
+  la elegida. El HTML que exporta es referencia, no código del producto.
+- **Sin Stitch**: las haces tú como miniaturas HTML
+  (`frontend-design:frontend-design`, `ui-ux-pro-max` para paletas y
+  fuentes) y se las enseñas juntas.
 
-Un HTML estático con la pantalla principal y datos verosímiles (incluido un
-caso de peor caso: nombre largo, lista vacía) en
-`docs/<scope>/direccion-visual/maqueta.html`. Captúrala en claro y oscuro y
-enséñasela al humano. Como mucho tres vueltas; luego se decide.
+Antes de enseñarlas, descarta lo que tenga **señales de amateur**: fuente
+"con personalidad" en todo el texto, fondo de página tintado, muchos colores
+saturados, cifras en monoespaciada en lugar de números tabulares, dos
+fuentes expresivas compitiendo, insignias repetidas en cada fila.
 
 ## 5. Qué deja escrito
 
-`docs/<scope>/direccion-visual.md` (≤ 150 líneas), que leen
-`implementer_ui`, `reviewer` y `spec_author`:
-
-- propósito y tono; tokens (tabla claro/oscuro); tipografía; layout y
-  densidad;
-- componentes: librería y reglas (p. ej. nada de tarjetas dentro de
-  tarjetas);
-- iconos y gráficos;
-- **movimiento**: qué se anima, qué no, duraciones;
-- **prohibido**: los valores por defecto descartados en el paso 3;
-- las capturas aprobadas, en `docs/<scope>/direccion-visual/`.
-
-Además:
-- `docs/<scope>/conventions.md` tiene el comando del **modo de datos falsos**
-  y el juego de **peor caso** (`plantillas/stack/conventions-web.md`); si
-  aún no existen, va como `acceptance` de la primera feature con interfaz.
-- Si se eligió la API View Transitions con React, propón precargar
-  `vercel-react-view-transitions` en el `implementer_ui`.
-- Entrada en `docs/CHANGELOG.md` (es un cambio en `docs/`), con el
-  "Aprobado por" del humano.
+- **Los tokens, en un único sitio y en la forma nativa del stack** (tema de
+  la librería de componentes, variables CSS, configuración de Tailwind…):
+  colores claro/oscuro con su contraste, tipografía y escala, espaciado,
+  radios, sombras y duraciones. Las pantallas no usan valores sueltos.
+- `docs/<scope>/direccion-visual.md` (≤ 120 líneas), que leen
+  `spec_author`, `implementer_ui` y `reviewer`: propósito y tono, las
+  referencias y qué se toma de cada una, dónde viven los tokens y el papel
+  de cada uno (los valores no se copian), tipografía, layout y densidad,
+  reglas de componentes, movimiento (qué, cuándo, duraciones) y lo
+  prohibido.
+- Las capturas aprobadas de la pantalla principal (claro y oscuro, 1280 y
+  390 px, normal y peor caso) en `docs/<scope>/direccion-visual/`.
+- En `docs/<scope>/conventions.md`, el comando del modo de datos falsos con
+  su peor caso.
+- Si el MCP del navegador no arranca (p. ej. busca Chrome y solo hay Edge),
+  configúralo para el navegador instalado (Playwright: `--browser msedge`)
+  y anótalo en `conventions.md`.
+- Entrada en `docs/CHANGELOG.md`, con el "Aprobado por" del humano.

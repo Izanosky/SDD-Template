@@ -61,6 +61,15 @@ parsers y validación de entrada externa>.
   no era lo que protegía).
 - **Revertir solo la línea de producción**: si hace falta revertir también
   el test o el arnés, el test no protegía nada.
+- **Copias y sabotajes, cada agente en su carpeta**:
+  `<scratchpad>/<F>-IT<n>-<rol>/`. El scratchpad es compartido; lección:
+  el implementer pisó el `mut.py` del reviewer y este corrió la lista
+  ajena. <!-- ajuste-2026-10-11 -->
+- **Una copia no enlaza las dependencias del repo** (`node_modules`,
+  `.venv`): un `rm -rf` de la copia puede atravesar el enlace y vaciar el
+  original. Si enlazas, quita el enlace antes de borrar la copia.
+- **Procesos, por su PID**: el hook bloquea matar por nombre (lección: un
+  `taskkill /IM node.exe` mató todos los `node` de la máquina).
 
 ## Tests intermitentes
 
@@ -109,7 +118,7 @@ tramo `(interfaz)`:
   <!-- ajuste-2026-10-10 -->
 - `init.sh --rapido` (tests, lint, formato, tipos) en las vueltas del
   implementer y del reviewer; `init.sh` completo (build, secretos,
-  auditoría de dependencias) en el security_reviewer, el cierre y el CI.
+  auditoría de dependencias) en el implementer antes de entregar, el security_reviewer y el CI.
 
 ## Portabilidad local ↔ CI
 

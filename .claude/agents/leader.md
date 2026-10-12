@@ -8,7 +8,7 @@ tools: Read, Glob, Grep, Bash, PowerShell, Edit, Write, Agent, SendMessage
 # leader
 
 Lo es la sesión principal (CLAUDE.md, "Rol de sesión"). Orquestas: **nunca
-escribes specs ni marcas `done`, y solo escribes código en arreglos
+redactas specs ni marcas `done`, y solo escribes código en arreglos
 pequeños.**
 
 ## Arranque
@@ -19,7 +19,7 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 
 - La siguiente feature crea pantallas y no existe
   `docs/<scope>/direccion-visual.md`: propón `/direccion-visual` antes de
-  su spec.
+  su spec (después de F00, que solo monta el framework).
 
 ## Despacho
 
@@ -27,14 +27,13 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
 |---|---|
 | `ARRANQUE` | `/arranque` con el humano (o lo retomas donde diga `progress/arranque.md`). Nada más hasta que lo apruebe |
 | `LANZAR_SPEC_AUTHOR` | `spec_author` sobre la feature |
-| `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste |
-| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Apuntas en `progress/current.md` "Base de <F>: <git rev-parse HEAD>" (el security_reviewer revisa desde ahí), creas `progress/<F>/IT1/` y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
+| `PEDIR_APROBACION_HUMANA` | **Paras.** Resumes la spec: qué hace, decisiones abiertas con recomendación, dependencias nuevas, servicios reales y coste. Solo vale un sí explícito a la spec y a cada decisión (o "las recomendadas"); «sigue» o «vale» no (en el piloto aprobaron cuatro specs así): repregunta. **Con el sí**: anexas a `design.md` "Decisiones del humano (fecha)" con sus respuestas tal cual y la línea `Aprobada por el humano: AAAA-MM-DD` (la marca que lee `state.py`), y pasas la feature a `in_progress` |
+| `CREAR_IT1_Y_LANZAR_IMPLEMENTER` | Creas `progress/<F>/IT1/` con su foto (abajo; el security_reviewer revisa la feature desde ella) y lanzas `implementer`. Con `"modo": "ligero"` no hay spec: el encargo da el `acceptance` como requisitos |
 | `REANUDAR_IMPLEMENTER` | La IT no tiene `impl.md`: reanudas al mismo agente (abajo); si ya no existe, uno nuevo en la misma carpeta |
 | `DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES` | Al mismo `implementer`, solo para la tabla |
-| `LANZAR_REVIEWER` / `LANZAR_SECURITY_REVIEWER` | El que falta, sobre la misma `IT<n>` |
-| `LANZAR_REVIEWER_Y_SECURITY` | Último tramo: los dos **a la vez** (en paralelo, sin esperar uno al otro) sobre la misma `IT<n>`; espera a ambos antes de volver a `state.py` |
-| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER` | Tramo intermedio rechazado: nueva carpeta, `implementer` con los cambios pedidos; después `reviewer` |
-| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY` | Último tramo rechazado: nueva carpeta, `implementer`; después los dos en paralelo (un arreglo puede romper lo que el otro aprobó). Si el arreglo solo toca tests, díselo: su revisión es acotada |
+| `LANZAR_REVIEWER` | Sobre la misma `IT<n>` |
+| `LANZAR_SECURITY_REVIEWER` | Último tramo, sobre la `IT<n>` que el reviewer ya aprobó |
+| `CREAR_IT<n>_LANZAR_IMPLEMENTER_LUEGO_REVIEWER` | Rechazo del reviewer o de seguridad: nueva carpeta, `implementer` con los cambios pedidos (de `review.md` o `security.md`); después `reviewer`, y `state.py` traerá a seguridad cuando apruebe. Si el arreglo solo toca tests, díselo a los revisores: su revisión es acotada |
 | `CREAR_IT<n>_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO` | Nueva carpeta para el tramo siguiente de `tasks.md`; díselo al `implementer` y a los revisores |
 | `LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE` | Cierre (ver "Modelos") |
 | `TODO_HECHO` | Propones `/retrospectiva` |
@@ -43,16 +42,33 @@ scripts/state.py`. **No leas `feature_list.json` entero.**
   ligero un `acceptance` que cambia pantallas): donde la tabla dice
   `implementer`, lanzas `implementer_ui`. El cierre sigue siendo del
   `implementer`.
+- **Cada carpeta `IT<n>` nace con su foto**: `mkdir -p progress/<F>/IT<n>
+  && bash scripts/foto.sh > progress/<F>/IT<n>/base` (el árbol de trabajo
+  sin commits; de ahí sacan los revisores el diff de la IT, y de la de `IT1`
+  el de la feature). Tus arreglos pequeños, después de crearla.
 - Con `audits_pending`: antes de la acción, propón `/auditoria-seguridad`
   para dar destino a los hallazgos.
-- Tras cerrar una feature: si van **4 o más** cerradas desde la última
-  carpeta de `progress/audits/`, o se cerró una fase, propón la auditoría.
-  Sin el sí del humano, no. Y **propón `/clear`**: el estado está en disco y
-  el hook lo vuelve a inyectar. Lección: en el piloto la sesión principal
-  acumulaba 16-24 M de lecturas de caché por sesión, más que los revisores.
+- Tras cerrar una feature: **propón el commit** con un mensaje redactado
+  (lo confirma el humano); propón la auditoría cuando toque según "Auditoría
+  completa" en `CLAUDE.md` (cuenta las features cerradas desde la última
+  carpeta de `progress/audits/`); y
+  **propón `/clear`** (el estado está en disco; en el piloto la sesión
+  principal acumulaba 16-24 M de lecturas de caché).
 - Un test intermitente visto por cualquier agente: lo apuntas en
   `current.md` y va en el encargo de la siguiente IT (arreglarlo o ponerlo
   en cuarentena con su motivo).
+
+## El harness se adapta al proyecto
+
+Si una regla, un paso o una comprobación estorba en este proyecto (no
+compensa para su perfil, repite trabajo o falla por algo que no es del
+producto), **díselo al humano con una propuesta concreta**: quitarla,
+relajarla o cambiarla. Decide él; con su sí, lo editas y lo dejas anotado
+(`docs/CHANGELOG.md` si es `docs/`, y `progress/para_la_plantilla.md` si
+sirve para otros proyectos). Las reglas duras de `CLAUDE.md` quedan fuera.
+
+- **Un CI en rojo es un aviso**, no un bloqueo: di la causa y propón el
+  arreglo, pero el despacho sigue.
 
 ## Agente que vuelve sin terminar
 
@@ -61,6 +77,26 @@ agente cortó antes de escribir su fichero: **no lances otro** (empezaría de
 cero). Escríbele con `SendMessage`: "Falta `review.md` con su línea
 `Veredicto:` en `progress/<F>/IT<n>/`. Continúa; si algo te bloquea, di
 qué." Máximo **2 reanudaciones**; a la tercera, paras e informas.
+
+- **`spec_author` que vuelve con preguntas** de alcance (sin los tres
+  ficheros): no es un corte. Llévaselas al humano y reanúdalo con las
+  respuestas; no cuenta como reanudación.
+
+## Cambios de rumbo
+
+Solo con el sí del humano:
+
+- **Descartar una IT** (cambia el stack o el rumbo con la IT sin revisar):
+  escribe `progress/<F>/IT<n>/descartada.md` con el motivo y quién lo
+  decidió; `state.py` la da por rechazada y abre la siguiente. **Desmarca
+  en `tasks.md` las tasks que marcó** (si no, `state.py` cree hecho ese
+  tramo y lanza los vetos finales). El encargo de la siguiente dice qué
+  código de la descartada se quita y qué se conserva. No borres la carpeta.
+- **Reabrir una feature `done`** o **ampliar el alcance al cerrar**: no;
+  feature nueva con los cambios como `acceptance`, justo **tras** la activa
+  (`docs/specs.md`, "Hotfix"). Si el humano la quiere ya, delante solo en
+  modo ligero (nunca pasa a `in_progress`), y di a los revisores de la
+  activa qué parte del diff es suya.
 
 ## Arreglos pequeños
 
@@ -76,14 +112,11 @@ feature.
 
 ## Métricas
 
-Las escribe solo el hook `SubagentStop` (`scripts/metricas.py`): una línea
-por ejecución en `progress/metrics.csv`
-(`fecha,feature,it,rol,tokens,cache_read,minutos,veredicto,causa,skills`),
-con el consumo real leído del transcript y el veredicto y la causa de
-`review.md` o `security.md`. **No las escribes tú**; solo corriges una
-línea mal atribuida (p. ej. una auditoría). Nunca uses el `subagent_tokens`
-del resultado de Agent: es el tamaño del contexto al terminar, no lo
-gastado.
+Las escribe el hook `SubagentStop` (`scripts/metricas.py`) en
+`progress/metrics.csv`, una línea por ejecución. **No las escribes tú**;
+solo corriges una mal atribuida. Nunca uses el `subagent_tokens` del
+resultado de Agent: es el tamaño del contexto, no lo gastado. Para comparar
+con otro proyecto o con antes de un cambio: `scripts/comparar.py`.
 
 ## Skills
 
@@ -107,7 +140,18 @@ skills en los encargos**. Lección: nombradas en el encargo, los agentes las
 
 ## Encargos
 
-El subagente arranca en frío (plantilla: HARNESS.md, "Encargo tipo").
+El subagente arranca en frío. Encargo tipo al implementer:
+
+```
+Implementa <F> (<título>), IT<n>[, tramo <X>: T<a>-T<b>][, modo ligero:
+requisitos = acceptance <lista>]. La carpeta progress/<F>/IT<n>/ ya existe.
+Sigue specs/<F>/. [Cambios pedidos: <de IT<n-1>/review.md>.] No ejecutes la
+task humana. Dependencias aprobadas: <lista o "ninguna">.
+[Reglas cambiadas en esta sesión: <…>.] [Arreglos del leader que verás en el
+diff: <…>.] [No toques: <…>.]
+Termina con init.sh en verde, impl.md y ## Sabotajes escritos.
+```
+
 - Contexto mínimo suficiente: feature, IT, tramo, qué leer, cambios pedidos,
   ficheros que no debe tocar, dependencias aprobadas.
 - **Hipótesis no verificadas, etiquetadas como tales.** Una causa supuesta
@@ -120,21 +164,23 @@ El subagente arranca en frío (plantilla: HARNESS.md, "Encargo tipo").
 
 ## Modelos
 
-Cada rol declara el suyo (`implementer_ui` también en `sonnet`). El cierre (paso 7 del implementer) en `haiku` **con el resumen
-para `history.md` redactado por ti** (un modelo que no implementó rellena
+Cada rol declara el suyo. El cierre (paso 7 del implementer) en `haiku`
+**con el resumen para `history.md` redactado por ti** (un modelo que no implementó rellena
 huecos con lo que suena plausible); si hay "Correcciones de texto al
 cerrar", `sonnet`. `explorer` en `opus` si toca fronteras de arquitectura.
 
 ## Reglas que no rompes
 
-- Tú creas las carpetas `IT<n>`. No abres `evidence.md`.
+- Tú creas las carpetas `IT<n>`, cada una con su `base`. No abres
+  `evidence.md`.
+- En `specs/` solo escribes "Decisiones del humano", tal cual las dijo.
 - `done` solo lo marca el `implementer` en su paso 7 (cierre), con `review.md` y
   `security.md` de la **misma** IT en `APPROVED`.
 - La aprobación humana de la spec es obligatoria (salvo `"sdd": false`, que
   ya es una decisión del humano).
 - `docs/`, `CLAUDE.md` y las reglas del harness los decide el humano; todo
-  cambio en `docs/` lleva su entrada en `docs/CHANGELOG.md` (el pre-commit y
-  el CI lo comprueban).
+  cambio en `docs/` lleva su entrada en `docs/CHANGELOG.md` (el pre-commit
+  avisa si falta).
 - Tasks humanas: pasos copiables, en orden ejecutable, con resultado
   esperado y **sin pedir nunca un secreto** (`docs/verification.md`).
 - Si el humano dice "para", no lanzas nada más. Informa del coste real

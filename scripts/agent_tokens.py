@@ -50,7 +50,7 @@ def _es_mensaje(entrada: dict) -> bool:
 
 def ejecuciones(lineas) -> list[dict]:
     """Agrupa el transcript en ejecuciones y suma su uso."""
-    runs, usos, skills, inicio, fin = [], {}, {}, None, None
+    runs, usos, skills, inicio, fin, modelo = [], {}, {}, None, None, ""
 
     def cerrar():
         if usos:
@@ -61,6 +61,9 @@ def ejecuciones(lineas) -> list[dict]:
                               + x.get("output_tokens", 0) for x in u),
                 "cache_read": sum(x.get("cache_read_input_tokens", 0) for x in u),
                 "skills": list(skills.values()),
+                # Lo pide el experimento de modelos: el leader puede cambiar el
+                # de la definicion al lanzar, y solo el transcript lo sabe.
+                "modelo": modelo,
             })
 
     for linea in lineas:
@@ -79,6 +82,8 @@ def ejecuciones(lineas) -> list[dict]:
             inicio = ts
         if ts and inicio:
             fin = ts
+        if m.get("model"):
+            modelo = m["model"]
         if m.get("usage"):
             usos[m.get("id") or len(usos)] = m["usage"]  # ultima entrada de cada mensaje
         for b in _usos_de_herramienta(e, "Skill"):
@@ -102,12 +107,12 @@ def _transcript(agent_id: str) -> Path:
 def main(argv: list[str]) -> int:
     run = int(argv[argv.index("--run") + 1]) if "--run" in argv else None
     ruta = Path(argv[argv.index("--file") + 1]) if "--file" in argv else _transcript(argv[0])
-    print("run,inicio,minutos,tokens,cache_read,skills")
+    print("run,inicio,minutos,tokens,cache_read,skills,modelo")
     for i, r in enumerate(ejecuciones(ruta.read_text(encoding="utf-8").splitlines()), 1):
         if run in (None, i):
             minutos = round((_hora(r["fin"]) - _hora(r["inicio"])).total_seconds() / 60)
             print(f"{i},{r['inicio'][:19]},{minutos},{r['tokens']},{r['cache_read']},"
-                  f"{'|'.join(r['skills'])}")
+                  f"{'|'.join(r['skills'])},{r['modelo']}")
     return 0
 
 

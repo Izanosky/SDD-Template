@@ -6,6 +6,11 @@ traduzcas ni la cambies de formato. -->
 
 Estado: en curso
 
+## Perfil
+
+<personal | compartido | producción>, y las casillas que el humano cambió
+de la tabla del paso 0 (spec formal, zonas críticas, CI, auditoría).
+
 ## Producto
 
 <5-10 líneas: qué es, para quién, primera versión y lo que no entra,
@@ -25,9 +30,10 @@ Borra las filas que no apliquen; añade las que falten.
 | Backend | lenguaje y versión, framework, API y contratos, validación, errores, segundo plano | | | | | |
 | Datos | almacenamiento, acceso u ORM, migraciones y formatos, copias | | | | | |
 | Seguridad | autenticación y autorización, secretos, zonas sensibles | | | | | |
-| Frontend | framework, enrutado, estado y caché, formularios, estilos, componentes, iconos, animación, gráficos, i18n, accesibilidad | | | | | |
+| Frontend | framework, enrutado, estado y caché, formularios, i18n, accesibilidad (componentes, estilos, iconos, animación, gráficos y fuentes: propuesta; se deciden en `/direccion-visual`) | | | | | |
 | Calidad | tests por capa, lint, formato, tipos, auditoría de dependencias, **zonas críticas** y **herramienta de mutantes** para ellas | | | | | |
-| Operación | build, CI, despliegue y ramas, entornos, logs, coste | | | | | |
+| Operación | build, CI (según el perfil), despliegue y ramas, entornos, logs, coste | | | | | |
+| Escala | una fila por tema de `catalogo.md` que aplique (perfil compartido o producción) | | | | | |
 
 ## Supuestos de riesgo
 

@@ -60,4 +60,12 @@ def test_rango_de_commits_para_el_ci(tmp_path):
 
 def test_el_pre_commit_y_el_ci_usan_el_script():
     assert "scripts/check_docs_changelog.sh" in (RAIZ / ".githooks/pre-commit").read_text(encoding="utf-8")
-    assert "scripts/check_docs_changelog.sh" in (RAIZ / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    ci = RAIZ / ".github/workflows/ci.yml"  # opcional: /arranque lo borra si el perfil no lo lleva
+    if ci.is_file():
+        assert "scripts/check_docs_changelog.sh" in ci.read_text(encoding="utf-8")
+
+
+def test_el_pre_commit_avisa_sin_bloquear_por_el_changelog():
+    # Es costumbre del harness, no regla dura: el humano no queda atado a ella.
+    hook = (RAIZ / ".githooks/pre-commit").read_text(encoding="utf-8")
+    assert "check_docs_changelog.sh ||" in hook

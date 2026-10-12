@@ -25,6 +25,8 @@ Alternativas descartadas y cuándo revisar cada decisión: docs/adr/. -->
 
 ## Reglas duras
 
+Protegen lo que no tiene vuelta atrás; no se relajan.
+
 - **Nada de `git commit` ni `push` sin aprobación del humano** (los pide
   `settings.json`); nunca `--amend`, `push --force` ni reescritura de
   historia: el historial es la evidencia de qué iteración introdujo qué.
@@ -33,21 +35,30 @@ Alternativas descartadas y cuándo revisar cada decisión: docs/adr/. -->
   secretos, no se imprimen, no se copian. Nombres en `harness.json`.
 - **Nada destructivo sobre datos reales** (`DROP`, `TRUNCATE`, `DELETE` o
   `UPDATE` sin `WHERE`).
-- **`done` solo por el protocolo**: el `implementer` en el cierre, con
-  `review.md` y `security.md` de la misma IT en `APPROVED`.
-- **`docs/`, este fichero y las reglas del harness los decide el humano.**
-  Todo cambio en `docs/` lleva su entrada en `docs/CHANGELOG.md` en el mismo
-  commit (el pre-commit y el CI lo comprueban).
 - **Avisar antes de tocar servicios reales** y de si cuesta dinero.
   <RELLENAR: política de coste, p. ej. "solo planes gratuitos".>
+
+## Por defecto, y el humano manda
+
+El resto del harness es una forma de trabajar, no una atadura. Las
+decisiones son del humano, y el leader debe proponer quitar o relajar lo
+que estorbe en este proyecto.
+
+- **`docs/`, este fichero y las reglas del harness los decide el humano**;
+  los agentes no los cambian por su cuenta. Cada cambio en `docs/` lleva su
+  entrada en `docs/CHANGELOG.md` (el pre-commit avisa si falta).
+- **`done` solo por el protocolo**: el `implementer` en el cierre, con
+  `review.md` y `security.md` de la misma IT en `APPROVED`.
 
 ## Parámetros del harness
 
 | Parámetro | Valor | Por qué |
 |---|---|---|
+| Perfil | <RELLENAR: personal / compartido / producción (lo fija `/arranque`)> | decide cuánto proceso compensa |
+| CI | <RELLENAR: sí / no> | si lo hay, un rojo avisa pero no bloquea |
 | Veredictos e `impl.md` | ≤ 200 líneas | el leader y los revisores los leen enteros; lo largo va a `evidence.md` |
 | Spec (tres ficheros) | ~400 líneas (≈ 6-8 k tokens); partir pasado de 600 o de ~20 `R<n>` | cada agente la relee en cada iteración |
-| Auditoría completa | proponerla cada 4 features cerradas o al cerrar una fase | cada revisión solo mira su diff |
+| Auditoría completa | <RELLENAR: según el perfil: cada 4 features cerradas o al cerrar una fase / cuando la pida el humano> | cada revisión solo mira su diff |
 | Reanudaciones de un agente | 2 | a la tercera, el atasco es real |
 
 ## Comandos

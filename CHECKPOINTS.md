@@ -4,7 +4,7 @@ Cada ítem tiene un único dueño: dos agentes no se contradicen.
 
 ## Bloque funcional — dueño: `reviewer`
 
-- Cada `R<n>` tiene un test que lo cubre de verdad (verificado con mutantes).
+- Cada `R<n>` tiene un test que lo cubre de verdad (en zonas críticas, verificado con mutantes).
 - Tabla `## Sabotajes` presente y reproducible.
 - Tasks marcadas; task humana revisada y ejecutable paso a paso.
 - `init.sh` en verde, ejecutado por el reviewer.

@@ -28,6 +28,17 @@ def test_los_agentes_declaran_modelo():
             assert "tools:" in cabecera, nombre
 
 
+def test_ponytail_no_se_inyecta_en_los_roles_del_harness():
+    # Leccion: su hook SubagentStart metia "un solo check, nada de suites" en
+    # revisores y spec_author, y duplicaba la precarga del implementer.
+    import re
+    patron = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8")
+                        )["env"]["PONYTAIL_SUBAGENT_MATCHER"]
+    for rol in AGENTES - {"leader"}:
+        assert not re.search(patron, rol, re.I), rol
+    assert re.search(patron, "Explore", re.I)
+
+
 def test_los_revisores_no_pueden_abrir_subagentes():
     # Cierra la unica ruta por la que el gasto podia multiplicarse sin que el
     # leader lo decidiera.
@@ -51,6 +62,7 @@ def test_los_agentes_escriben_los_marcadores_que_lee_state_py():
     assert "## Sabotajes" in _agente("implementer")
     assert "SERVICIOS REALES" in _agente("spec_author")
     assert "Estado: APROBADO" in (RAIZ / ".claude/skills/arranque/SKILL.md").read_text(encoding="utf-8")
+    assert "Aprobada por el humano: AAAA-MM-DD" in _agente("leader")
 
 
 def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
@@ -66,7 +78,9 @@ def test_los_hooks_pasan_por_el_lanzador_que_falla_cerrado():
 
 def test_commit_y_push_piden_confirmacion():
     ask = json.loads((RAIZ / ".claude/settings.json").read_text(encoding="utf-8"))["permissions"]["ask"]
-    for regla in ("Bash(git commit *)", "Bash(git push *)", "PowerShell(git commit *)"):
+    # `git push` a secas tambien publica; `git push *` quiza no lo cubra.
+    for regla in ("Bash(git commit *)", "Bash(git push *)", "Bash(git push)",
+                  "PowerShell(git commit *)"):
         assert regla in ask
 
 

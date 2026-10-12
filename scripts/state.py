@@ -7,8 +7,9 @@ ningun estado aparte que mantener sincronizado.
 
 Los marcadores que lee son fijos (HARNESS.md, "Marcadores"): la linea
 `Veredicto: APPROVED|CHANGES_REQUESTED`, el encabezado `## Sabotajes`,
-`SERVICIOS REALES` en la cabecera de la task humana y `Estado: APROBADO` en
-`progress/arranque.md`.
+`SERVICIOS REALES` en la cabecera de la task humana, `Estado: APROBADO` en
+`progress/arranque.md` y `Aprobada por el humano: AAAA-MM-DD` en el
+`design.md` de una spec.
 """
 import json
 import re
@@ -24,6 +25,7 @@ _SABOTAJES = re.compile(r"^#{2,3}\s*Sabotajes\b", re.M)
 _TASK_ABIERTA = re.compile(r"^\s*[-*]\s+\[ \]\s*\**\s*T\d+.*$", re.M)
 _TASK_HUMANA = ("SERVICIOS REALES", "PRUEBA REAL")
 _ARRANQUE_APROBADO = re.compile(r"^\W*Estado\W*APROBADO\b", re.M | re.I)
+_SPEC_APROBADA = re.compile(r"^\W*Aprobada por el humano\W*\d{4}-\d{2}-\d{2}", re.M | re.I)
 
 
 def _leer(ruta: Path) -> str:
@@ -69,6 +71,14 @@ def _tasks_pendientes(feature_id: str) -> int:
     return sum(not any(m in t for m in _TASK_HUMANA) for t in _TASK_ABIERTA.findall(_leer(ruta)))
 
 
+# La aprobacion es la marca del humano en design.md, no el campo status.
+# Leccion: nadie tenia la orden de pasar la feature a in_progress y el
+# despacho se quedaba pidiendo aprobacion para siempre.
+def _spec_aprobada(feature_id: str) -> bool:
+    ruta = ROOT / "specs" / feature_id / "design.md"
+    return ruta.is_file() and bool(_SPEC_APROBADA.search(_leer(ruta)))
+
+
 # Una auditoria sin cambios.md tiene hallazgos sin destino.
 def _auditorias_pendientes() -> list[str]:
     carpeta = ROOT / "progress" / "audits"
@@ -105,7 +115,7 @@ def _despacho() -> dict:
         base["modo"] = "ligero"
     elif estado == "pending":
         return {**base, "iteration": 0, "action": "LANZAR_SPEC_AUTHOR"}
-    elif estado == "spec_ready":
+    elif estado == "spec_ready" and not _spec_aprobada(fid):
         return {**base, "iteration": 0, "action": "PEDIR_APROBACION_HUMANA"}
 
     it = _ultima_iteracion(fid)
@@ -113,39 +123,38 @@ def _despacho() -> dict:
         return {**base, "iteration": 1, "action": "CREAR_IT1_Y_LANZAR_IMPLEMENTER"}
 
     base = {**base, "iteration": it}
+    carpeta = ROOT / "progress" / fid / f"IT{it}"
 
-    # Leccion: una IT sin impl.md se despachaba como "revisar". Sin impl.md el
-    # implementer se paro a medias: se reanuda el mismo agente, no uno nuevo.
-    if not (ROOT / "progress" / fid / f"IT{it}" / "impl.md").is_file():
-        return {**base, "action": "REANUDAR_IMPLEMENTER"}
-    if not _tiene_sabotajes(fid, it):
-        return {**base, "action": "DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES"}
+    # Una IT descartada (el humano cambia de stack o de rumbo con ella sin
+    # revisar) cuenta como rechazada: la siguiente parte de ahi. Leccion: el
+    # despacho pedia revisar una IT de un framework ya abandonado.
+    if (carpeta / "descartada.md").is_file():
+        review = security = "CHANGES_REQUESTED"
+    else:
+        # Leccion: una IT sin impl.md se despachaba como "revisar". Sin
+        # impl.md el implementer se paro a medias: se reanuda el mismo agente.
+        if not (carpeta / "impl.md").is_file():
+            return {**base, "action": "REANUDAR_IMPLEMENTER"}
+        if not _tiene_sabotajes(fid, it):
+            return {**base, "action": "DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES"}
+        review = _veredicto(fid, it, "review.md")
+        security = _veredicto(fid, it, "security.md")
 
-    review = _veredicto(fid, it, "review.md")
-    security = _veredicto(fid, it, "security.md")
-
-    # Tramo intermedio: solo el veto funcional. Leccion: en el piloto el
-    # security_reviewer paso 46 veces (una por tramo) y rechazo 2; revisa la
-    # feature entera al final.
-    if _tasks_pendientes(fid):
-        if review is None:
-            return {**base, "action": "LANZAR_REVIEWER"}
-        if review == "CHANGES_REQUESTED":
-            return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
-        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
-
-    # Ultimo tramo (o modo ligero): los dos vetos, en paralelo, sobre la misma
-    # IT. Cualquier rechazo re-verifica ambos: un arreglo puede romper lo que
-    # el otro aprobo.
-    if "CHANGES_REQUESTED" in (review, security):
-        return {
-            **base,
-            "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY",
-        }
-    if review is None and security is None:
-        return {**base, "action": "LANZAR_REVIEWER_Y_SECURITY"}
+    # Primero el veto funcional, siempre. Cualquier rechazo (tambien de
+    # seguridad) abre otra IT que vuelve a pasar por el reviewer: un arreglo
+    # puede romper lo que estaba aprobado.
     if review is None:
         return {**base, "action": "LANZAR_REVIEWER"}
+    if "CHANGES_REQUESTED" in (review, security):
+        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"}
+    if _tasks_pendientes(fid):
+        return {**base, "action": f"CREAR_IT{it + 1}_LANZAR_IMPLEMENTER_SIGUIENTE_TRAMO"}
+
+    # Ultimo tramo (o modo ligero): el security_reviewer, solo sobre una IT que
+    # el reviewer ya aprobo, y una vez por feature salvo que rechace.
+    # Lecciones del piloto: en cada tramo paso 47 veces y rechazo 2; y en
+    # paralelo con el reviewer revisaba IT que este iba a rechazar (el 51 %,
+    # ~61 k tokens por pasada) para ahorrar unos 3 minutos.
     if security is None:
         return {**base, "action": "LANZAR_SECURITY_REVIEWER"}
     return {**base, "action": "LANZAR_IMPLEMENTER_CIERRE_MARCAR_DONE"}

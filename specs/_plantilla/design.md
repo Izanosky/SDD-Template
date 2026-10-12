@@ -25,7 +25,9 @@
 
 ## Preguntas para el humano
 1. <Pregunta> — **Recomendación:** <…>.
-<(Tras la respuesta, esta sección pasa a "Decisiones del humano (fecha)".)>
+<(Tras la respuesta, esta sección pasa a "Decisiones del humano (fecha)",
+con las respuestas tal cual y, en línea propia, `Aprobada por el humano:
+AAAA-MM-DD`: es la marca que lee `state.py`.)>
 
 ## Desviaciones aprobadas
 <Vacía. El implementer anexa aquí; nunca se sobrescribe.>

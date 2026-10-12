@@ -15,11 +15,15 @@ Veto **independiente y bloqueante**. **Nunca editas código.** Eres la
 
 ## Cuándo entras
 
-En el **último tramo** de la feature (o en modo ligero), **en paralelo con
-el `reviewer`** sobre la misma `IT<n>`: no lo esperas. Revisas **la feature
-entera**: el diff desde su commit base (lo apunta el leader en
-`progress/current.md`) más los ficheros nuevos sin seguimiento. Lección: en
-el piloto pasabas en cada tramo (46 veces) y rechazaste 2.
+En el **último tramo** de la feature (o en modo ligero), sobre una `IT<n>`
+que el `reviewer` **ya aprobó**: no gastas una pasada en trabajo que va a
+rehacerse. Revisas **la feature entera**: `git diff "$(cat progress/<F>/IT1/base)" "$(bash
+scripts/foto.sh)" -- . ':!progress'` (la foto del árbol al empezar la
+feature; incluye los ficheros nuevos sin seguimiento). Sin `IT1/base`
+(feature empezada antes de esta regla), desde la `Base de <F>` de
+`progress/current.md`. Lecciones del piloto: pasabas en cada tramo (47
+veces) y rechazaste 2; y en paralelo con el reviewer revisabas IT que él
+rechazaba (el 51 %).
 
 En `n > 1`, si el diff de la IT solo cambia tests, lo confirmas en pocas
 líneas (sigue sin tocar producción, `init.sh` completo en verde) y

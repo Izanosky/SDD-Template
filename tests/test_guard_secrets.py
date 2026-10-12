@@ -47,6 +47,10 @@ BLOQUEADOS = [
     "rg --regexp=. .env",
     "grep -f .env x",
     "cat .env-prod",
+    "cd app\nenv",
+    "cat <<EOF; env\nx\nEOF",
+    # Sin comillas en la marca, bash expande el secreto dentro del heredoc.
+    "cat <<EOF\n$MI_TOKEN\nEOF",
 ]
 
 PERMITIDOS = [
@@ -60,6 +64,9 @@ PERMITIDOS = [
     # Leccion: buscar el TEXTO ".env" en la documentacion no lee ningun .env.
     'grep -n "./.env" notas.txt',
     "rg '\\.env' docs",
+    # Leccion del piloto: codigo dentro de un heredoc se leia como volcado.
+    "python - <<'EOF'\nprint(fn(env))\nEOF",
+    "cat >> t.py <<EOF\n    x = 1; env | 2\nset\nEOF",
 ]
 
 
@@ -140,6 +147,58 @@ def test_bloquea_saltarse_el_pre_commit(comando):
 @pytest.mark.parametrize("comando", RESPETAN_EL_PRE_COMMIT)
 def test_permite_git_normal(comando):
     assert not guard_secrets.salta_el_pre_commit(comando)
+
+
+DESTRUCTIVOS = [
+    # Leccion del piloto: mato todos los node de la maquina.
+    "taskkill /F /IM node.exe",
+    "cd app\ntaskkill /IM python.exe /F",
+    "pkill node",
+    "killall python3",
+    "Stop-Process -Name node -Force",
+    "Get-Process node | Stop-Process",
+    "git commit --amend --no-edit",
+    "git push --force origin main",
+    "git push -f",
+    "git push --force-with-lease",
+    "git rebase main",
+    "git filter-branch --tree-filter x",
+    # Leccion del piloto: "restaurar de HEAD" borra el trabajo sin commitear.
+    "git checkout HEAD -- app/bridge.py",
+    "git checkout -- .",
+    "git checkout .",
+    "git restore app/bridge.py",
+    "git restore --staged --worktree x",
+    "git reset --hard",
+    "git clean -fd",
+    "git stash drop",
+]
+
+NO_DESTRUCTIVOS = [
+    "taskkill /PID 4242 /F",
+    "Stop-Process -Id 4242",
+    "Get-Process -Id 4242 | Stop-Process",
+    "kill 4242",
+    "git push origin main",
+    'git commit -m "docs: no usar taskkill /IM ni --amend"',
+    "cat > notas.sh <<'EOF'\ngit rebase main\nEOF",
+    "git checkout -b prueba",
+    "git restore --staged x",
+    "git reset HEAD x",
+    "git clean -n",
+    "git stash",
+    "git diff HEAD -- app/bridge.py",
+]
+
+
+@pytest.mark.parametrize("comando", DESTRUCTIVOS)
+def test_bloquea_lo_destructivo(comando):
+    assert guard_secrets.destructivo(comando)
+
+
+@pytest.mark.parametrize("comando", NO_DESTRUCTIVOS)
+def test_permite_lo_acotado(comando):
+    assert guard_secrets.destructivo(comando) is None
 
 
 def test_hook_bloquea_no_verify_con_codigo_2():

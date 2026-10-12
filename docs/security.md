@@ -23,7 +23,7 @@ gestionados directamente, con cualquier clave pública del cliente.
 2. Hook `scripts/guard_secrets.py`: bloquea comandos que leen `.env`,
    expanden un secreto de `harness.json` o vuelcan el entorno. Falla cerrado.
 3. Pre-commit con gitleaks sobre el índice, `--redact`, falla cerrado.
-4. CI: gitleaks sobre la historia completa.
+4. CI, si el perfil lo lleva: gitleaks sobre la historia completa. <!-- ajuste-2026-10-12 -->
 
 - Los secretos **no pasan por el contexto de un agente** y viven solo donde
   se usan (panel del servicio, variables del sistema de la máquina que los

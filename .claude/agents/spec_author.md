@@ -55,7 +55,11 @@ scope, **solo ese**. Si necesitas explorar el repositorio a fondo, pide al
 - **Dependencias nuevas** nunca se dan por aprobadas: pregunta con una
   alternativa sin dependencia. **Datos que caducan**: fuente y fecha.
 - **Pregunta antes de redactar** si el `acceptance` deja abierto el alcance:
-  dos o tres preguntas al humano (vía `leader`) cuestan menos que reescribir.
+  dos o tres preguntas al humano cuestan menos que reescribir. No puedes
+  esperar respuesta a mitad: terminas tu turno solo con las preguntas
+  (cada una con tu recomendación) y el `leader` te reanuda con las
+  respuestas. Lo que no sea alcance no para: va a `design.md` como
+  pregunta con recomendación.
 
 ## Dónde terminas
 
@@ -63,4 +67,4 @@ Pasas la feature a `spec_ready` **editando esa línea de `feature_list.json`
 como texto** y te detienes: no lanzas al implementer ni das tu spec por
 buena. Tu turno termina cuando los tres ficheros están escritos enteros; no
 acabes anunciando el siguiente paso ni ofreciendo seguir. Solo paras antes
-ante un bloqueo real, y lo dices en una línea.
+ante un bloqueo real o con las preguntas de alcance (arriba).

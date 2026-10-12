@@ -12,8 +12,8 @@ DRY=0
 ALL=0
 # Leccion: cada agente ejecutaba init.sh completo varias veces por IT, con
 # install, build y auditorias que van a la red. Las vueltas del implementer
-# y del reviewer usan --rapido; el completo, el security_reviewer, el cierre
-# y el CI.
+# y del reviewer usan --rapido; el completo, el implementer al entregar,
+# el security_reviewer y el CI.
 export HARNESS_RAPIDO=""
 for arg in "$@"; do
   case "$arg" in

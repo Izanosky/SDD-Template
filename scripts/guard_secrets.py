@@ -13,6 +13,10 @@ El pre-commit es la ultima puerta antes de que un secreto exista en un
 commit: `--no-verify`, `commit -n` o un `core.hooksPath` distinto de
 `.githooks` lo apagan sin dejar rastro (idea del hook block-no-verify de ECC).
 
+Y lo que no tiene vuelta atras (idea de safety-guard de ECC): reescribir la
+historia (CLAUDE.md, Reglas duras) y matar procesos por nombre. Leccion del
+piloto: un `taskkill /IM node.exe` mato todos los node de la maquina.
+
 Exit 2 = bloqueado; el motivo va por stderr y lo lee el agente.
 """
 import json
@@ -34,16 +38,21 @@ def _secretos() -> tuple[str, ...]:
     return tuple(s for s in datos.get("secretos", []) if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", s))
 
 
+# El cuerpo de un heredoc es texto (codigo que se escribe o se pasa a un
+# interprete), no comandos. Leccion: `print(fn(env))` o `; env |` dentro de
+# un `python - <<EOF` se leian como volcado del entorno.
+_HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re.S)
+
+_VOLCADOS = [
+    # Una linea nueva tambien separa comandos: `cd x\nenv` vuelca.
+    re.compile(r"(^|[;&|(\n]\s*)(printenv|env|set|export\s+-p)\s*($|[;&|)\n])"),
+    re.compile(r"\b(Get-ChildItem|gci|dir|ls|Get-Item|gi)\s+env:", re.I),
+    re.compile(r"\[Environment\]::GetEnvironmentVariables", re.I),
+]
+
+
 def _reglas() -> list[tuple[re.Pattern[str], str]]:
-    reglas = [
-        # Volcar el entorno entero.
-        (re.compile(r"(^|[;&|(]\s*)(printenv|env|set|export\s+-p)\s*($|[;&|)])"),
-         "vuelca todas las variables de entorno"),
-        (re.compile(r"\b(Get-ChildItem|gci|dir|ls|Get-Item|gi)\s+env:", re.I),
-         "vuelca todas las variables de entorno"),
-        (re.compile(r"\[Environment\]::GetEnvironmentVariables", re.I),
-         "vuelca todas las variables de entorno"),
-    ]
+    reglas = []
     nombres = "|".join(_secretos())
     if nombres:
         reglas += [
@@ -86,34 +95,105 @@ def motivo(comando: str) -> str | None:
     # .env.example. `.venv` no casa: el punto va delante de la v, no de la e.
     if _ENV.search(_sin_patron_de_busqueda(comando)):
         return "toca un fichero .env (solo .env.example es legible)"
+    # Con la marca sin comillas, bash expande $X dentro del heredoc: las
+    # reglas de secretos siguen mirando el comando entero.
+    sin_heredocs = _HEREDOC.sub(r"\3", comando)
+    if any(p.search(sin_heredocs) for p in _VOLCADOS):
+        return "vuelca todas las variables de entorno"
     for patron, texto in _reglas():
         if patron.search(comando):
             return texto
     return None
 
 
-def salta_el_pre_commit(comando: str) -> bool:
-    """Por tokens, no por texto: un mensaje de commit que mencione --no-verify pasa."""
+def _tramos(comando: str) -> list[list[str]] | None:
+    """Por tokens, no por texto: un mensaje de commit que cite un comando pasa.
+
+    None si hay comillas sin cerrar; quien llama mira el texto entero.
+    """
     try:
-        lexer = shlex.shlex(comando, posix=True, punctuation_chars=True)
+        # La linea nueva separa comandos, salvo dentro de comillas.
+        lexer = shlex.shlex(_HEREDOC.sub(r"\3", comando), posix=True,
+                            punctuation_chars="();<>|&\n")
+        lexer.whitespace = " \t\r"
         lexer.whitespace_split = True
         tokens = list(lexer)
     except ValueError:
-        # Comillas sin cerrar: se mira el texto entero, aunque sobre-bloquee.
-        return bool(re.search(r"--no-verify|core\.hookspath", comando, re.I))
-    tramo: list[str] = []
+        return None
+    tramos, tramo = [], []
     for t in tokens + [";"]:
-        if t and set(t) <= set(";&|()"):
-            if _tramo_salta(tramo):
-                return True
+        if t and set(t) <= set(";&|()\n"):
+            if tramo:
+                tramos.append(tramo)
             tramo = []
         else:
             tramo.append(t)
-    return False
+    return tramos
+
+
+def salta_el_pre_commit(comando: str) -> bool:
+    tramos = _tramos(comando)
+    if tramos is None:
+        # Comillas sin cerrar: se mira el texto entero, aunque sobre-bloquee.
+        return bool(re.search(r"--no-verify|core\.hookspath", comando, re.I))
+    return any(_tramo_salta(t) for t in tramos)
+
+
+def _es_git(tramo: list[str]) -> bool:
+    return "git" in (Path(t).stem.lower() for t in tramo[:3])
+
+
+def destructivo(comando: str) -> str | None:
+    tramos = _tramos(comando)
+    if tramos is None:
+        tramos = [comando.split()]
+    previo: list[str] = []
+    for tramo in tramos:
+        bajos = [t.lower() for t in tramo]
+        orden = Path(bajos[0]).stem
+        if (orden in ("pkill", "killall")
+                or (orden == "taskkill" and "/im" in bajos)
+                or (orden in ("stop-process", "spps") and "-name" in bajos)
+                # `Get-Process node | Stop-Process`
+                or (orden in ("stop-process", "spps", "kill") and previo
+                    and Path(previo[0]).stem in ("get-process", "gps", "ps")
+                    and "-id" not in previo)):
+            return ("mata procesos por nombre (todos los de la maquina, no solo "
+                    "los tuyos). Paralo por el PID que arrancaste")
+        if _es_git(tramo) and (
+                "--amend" in bajos
+                or ("push" in bajos and any(t == "-f" or t.startswith("--force") for t in bajos))
+                or any(t in ("rebase", "filter-branch", "filter-repo") for t in bajos)):
+            return ("reescribe la historia de git (--amend, push --force, rebase, "
+                    "filter-branch): el historial es la evidencia de cada iteracion")
+        if _es_git(tramo) and _descarta_cambios(tramo):
+            return ("descarta cambios sin commitear: el trabajo de todas las IT vive "
+                    "sin commitear hasta que el humano commitea. Restaura desde tu copia")
+        previo = bajos
+    return None
+
+
+def _descarta_cambios(tramo: list[str]) -> bool:
+    """reset --hard, checkout/restore de ficheros, clean -f, stash drop/clear.
+
+    Leccion del piloto: un agente comprobo un rojo "restaurando bridge.py de
+    HEAD", que borra todo lo que las IT anteriores cambiaron en ese fichero.
+    """
+    t = tramo
+    if "reset" in t and "--hard" in t:
+        return True
+    if "checkout" in t and ("--" in t or "." in t or "-f" in t or "--force" in t):
+        return True
+    if "restore" in t and ("--worktree" in t or "-W" in t
+                           or not ("--staged" in t or "-S" in t)):
+        return True
+    if "clean" in t and any(re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*|--force", x) for x in t):
+        return True
+    return "stash" in t and ("drop" in t or "clear" in t)
 
 
 def _tramo_salta(tramo: list[str]) -> bool:
-    if "git" not in (Path(t).stem.lower() for t in tramo[:3]):
+    if not _es_git(tramo):
         return False
     bajos = [t.lower() for t in tramo]
     if "--no-verify" in bajos or ("commit" in bajos and "-n" in bajos):
@@ -147,6 +227,11 @@ def main() -> int:
               "pre-commit (--no-verify, commit -n o core.hooksPath distinto de "
               ".githooks). Si un hook falla, arregla la causa; si sobra, lo "
               "decide el humano.", file=sys.stderr)
+        return 2
+    peligro = destructivo(comando)
+    if peligro:
+        print(f"Bloqueado por scripts/guard_secrets.py: el comando {peligro}. "
+              "Si de verdad hace falta, lo ejecuta el humano.", file=sys.stderr)
         return 2
     razon = motivo(comando)
     if razon is None:

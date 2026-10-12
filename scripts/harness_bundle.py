@@ -32,6 +32,12 @@ RUTAS = (
     "specs/_plantilla/", "tests/",
 )
 BLOQUE = re.compile(rf"^{VALLA} fichero=(\S+)\n(.*?)^{VALLA}$", re.M | re.S)
+# Los reescribe el proyecto tras cada agente: el documento guarda su semilla,
+# no lo vivo. Leccion del piloto: un commit salio con HARNESS.md desfasado
+# por una linea nueva de metrics.csv. Para cambiar una semilla, se edita aqui
+# su bloque.
+VOLATILES = ("progress/current.md", "progress/history.md",
+             "progress/metrics.csv", "progress/para_la_plantilla.md")
 
 
 def _normal(texto: str) -> str:
@@ -50,10 +56,14 @@ def ficheros() -> list[Path]:
 
 
 def parte_ii() -> str:
+    semillas = dict(BLOQUE.findall(GUIA.read_text(encoding="utf-8"))) if GUIA.is_file() else {}
     trozos = [INICIO, ""]
     for p in ficheros():
         ruta = p.relative_to(RAIZ).as_posix()
-        contenido = _normal(p.read_text(encoding="utf-8"))
+        if ruta in VOLATILES and ruta in semillas:
+            contenido = semillas[ruta]
+        else:
+            contenido = _normal(p.read_text(encoding="utf-8"))
         trozos += [f"### `{ruta}`", "", f"{VALLA} fichero={ruta}", contenido + VALLA, ""]
     trozos.append(FIN)
     return "\n".join(trozos)

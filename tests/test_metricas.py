@@ -15,7 +15,7 @@ def _transcript(ruta: Path) -> Path:
     lineas = [
         {"type": "user", "timestamp": "2026-10-10T10:00:00Z", "message": {"content": "encargo"}},
         {"type": "assistant", "timestamp": "2026-10-10T10:04:00Z", "message": {
-            "id": "a", "content": [], "usage": {"input_tokens": 10, "output_tokens": 2,
+            "id": "a", "model": "claude-opus-x", "content": [], "usage": {"input_tokens": 10, "output_tokens": 2,
                                                 "cache_read_input_tokens": 300}}},
     ]
     ruta.write_text("\n".join(json.dumps(x) for x in lineas), encoding="utf-8")
@@ -42,7 +42,17 @@ def test_fila_del_reviewer_con_veredicto_y_causa(repo):
     fila = metricas.fila({"agent_type": "reviewer",
                           "agent_transcript_path": str(_transcript(repo / "t.jsonl"))})
     assert fila == ["2026-10-10", "F01", "2", "reviewer", "12", "300", "4",
-                    "CHANGES_REQUESTED", "tests", ""]
+                    "CHANGES_REQUESTED", "tests", "", "claude-opus-x"]
+
+
+def test_el_cierre_cuenta_en_la_feature_cerrada(repo):
+    # Leccion: el cierre marca done y state.py ya despacha la feature siguiente.
+    (repo / "feature_list.json").write_text(json.dumps([
+        {"id": "F01", "status": "done", "sdd": True, "scope": ["a"]},
+        {"id": "F02", "status": "pending", "sdd": True, "scope": ["a"]}]), encoding="utf-8")
+    fila = metricas.fila({"agent_type": "implementer",
+                          "agent_transcript_path": str(_transcript(repo / "t.jsonl"))})
+    assert fila[1:4] == ["F01", "2", "implementer"]
 
 
 def test_spec_author_va_en_la_it_0(repo):

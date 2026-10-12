@@ -33,6 +33,21 @@ def test_spec_ready_pide_aprobacion_humana(tmp_path, monkeypatch):
     assert state.next_action()["action"] == "PEDIR_APROBACION_HUMANA"
 
 
+def test_spec_aprobada_por_marca_avanza_aunque_siga_en_spec_ready(tmp_path, monkeypatch):
+    # Leccion: nadie pasaba la feature a in_progress y el despacho se quedaba
+    # pidiendo aprobacion. La marca del humano basta.
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "spec_ready"}], [
+        ("specs/F01/design.md", "## Decisiones del humano (2026-10-11)\nP1: la recomendada\n"
+                                "Aprobada por el humano: 2026-10-11\n")])
+    assert state.next_action()["action"] == "CREAR_IT1_Y_LANZAR_IMPLEMENTER"
+
+
+def test_spec_sin_marca_sigue_pidiendo_aprobacion(tmp_path, monkeypatch):
+    _preparar(tmp_path, monkeypatch, [{**F, "status": "spec_ready"}], [
+        ("specs/F01/design.md", "## Preguntas para el humano\nP1: recomiendo A\n")])
+    assert state.next_action()["action"] == "PEDIR_APROBACION_HUMANA"
+
+
 def test_in_progress_sin_iteraciones_crea_it1(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F])
     r = state.next_action()
@@ -47,6 +62,13 @@ def test_carpeta_it_sin_impl_reanuda_implementer_no_reviewer(tmp_path, monkeypat
     assert state.next_action()["action"] == "REANUDAR_IMPLEMENTER"
 
 
+def test_it_descartada_sin_revisar_abre_la_siguiente(tmp_path, monkeypatch):
+    # Leccion del piloto: con el stack cambiado, pedia revisar la IT vieja.
+    _preparar(tmp_path, monkeypatch, [F], [
+        ("progress/F01/IT1/descartada.md", "Motivo: cambio de framework (humano)")])
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
+
+
 def test_impl_sin_sabotajes_vuelve_al_implementer(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [("progress/F01/IT1/impl.md", "informe")])
     assert state.next_action()["action"] == "DEVOLVER_AL_IMPLEMENTER_FALTAN_SABOTAJES"
@@ -57,12 +79,12 @@ def test_sabotajes_en_evidence_cuentan(tmp_path, monkeypatch):
         ("progress/F01/IT1/impl.md", "informe"),
         ("progress/F01/IT1/evidence.md", "## Sabotajes\n| linea | test |"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER"
 
 
-def test_ultimo_tramo_lanza_los_dos_vetos_en_paralelo(tmp_path, monkeypatch):
+def test_ultimo_tramo_empieza_por_el_reviewer(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [IMPL])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER"
 
 
 def test_ultimo_tramo_con_security_hecho_lanza_solo_reviewer(tmp_path, monkeypatch):
@@ -97,20 +119,21 @@ def test_review_approved_sin_security_lanza_security(tmp_path, monkeypatch):
     assert state.next_action()["action"] == "LANZAR_SECURITY_REVIEWER"
 
 
-def test_review_rechazado_en_el_ultimo_tramo_reverifica_ambos(tmp_path, monkeypatch):
+def test_review_rechazado_no_gasta_una_pasada_de_seguridad(tmp_path, monkeypatch):
+    # Leccion del piloto: en paralelo, seguridad revisaba IT que el reviewer
+    # iba a rechazar (el 51 %).
     _preparar(tmp_path, monkeypatch, [F],
               [IMPL, ("progress/F01/IT1/review.md", "Veredicto: CHANGES_REQUESTED")])
-    assert state.next_action()["action"] ==         "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY"
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
 
 
-def test_security_rechazado_reverifica_ambos(tmp_path, monkeypatch):
+def test_security_rechazado_vuelve_por_el_reviewer(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [
         IMPL,
         ("progress/F01/IT1/review.md", "Veredicto: APPROVED"),
         ("progress/F01/IT1/security.md", "Veredicto: CHANGES_REQUESTED"),
     ])
-    assert state.next_action()["action"] == \
-        "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER_Y_SECURITY"
+    assert state.next_action()["action"] == "CREAR_IT2_LANZAR_IMPLEMENTER_LUEGO_REVIEWER"
 
 
 def test_ambos_approved_cierra(tmp_path, monkeypatch):
@@ -186,7 +209,7 @@ def test_sin_linea_de_veredicto_no_hay_veredicto(tmp_path, monkeypatch):
     _preparar(tmp_path, monkeypatch, [F], [
         IMPL, ("progress/F01/IT1/review.md", "Borrador: todo parece APPROVED"),
     ])
-    assert state.next_action()["action"] == "LANZAR_REVIEWER_Y_SECURITY"
+    assert state.next_action()["action"] == "LANZAR_REVIEWER"
 
 
 def test_task_de_tramo_sin_negrita_cuenta_como_pendiente(tmp_path, monkeypatch):

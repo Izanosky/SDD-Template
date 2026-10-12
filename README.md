@@ -62,6 +62,7 @@ feature_list.json          specs/<F>/                 progress/<F>/IT<n>/
 cp -r harness-sdd-template mi-proyecto && cd mi-proyecto   # o: extrae HARNESS.md (sección 3)
 git init
 git config core.hooksPath .githooks
+git status --short          # lo personal, a .gitignore antes de añadir
 git add -A
 git update-index --chmod=+x init.sh scripts/*.sh .githooks/pre-commit plantillas/stack/init.sh
 grep -rn "<RELLENAR" .      # lo que hay que rellenar
@@ -98,11 +99,12 @@ instrucciones que el agente sigue con tus permisos.
 
 | Skill | Origen y licencia | Rol | Cómo |
 |---|---|---|---|
-| `ponytail:ponytail` | plugin [ponytail](https://github.com/DietrichGebert/ponytail), MIT | `implementer`, `implementer_ui` | precargada |
+| `ponytail:ponytail` | plugin [ponytail](https://github.com/DietrichGebert/ponytail), MIT | `implementer`, `implementer_ui` | precargada (su hook `SubagentStart` se limita en `settings.json` a los subagentes ajenos al harness) |
+| `ponytail:ponytail-review` | plugin ponytail, MIT | `reviewer` | precargada; lo que sobra va a observaciones que no bloquean |
 | `property-based-testing` | [trailofbits/skills](https://github.com/trailofbits/skills), CC BY-SA 4.0 | `implementer`, `implementer_ui`, `reviewer` | precargada |
 | `migration`, `surgical-patch`, `investigate-first` | skills de usuario enlazadas desde `~/.agents/skills/` (origen sin registrar en un `ORIGEN.md`) | `implementer` (las dos primeras); `leader` la tercera | precargadas / bajo demanda |
-| `frontend-design:frontend-design` | plugin oficial `frontend-design` (Anthropic) | `implementer_ui`, `/direccion-visual` | precargada |
-| `frontend-design-direction`, `make-interfaces-feel-better` | [affaan-m/ECC](https://github.com/affaan-m/ECC), MIT | `implementer_ui`, `/direccion-visual` | precargadas |
+| `frontend-design:frontend-design` | plugin oficial `frontend-design` (Anthropic) | `/direccion-visual` | la invoca la skill si no hay Stitch, para las tres miniaturas |
+| `make-interfaces-feel-better` | affaan-m/ECC, MIT | `implementer_ui` | precargada |
 | `web-design-guidelines` | [vercel-labs/web-interface-guidelines](https://github.com/vercel-labs/web-interface-guidelines), MIT | `implementer_ui`, `reviewer` | precargada |
 | `ui-ux-pro-max`, `redesign-existing-projects`, `pick-ui-library` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), [emilkowalski/skills](https://github.com/emilkowalski/skills); MIT | `/direccion-visual` | las invoca la skill |
 | `differential-review` | trailofbits/skills, CC BY-SA 4.0 | `security_reviewer` | precargada |
@@ -116,6 +118,12 @@ instrucciones que el agente sigue con tus permisos.
 | `prd-securability-enhancement` | [OWASP/secure-agent-playbook](https://github.com/OWASP/secure-agent-playbook), CC BY 4.0 | `spec_author` | la precarga `/arranque` si hay usuarios o servidor |
 | `vercel-react-best-practices`, `vercel-composition-patterns`, `vercel-react-view-transitions` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills), MIT | `implementer_ui` | las precarga `/arranque` si el stack es React |
 | `modern-python` | trailofbits/skills, CC BY-SA 4.0 (solo la skill, sin sus hooks) | `implementer` | la precarga `/arranque` si el stack es Python |
+
+Para `/direccion-visual`, opcionales y fuera de Claude Code: tus
+referencias pueden salir de [Refero](https://refero.design/) (tiene MCP con su
+plan de pago) o de cualquier app que uses, y las tres direcciones se generan
+a mano en [Google Stitch](https://stitch.withgoogle.com/) (gratis con cuenta
+de Google). Sin Stitch, la skill las hace como miniaturas HTML.
 
 Navegador para las capturas y el `explorer`: el plugin oficial `playwright`
 (MCP). Si tu servidor de Playwright tiene otro nombre, cambia los nombres

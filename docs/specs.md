@@ -79,13 +79,15 @@ la IT aparece una decisión de diseño de verdad, se pasa a `"sdd": true`.
 
 - Cada vuelta vive en `progress/<F>/IT<n>/` (la crea el leader). El número de
   carpetas es el contador de intentos.
-- **Los vetos**: en un tramo intermedio, solo el reviewer; en el último
-  tramo (o en modo ligero), reviewer y security_reviewer **en paralelo**
-  sobre la misma IT, y el security_reviewer revisa la feature entera desde
-  su commit base. Lección: en el piloto el security_reviewer pasó en cada
-  tramo (46 veces) y rechazó 2. <!-- ajuste-2026-10-10 -->
-- `CHANGES_REQUESTED` → nueva IT. En el último tramo, cualquier rechazo
-  re-verifica **ambos** vetos (acotados si el arreglo solo toca tests).
+- **Los vetos**: primero el reviewer, siempre; en el último tramo (o en
+  modo ligero), con su `APPROVED`, el security_reviewer, que revisa la
+  feature entera desde la foto de su `IT1` (`scripts/foto.sh`). Lecciones
+  del piloto: el security_reviewer pasó en cada tramo (47 veces) y rechazó
+  2; y en paralelo con el reviewer revisaba IT que este rechazaba (el
+  51 %). <!-- ajuste-2026-10-11 -->
+- `CHANGES_REQUESTED` (de cualquiera) → nueva IT, que vuelve a pasar por el
+  reviewer y, en el último tramo, por seguridad (acotados si el arreglo
+  solo toca tests).
 - **Correcciones de texto al cerrar**: si el único problema es texto en
   `specs/` o `progress/`, el reviewer aprueba y lista cada corrección
   literal; se aplican en el cierre. Nunca para código, tests, dependencias

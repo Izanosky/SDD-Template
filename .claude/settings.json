@@ -1,4 +1,7 @@
 {
+  "env": {
+    "PONYTAIL_SUBAGENT_MATCHER": "^(?!(implementer|implementer_ui|reviewer|security_reviewer|spec_author|explorer)$)"
+  },
   "permissions": {
     "deny": [
       "Read(**/.env)",
@@ -31,8 +34,10 @@
     "ask": [
       "Bash(git commit *)",
       "Bash(git push *)",
+      "Bash(git push)",
       "PowerShell(git commit *)",
       "PowerShell(git push *)",
+      "PowerShell(git push)",
       "Bash(npm install *)",
       "Bash(npm i *)",
       "Bash(npm add *)",
@@ -98,7 +103,7 @@
     "web-design-guidelines": "name-only",
     "migration": "name-only",
     "surgical-patch": "name-only",
-    "frontend-design-direction": "name-only",
+    "frontend-design-direction": "user-invocable-only",
     "make-interfaces-feel-better": "name-only",
     "supply-chain-risk-auditor": "name-only",
     "variant-analysis": "name-only",
