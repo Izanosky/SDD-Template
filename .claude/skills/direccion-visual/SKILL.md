@@ -91,7 +91,7 @@ Tailwind. Las pantallas no usan valores sueltos. Si el framework ya está
 instalado, escribe ya los tokens. Si no, lo hace la primera feature.
 
 Para las capturas al construir, la primera feature con pantallas deja en
-`docs/convenciones.md` el comando que arranca la app con datos falsos
+la sección "Comandos" del `CLAUDE.md` el comando que arranca la app con datos falsos
 (caso normal y peor caso). Si
 el navegador de Playwright busca Chrome y solo hay Edge, se configura con
 `--browser msedge`. Que vaya con `--isolated`, para no compartir ventana

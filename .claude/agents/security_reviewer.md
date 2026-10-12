@@ -68,3 +68,8 @@ Después, cada hallazgo con `archivo:línea` y la tabla de ataque. Aparte,
 las observaciones que no bloquean, diciendo por qué no bloquean. Como mucho
 200 líneas. Tu turno termina cuando `security.md` está escrito entero. En tu
 mensaje final, el veredicto y la ruta del fichero.
+
+Si algo de la forma de trabajo te ha estorbado, es ambiguo o se contradice
+(un documento, el encargo, un hook), dilo en una línea al final de
+`security.md`, bajo `## Para la forma de trabajo`. La sesión principal lo
+pasa a "Lecciones".

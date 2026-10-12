@@ -176,8 +176,9 @@ Además, decide con el humano y apunta:
 
 - **el comando que verifica todo** (tests, lint, tipos, build, auditoría de
   dependencias, según lo que se haya elegido) y el comando de mutantes, si
-  los hay, en `docs/convenciones.md`. La feature de andamiaje los deja
-  funcionando y demuestra que cada paso sabe fallar;
+  los hay. Van a la sección "Comandos" del `CLAUDE.md` del proyecto; la
+  feature de andamiaje los deja funcionando y demuestra que cada paso sabe
+  fallar;
 - **si se pasa un escáner de secretos** (por ejemplo, gitleaks) antes del
   primer push: un secreto commiteado y borrado sigue en el historial;
 - **las zonas críticas**, si las hay (dinero, escritura de datos, permisos,
@@ -192,7 +193,9 @@ Además, decide con el humano y apunta:
   que es preferencia suya: en qué idioma van el código y los textos de la
   interfaz, si hay patrones que quiere prohibir o exigir, y el formato de
   ramas y mensajes de commit. Si quiere fundamentarlas mejor, ofrécele la
-  investigación a fondo. Los comandos los completa F00;
+  investigación a fondo. Las reglas que se apartan de lo estándar y se
+  necesitan en cada sesión van también, en una línea cada una, al
+  `CLAUDE.md`;
 - **las skills para los agentes según el stack**, si están instaladas: con
   React, `vercel-react-best-practices` y `vercel-composition-patterns` en el
   `implementer`; con Python, `modern-python`; con usuarios o servidor,
@@ -212,12 +215,71 @@ Comprueba que:
 Enseña un resumen de una pantalla: qué se decidió en cada fase, qué es
 revisable y cuándo, y la primera feature. **Con el sí explícito del
 humano**, escribe `Estado: aprobado (AAAA-MM-DD)` en `docs/proyecto.md` y
-rellena `CLAUDE.md` (qué es el proyecto y el resumen del stack). Si la
-carpeta no es todavía un repositorio git, propón `git init`. Después,
+**genera el `CLAUDE.md` del proyecto** (abajo). Si la carpeta no es
+todavía un repositorio git, propón `git init`. Después,
 **propón el primer commit** (la plantilla y los documentos del arranque),
 tras mirar `git status`: los revisores comparan contra `HEAD`, y sin un
 commit previo no hay con qué comparar. Desde ahí se construye siguiendo
 `docs/forma-de-trabajo.md`.
 
 Si más adelante cambia una decisión de base, se vuelve a su fase, se
-actualiza `docs/proyecto.md` y solo entonces se sigue.
+actualiza `docs/proyecto.md` (y `CLAUDE.md`, si cambia algo de lo que
+recoge) y solo entonces se sigue.
+
+## El `CLAUDE.md` del proyecto
+
+Sustituye al de la plantilla ("Proyecto sin arrancar"). Claude lo lee en
+cada sesión, y cada agente también, así que sigue la guía oficial de
+Claude Code (code.claude.com/docs/en/best-practices y /memory): **corto
+(unas 60 líneas, nunca más de 200), con encabezados y viñetas, y solo lo
+que hace falta en cada sesión y no se deduce del código.** Para cada línea:
+*¿quitarla haría que Claude se equivoque?* Si no, fuera.
+
+| Entra | No entra |
+|---|---|
+| comandos que Claude no adivina | lo que se deduce leyendo el código (el stack está en `package.json` o equivalente) |
+| reglas de código que se apartan de lo estándar | convenciones estándar del lenguaje |
+| cómo se prueba y con qué | documentación detallada (se enlaza) |
+| ramas y formato de commits | lo que cambia a menudo (el estado del proyecto vive en `docs/proyecto.md`) |
+| decisiones de arquitectura propias, con su motivo | explicaciones largas |
+| rarezas del entorno (variables necesarias, por nombre) | descripción fichero a fichero |
+| lo que rompe cosas y no es evidente | obviedades ("escribe código limpio") |
+
+Estructura:
+
+```
+# <Nombre>
+<Una o dos líneas: qué es y para quién.>
+
+## Comandos
+<verificar todo, verificar rápido, arrancar, datos falsos (normal y peor
+caso), mutantes. Los completa F00.>
+
+## Decisiones que no se deducen del código
+- <decisión> — <motivo> (p. ej. "TypeScript 6.0, no 7: typescript-eslint
+  aún no lo admite").
+
+## Lo que rompe cosas
+- <regla> — <motivo> (p. ej. "las fechas, siempre en local: la racha
+  depende del día del usuario").
+
+## Repositorio y entorno
+- <ramas y formato de commits>
+- <variables de entorno necesarias, solo los nombres; política de coste>
+
+## Dónde está el resto
+docs/proyecto.md (decisiones y estado) · docs/convenciones.md ·
+docs/seguridad.md · docs/diseno.md
+```
+
+No repite la forma de trabajo ni las reglas duras (están en
+`.claude/rules/harness.md`, que se carga siempre). **Si el proyecto ya
+tenía un `CLAUDE.md` propio**, no lo sustituyas: añade lo que falte,
+enséñale el cambio al humano y respeta lo que ya había.
+
+**Se mantiene vivo**: cuando cambia un comando, una decisión o aparece una
+regla nueva, se actualiza en el momento. Se añade una línea cuando Claude
+comete el mismo error por segunda vez o el humano repite una corrección, y
+se poda lo que Claude ya hace bien sin ella (`/doctor prompt-audit` lo
+revisa). Si Claude se salta una instrucción concreta, se marca esa sola con
+"IMPORTANTE"; si se marcan muchas, ninguna destaca.

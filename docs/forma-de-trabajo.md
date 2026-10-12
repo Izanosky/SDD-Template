@@ -31,7 +31,8 @@ el humano y que se puede cambiar cuando estorbe.
 | Requisitos, alcance, decisiones, librerías, forma de trabajo | `docs/proyecto.md` |
 | Lista de features, la que está en curso y lo pendiente | `docs/proyecto.md`, al final |
 | Diseño visual y tokens | `docs/diseno.md` (los tokens, en el stack) |
-| Comandos, estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
+| Comandos, decisiones que no se deducen del código, lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque`; se carga siempre) |
+| Estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
 | Riesgos propios y lista de seguridad | `docs/seguridad.md` |
 | Lecciones del proyecto, según ocurren | `docs/proyecto.md`, sección "Lecciones" |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
@@ -272,9 +273,12 @@ sin pedir nunca un secreto.
 ### Lecciones del proyecto
 
 Cuando algo de la forma de trabajo falla o estorba, la sesión principal lo
-apunta **en el momento** en la sección "Lecciones" de `docs/proyecto.md`:
-qué pasó, cuánto costó y de qué feature e iteración salió, sin proponer
-todavía el arreglo. *En la prueba mínima, ese diario fue lo que más sirvió
+apunta **en el momento y sin que se lo pidan** en la sección "Lecciones" de
+`docs/proyecto.md`: qué pasó, cuánto costó y de qué feature e iteración
+salió, sin proponer todavía el arreglo. Cuándo apuntar, en
+`.claude/rules/harness.md`. Los agentes lo dejan en su fichero de la
+iteración, bajo `## Para la forma de trabajo`, y la sesión principal lo
+pasa. *En la prueba mínima, ese diario fue lo que más sirvió
 para mejorar la plantilla.* La `/retrospectiva` lo convierte en cambios.
 
 ### En equipo

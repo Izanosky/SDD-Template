@@ -1,3 +1,6 @@
+# Instrucciones personales de Claude para este repositorio (no se comparten)
+CLAUDE.local.md
+
 # Secretos: nunca en git. La plantilla .env.example si.
 .env
 .env.*

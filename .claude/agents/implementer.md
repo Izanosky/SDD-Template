@@ -39,7 +39,7 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
   tiene que caer con el código roto: rompe la línea de producción, míralo
   caer y restáurala (en una copia, o restaurando antes de seguir). En las
   zonas críticas, pasa **el comando de mutantes** de
-  `docs/convenciones.md`, el mismo que repetirá el `reviewer`. Cada mutante que sobreviva acaba en un test
+  `CLAUDE.md`, el mismo que repetirá el `reviewer`. Cada mutante que sobreviva acaba en un test
   nuevo o en "equivalente: <por qué>".
 - **El nombre de un test no promete más de lo que comprueba.** Un límite se
   compara con el valor de la spec, no con la constante del código. Un doble
@@ -53,8 +53,7 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
 - **Una desviación de la spec** se apunta en su sección "Desviaciones", con
   el motivo, y se deja pendiente de visto bueno: no te la apruebas tú.
 - Marca en la spec las tareas que vas terminando.
-- El comando de verificación de `docs/convenciones.md`, en verde antes de
-  entregar.
+- El comando de verificación del `CLAUDE.md`, en verde antes de entregar.
 - Lo que no puedas verificar con tests, dilo en `impl.md`: nunca lo des por
   verificado sin más.
 
@@ -65,7 +64,7 @@ aprueba una dependencia.
 
 ## Capturas (si tocas pantallas)
 
-Arranca la app con el comando de datos falsos de `docs/convenciones.md`, con
+Arranca la app con el comando de datos falsos del `CLAUDE.md`, con
 datos normales y con el peor caso (nombres largos, cero elementos, cifras
 enormes). Captura cada pantalla que tocaste: claro y oscuro si existen,
 1280 y 390 px. Como mucho unas 8 capturas. Usa un navegador **aislado**
@@ -88,10 +87,10 @@ Al terminar, para **solo tu servidor**, por su PID.
 
 Commit, leer `.env` o claves, tocar carpetas de otras iteraciones,
 dependencias no aprobadas, operaciones destructivas sobre datos reales,
-darte por aprobado y editar `docs/`. Hay una excepción: en F00, o en la
-primera feature con pantallas, rellenas los comandos de
-`docs/convenciones.md` (verificar, mutantes, datos falsos) si el encargo
-lo pide.
+darte por aprobado y editar `docs/` o `CLAUDE.md`. Hay una excepción: en
+F00, o en la primera feature con pantallas, rellenas la sección "Comandos"
+del `CLAUDE.md` (verificar, mutantes, datos falsos) si el encargo lo
+pide.
 
 ## Qué escribes
 
@@ -114,3 +113,8 @@ Tu turno termina cuando `impl.md` y `evidence.md` están escritos enteros.
 En tu mensaje final, un resumen de cinco líneas y la ruta de `impl.md`.
 Solo paras antes de terminar ante un bloqueo real, y lo dices en una línea.
 No acabes anunciando un siguiente paso ni ofreciendo seguir.
+
+Si algo de la forma de trabajo te ha estorbado, es ambiguo o se contradice
+(un documento, el encargo, un hook), dilo en una línea al final de
+`impl.md`, bajo `## Para la forma de trabajo`. La sesión principal lo
+pasa a "Lecciones".

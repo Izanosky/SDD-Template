@@ -25,13 +25,12 @@ revisas.
 - **Cada requisito de la spec (`specs/FNN-*.md`; sin spec, los del
   encargo) tiene un test que lo comprueba de verdad**, es decir, que afirma algo sobre el resultado. En
   las zonas críticas (`docs/proyecto.md`, sección 7), **repite el mismo
-  comando de mutantes** (`docs/convenciones.md`) que usó el implementer y juzga cada mutante que
+  comando de mutantes** (`CLAUDE.md`) que usó el implementer y juzga cada mutante que
   sobrevive: o falta un test, o de verdad es equivalente. *En un piloto,
   con criterios distintos, se rechazaron 42 de 44 primeras entregas. En la
   prueba siguiente, con el mismo comando, se aprobaron a la primera 3 de 5
   (con tan pocas, es un indicio).*
-- **El comando de verificación de `docs/convenciones.md`, ejecutado por
-  ti.**
+- **El comando de verificación del `CLAUDE.md`, ejecutado por ti.**
 - **Lo que fijan `docs/proyecto.md` y `docs/convenciones.md`**: el stack y
   las librerías aprobadas, sin dependencias nuevas; la estructura, las
   fronteras y los patrones prohibidos.
@@ -77,3 +76,8 @@ Después:
 
 Como mucho 200 líneas. Tu turno termina cuando `review.md` está escrito entero. En tu
 mensaje final, el veredicto y la ruta del fichero.
+
+Si algo de la forma de trabajo te ha estorbado, es ambiguo o se contradice
+(un documento, el encargo, un hook), dilo en una línea al final de
+`review.md`, bajo `## Para la forma de trabajo`. La sesión principal lo
+pasa a "Lecciones".

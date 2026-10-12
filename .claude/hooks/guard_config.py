@@ -38,7 +38,7 @@ def _del_harness(ruta: Path) -> bool:
         rel = ruta.resolve().relative_to(RAIZ).as_posix()
     except ValueError:
         return False
-    return (rel.startswith((".claude/hooks/", ".githooks/", ".github/workflows/"))
+    return (rel.startswith((".claude/hooks/", ".claude/rules/", ".githooks/", ".github/workflows/"))
             or rel == ".claude/settings.json")
 
 

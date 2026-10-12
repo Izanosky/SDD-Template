@@ -16,7 +16,7 @@ ultima puerta antes de que un secreto exista en un commit: `--no-verify`,
 hook block-no-verify de ECC).
 
 Y lo que no tiene vuelta atras (idea de safety-guard de ECC): reescribir la
-historia (CLAUDE.md, Reglas duras) y matar procesos por nombre. Leccion del
+historia (.claude/rules/harness.md, Reglas duras) y matar procesos por nombre. Leccion del
 piloto: un `taskkill /IM node.exe` mato todos los node de la maquina.
 
 Exit 2 = bloqueado; el motivo va por stderr y lo lee el agente.
@@ -255,8 +255,9 @@ def main() -> int:
     if razon is None:
         return 0
     print(f"Bloqueado por .claude/hooks/guard_shell.py: el comando {razon}. "
-          "Los secretos no pasan por el contexto de un agente (CLAUDE.md, "
-          "Reglas duras). Si hace falta, pideselo al humano.",
+          "Los secretos no pasan por el contexto de un agente "
+          "(.claude/rules/harness.md, Reglas duras). Si hace falta, "
+          "pideselo al humano.",
           file=sys.stderr)
     return 2
 

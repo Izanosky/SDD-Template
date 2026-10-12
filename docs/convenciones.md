@@ -1,27 +1,23 @@
 # Convenciones
 
-Cómo se escribe el código de este proyecto. Las leen el `implementer` y el
-`reviewer`. Solo va lo que difiere de las convenciones estándar del
-lenguaje: lo que el modelo ya sabe no se escribe. La configuración de las
-herramientas manda; aquí se explica el porqué. Lo empieza `/arranque`
-(fase 7) y lo completa F00 con los comandos reales. Si hay varios stacks
+Cómo se escribe el código de este proyecto, en detalle. Las leen el
+`implementer` y el `reviewer`. Solo va lo que difiere de las convenciones
+estándar del lenguaje: lo que el modelo ya sabe no se escribe. La
+configuración de las herramientas manda; aquí se explica el porqué. Lo
+rellena `/arranque` (fase 7); las pocas reglas que hacen falta en cada
+sesión se repiten, en una línea, en el `CLAUDE.md`. Si hay varios stacks
 (por ejemplo, API y web), repite las secciones por stack.
 
 ## Comandos
 
-| Para qué | Comando |
-|---|---|
-| Verificar todo (tests, lint, formato, tipos, build, auditoría de dependencias) | <…> |
-| Verificar rápido mientras se trabaja | <…> |
-| Mutantes sobre unos ficheros (zonas críticas) | <…> |
-| Arrancar con datos falsos, caso normal y peor caso (si hay interfaz) | <…> |
-
-Cada paso de verificación **se ha demostrado que sabe fallar** (F00):
-se planta un fallo y se mira el código de salida. La carpeta de trabajo de
-los mutantes (`mutants/`, `.stryker-tmp/`…) queda fuera de los tests, del
-lint y de git. En Windows, `mutmut` no funciona (usa `cosmic-ray`, siempre
-en una copia, porque muta el fichero en su sitio), y Stryker necesitó
-`--concurrency 2`.
+Están en el `CLAUDE.md` del proyecto, que Claude carga en cada sesión: verificar
+todo, verificar rápido, arrancar, datos falsos (normal y peor caso) y
+mutantes. Cada paso de verificación **se ha demostrado que sabe fallar**
+(F00): se planta un fallo y se mira el código de salida. La carpeta de
+trabajo de los mutantes (`mutants/`, `.stryker-tmp/`…) queda fuera de los
+tests, del lint y de git. En Windows, `mutmut` no funciona (usa
+`cosmic-ray`, siempre en una copia, porque muta el fichero en su sitio), y
+Stryker necesitó `--concurrency 2`.
 
 ## Estructura y fronteras
 

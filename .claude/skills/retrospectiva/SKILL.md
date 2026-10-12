@@ -43,7 +43,7 @@ Qué buscar:
   skills (que `skillOverrides` recorta) y los esquemas de las herramientas
   MCP. Estímalo (palabras × 1,3) y propón recortes con su ahorro.
 - **Instrucciones obsoletas o contradictorias** en `CLAUDE.md`,
-  `.claude/agents/` y `.claude/skills/`: `/doctor prompt-audit` (de serie
+  `.claude/rules/`, `.claude/agents/` y `.claude/skills/`: `/doctor prompt-audit` (de serie
   en Claude Code; si no puedes lanzarlo tú, pídeselo al humano). Cada
   recorte, con fichero, línea y motivo.
 - **Lo que fue un estorbo**: pregúntaselo al humano.

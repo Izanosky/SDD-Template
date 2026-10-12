@@ -6,8 +6,9 @@ y para quién, después con qué ambición, y solo entonces **cómo**. Claude
 pregunta, propone con una recomendación y aporta lo que tú no sabes que
 necesitas. Las decisiones las tomas tú.
 
-La plantilla es casi toda documentos que Claude sigue: `CLAUDE.md`, unos
-agentes y unas skills. Lo único que se ejecuta son **dos hooks pequeños** que
+La plantilla es casi toda documentos que Claude sigue: unas reglas que se
+cargan siempre (`.claude/rules/harness.md`), unos agentes y unas skills.
+El `CLAUDE.md` es del proyecto: lo genera `/arranque` al cerrar. Lo único que se ejecuta son **dos hooks pequeños** que
 protegen lo que no tiene vuelta atrás (secretos, historia de git, trabajo
 sin commitear). No trae tests, CI ni métricas: si los quieres, se deciden
 en el arranque o se piden después.
@@ -33,8 +34,10 @@ en el arranque o se piden después.
 1. Copia esta carpeta como raíz del proyecto nuevo y ejecuta `git init`
    si no es un repositorio. En un proyecto que ya existe, **no pises** su
    `CLAUDE.md`, su `.gitignore` ni su `.claude/settings.json`: fusiónalos a
-   mano. El resto (`.claude/agents/`, `.claude/skills/`, `docs/`, `specs/`)
-   se copia tal cual.
+   mano (el arranque añade a su `CLAUDE.md` lo que falte, sin
+   sustituirlo). El resto (`.claude/rules/`, `.claude/agents/`,
+   `.claude/skills/`, `.claude/hooks/`, `docs/`, `specs/`) se copia tal
+   cual.
 2. Antes del primer `git add -A`, mira `git status` y lleva a `.gitignore`
    lo personal que hubiera en la carpeta.
 3. Abre Claude Code en ella y escribe `/arranque`, o di qué quieres
@@ -113,7 +116,8 @@ número de intentos.
 |---|---|
 | Requisitos, alcance, decisiones, librerías, forma de trabajo, features, estado actual, pendientes, lecciones | `docs/proyecto.md` |
 | Diseño visual | `docs/diseno.md` (los tokens, en el código) |
-| Comandos, estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
+| Comandos, decisiones que no se deducen del código, lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque` siguiendo la guía oficial de Claude Code; se carga siempre) |
+| Estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
 | Riesgos propios y lista de seguridad | `docs/seguridad.md` |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
 | Iteraciones | `progress/FNN/IT<n>/` |
@@ -272,8 +276,9 @@ Recopiladas en las pruebas. El incidente que motivó cada una está en
 - Un cambio de decisión de base para la feature y vuelve al arranque.
 - La prueba con servicios reales la revisa el reviewer en la primera vuelta
   y la ejecuta el humano al final.
-- Lo que falla o estorba se apunta en el momento en "Lecciones"; los
-  cambios en la forma de trabajo, con su fecha y su motivo.
+- Lo que falla o estorba lo apunta Claude, sin que se lo pidas, en
+  "Lecciones"; los cambios en la forma de trabajo, con su fecha y su
+  motivo.
 - "Para" significa parar. Se avisa del coste cuando es alto.
 - En equipo, una rama o worktree por feature.
 - Tras el commit, se actualizan "Estado actual" y "Pendiente", y se propone
@@ -346,7 +351,8 @@ Recopiladas en las pruebas. El incidente que motivó cada una está en
 ## Ficheros
 
 ```
-CLAUDE.md                          lo que Claude lee siempre
+CLAUDE.md                          el del proyecto; lo genera /arranque (en la plantilla, solo un aviso)
+.claude/rules/harness.md           la forma de trabajo y las reglas duras; Claude lo carga siempre
 README.md                          esto
 .claude/settings.json              permisos (secretos, commits, dependencias), hooks y skillOverrides
 .claude/hooks/                     guard_shell.py, guard_config.py y su lanzador py.sh
@@ -357,7 +363,7 @@ README.md                          esto
 .claude/skills/auditoria-seguridad/
 .claude/skills/retrospectiva/
 docs/forma-de-trabajo.md           cómo se construye, con el porqué de cada paso
-docs/convenciones.md               plantilla: comandos, estructura, errores, interfaz web
+docs/convenciones.md               plantilla: estructura, errores, patrones prohibidos, interfaz web
 docs/seguridad.md                  lista de seguridad y riesgos propios
 specs/_plantilla.md                esqueleto de una spec
 ```

@@ -71,8 +71,8 @@ Ver `docs/diseno.md`.
 | Ramas y commits | un commit por feature, lo aprueba el humano |
 | Skills de los agentes según el stack | |
 
-Los comandos (verificar, mutantes, datos falsos) están en
-`docs/convenciones.md`. Riesgos propios de
+Los comandos (verificar, mutantes, datos falsos) están en el
+`CLAUDE.md`; el detalle de las convenciones, en `docs/convenciones.md`. Riesgos propios de
 seguridad: `docs/seguridad.md`.
 
 Cambios a esta sección a mitad de proyecto, con su fecha y su motivo, para
