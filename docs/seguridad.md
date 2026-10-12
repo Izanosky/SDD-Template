@@ -16,7 +16,10 @@ gestionados directamente, con cualquier clave pública del cliente.
 ## Secretos
 
 - No pasan por el contexto de un agente: no se leen `.env` ni claves, no se
-  imprimen y no se copian (`.claude/settings.json` bloquea leerlos).
+  imprimen y no se copian. `.claude/settings.json` bloquea leerlos con las
+  herramientas de Claude, y el hook `.claude/hooks/guard_shell.py` desde la
+  terminal (`cat .env`, volcar el entorno, expandir un secreto de los que
+  nombra `.env.example`).
 - Viven solo donde se usan (el panel del servicio, las variables de la
   máquina que los necesita). **Mínimo privilegio**: cada proceso, solo los
   suyos.

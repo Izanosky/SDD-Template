@@ -95,5 +95,27 @@
     "vercel-react-view-transitions": "name-only",
     "modern-python": "name-only",
     "investigate-first": "name-only"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/py.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_shell.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/py.sh\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_config.py\""
+          }
+        ]
+      }
+    ]
   }
 }

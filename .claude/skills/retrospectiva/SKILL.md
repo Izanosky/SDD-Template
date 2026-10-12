@@ -38,6 +38,14 @@ Qué buscar:
   `docs/forma-de-trabajo.md`.
 - **Las skills**: cuáles dejaron rastro en las revisiones o en el código y
   cuáles no.
+- **Coste fijo del contexto** (método `context-budget` de ECC): cada turno
+  de cada agente relee su definición, sus skills precargadas, el listado de
+  skills (que `skillOverrides` recorta) y los esquemas de las herramientas
+  MCP. Estímalo (palabras × 1,3) y propón recortes con su ahorro.
+- **Instrucciones obsoletas o contradictorias** en `CLAUDE.md`,
+  `.claude/agents/` y `.claude/skills/`: `/doctor prompt-audit` (de serie
+  en Claude Code; si no puedes lanzarlo tú, pídeselo al humano). Cada
+  recorte, con fichero, línea y motivo.
 - **Lo que fue un estorbo**: pregúntaselo al humano.
 
 Cada lección nueva se propone al humano **como recomendación con su

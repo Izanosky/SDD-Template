@@ -1,0 +1,2 @@
+# Los .sh los ejecuta bash: con CRLF fallan en Linux y macOS.
+*.sh text eol=lf

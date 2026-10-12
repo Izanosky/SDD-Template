@@ -329,6 +329,29 @@ Según la sección 7 de `docs/proyecto.md`:
 
 La lista completa está en `docs/seguridad.md`.
 
+**Dos hooks lo hacen cumplir** (`.claude/hooks/`, ideas de ECC adoptadas
+tras el piloto; necesitan Python 3.10+):
+
+- `guard_shell.py`, antes de cada comando de terminal, **bloquea**:
+  - leer un `.env` (salvo `.env.example`), volcar el entorno o expandir un
+    secreto; los nombres de los secretos los toma de `.env.example`;
+  - saltarse los hooks de git (`--no-verify`, `commit -n`, cambiar
+    `core.hooksPath`);
+  - reescribir la historia (`--amend`, `push --force`, `rebase`,
+    `filter-branch`);
+  - descartar cambios sin commitear (`reset --hard`, `checkout --`,
+    `restore`, `clean -f`, `stash drop`);
+  - matar procesos por nombre.
+
+  Si un bloqueo sobra, lo ejecuta el humano.
+- `guard_config.py`, antes de editar la configuración de lint, formato,
+  tipos o tests, o la del propio harness (`.claude/settings.json` y
+  `.claude/hooks/`), **pregunta** al humano. *Un agente atascado en un check
+  tiende a relajar la regla en vez de arreglar el código.*
+
+Sin Python, el lanzador bloquea los comandos de terminal en vez de
+dejarlos pasar sin vigilar.
+
 - **Los secretos no pasan por el contexto**: no se leen `.env` ni claves,
   no se imprimen y no se copian (`.claude/settings.json` lo bloquea). Un
   secreto que llega al chat, a un log o a un commit se rota: borrarlo no

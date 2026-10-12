@@ -6,13 +6,18 @@ y para quién, después con qué ambición, y solo entonces **cómo**. Claude
 pregunta, propone con una recomendación y aporta lo que tú no sabes que
 necesitas. Las decisiones las tomas tú.
 
-La plantilla no ejecuta nada: no trae scripts, hooks, tests ni CI. Son
-documentos que Claude sigue: `CLAUDE.md`, unos agentes y unas skills. Si
-quieres tests, CI o métricas, se deciden en el arranque o se piden después.
+La plantilla es casi toda documentos que Claude sigue: `CLAUDE.md`, unos
+agentes y unas skills. Lo único que se ejecuta son **dos hooks pequeños** que
+protegen lo que no tiene vuelta atrás (secretos, historia de git, trabajo
+sin commitear). No trae tests, CI ni métricas: si los quieres, se deciden
+en el arranque o se piden después.
 
 ## Requisitos
 
 - [Claude Code](https://code.claude.com/) y git.
+- Python 3.10+ y bash (en Windows, Git Bash) para los hooks. Sin Python, el
+  hook bloquea los comandos de terminal en lugar de dejarlos pasar sin
+  vigilar.
 - Opcional: las skills de la tabla "Skills opcionales". Si una no está
   instalada, el harness funciona igual, sin ella.
 - Opcional, para las capturas de interfaz: el plugin oficial `playwright`
@@ -139,6 +144,23 @@ contigo. El `leader` era la sesión principal con un script (`state.py`) que
 calculaba el siguiente paso. Ahora el estado vive en `docs/proyecto.md` y
 en las carpetas `IT<n>`.
 
+## Hooks
+
+Vienen en `.claude/hooks/` y se activan desde `.claude/settings.json`. Son
+ideas de [ECC](https://github.com/affaan-m/ECC) (config-protection,
+block-no-verify y safety-guard), adoptadas tras el piloto.
+
+| Hook | Cuándo | Qué hace |
+|---|---|---|
+| `guard_shell.py` | antes de cada comando de terminal | **bloquea** leer un `.env` (salvo `.env.example`), volcar el entorno o expandir un secreto (los nombres los toma de `.env.example`); saltarse los hooks de git; reescribir la historia; descartar cambios sin commitear; matar procesos por nombre |
+| `guard_config.py` | antes de editar | **pregunta** antes de tocar la configuración de lint, formato, tipos o tests, o la del propio harness |
+
+Cada regla viene de un incidente. *Un `taskkill /IM node.exe` mató todos
+los `node` de la máquina; "restaurar de HEAD" para deshacer un sabotaje
+borró el trabajo de varias iteraciones; un agente atascado en un check
+relajaba la regla en vez de arreglar el código.* Si un bloqueo sobra, el
+comando lo ejecutas tú.
+
 ## Skills del harness
 
 Vienen en `.claude/skills/`. Las usa la sesión principal.
@@ -196,6 +218,11 @@ problemas. La `/retrospectiva` las revisa.
 `PONYTAIL_SUBAGENT_MATCHER` de `.claude/settings.json` lo excluye de los
 agentes del harness, que lo llevan precargado donde toca. *Antes se colaba
 en los revisores.* Si no usas ponytail, la variable no hace nada.
+
+**Revisión de la configuración de `.claude/`**, de vez en cuando:
+`npx ecc-agentshield@<versión fijada> scan`
+([AgentShield](https://github.com/affaan-m/agentshield), MIT). Ejecuta código
+descargado: fija una versión con más de 7 días.
 
 **Herramientas externas** para `/direccion-visual`: tus referencias pueden
 salir de [Refero](https://refero.design/), [Mobbin](https://mobbin.com/) o
@@ -298,7 +325,8 @@ Recopiladas en las pruebas. El incidente que motivó cada una está en
 ```
 CLAUDE.md                          lo que Claude lee siempre
 README.md                          esto
-.claude/settings.json              permisos (secretos, commits, dependencias) y skillOverrides
+.claude/settings.json              permisos (secretos, commits, dependencias), hooks y skillOverrides
+.claude/hooks/                     guard_shell.py, guard_config.py y su lanzador py.sh
 .claude/agents/                    explorer, implementer, reviewer, security_reviewer
 .claude/skills/arranque/           la entrevista inicial, catalogo.md y la plantilla de docs/proyecto.md
 .claude/skills/entrevista/         el método de preguntas
