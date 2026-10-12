@@ -60,7 +60,8 @@ en el arranque o se piden después.
 - cada pregunta trae la recomendación de Claude y su porqué;
 - los hechos los busca Claude, y las decisiones las tomas tú.
 
-Todo queda en `docs/proyecto.md`, que se puede retomar en otra sesión.
+Cada decisión queda en su documento de `docs/` (tabla de abajo), así que
+se puede retomar en otra sesión y se consulta siempre aparte del código.
 
 | Fase | Qué se decide |
 |---|---|
@@ -91,7 +92,7 @@ spec (con el humano) ─► aprobación ─► implementer ─► reviewer ─�
                                          └── IT<n+1> ◄──┴── cambios ◄───┘
 ```
 
-Lo que la sección 7 no pida, se salta: por ejemplo, un proyecto personal
+Lo que `docs/proceso.md` no pida, se salta: por ejemplo, un proyecto personal
 puede ir sin spec ni revisores en los cambios pequeños.
 
 **Una carpeta por vuelta.** Cada intento de implementar es una iteración
@@ -114,18 +115,21 @@ número de intentos.
 
 | Qué | Dónde |
 |---|---|
-| Requisitos, alcance, decisiones, librerías, forma de trabajo, features, estado actual, pendientes, lecciones | `docs/proyecto.md` |
-| Diseño visual | `docs/diseno.md` (los tokens, en el código) |
-| Comandos, decisiones que no se deducen del código, lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque` siguiendo la guía oficial de Claude Code; se carga siempre) |
-| Estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
+| Qué es, alcance, features, estado, pendiente, lecciones | `docs/proyecto.md` |
+| Aspectos clave, arquitectura, supuestos de riesgo, restricciones | `docs/arquitectura.md` |
+| Stack y librerías aprobadas | `docs/stack.md` |
+| Diseño visual y tokens | `docs/diseno.md` (los tokens, en el código) |
+| Proceso del proyecto: specs, pruebas, zonas críticas, revisiones, ramas | `docs/proceso.md` |
+| Convenciones del lenguaje y del código | `docs/convenciones.md` |
 | Riesgos propios y lista de seguridad | `docs/seguridad.md` |
+| Comandos y lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque`; se carga siempre) |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
 | Iteraciones | `progress/FNN/IT<n>/` |
 | Investigaciones a fondo | `docs/investigaciones/<tema>.md` |
 | Auditorías y retrospectivas | `docs/auditorias/`, `docs/retrospectiva-<fecha>.md` |
 
 El detalle del ciclo, con el incidente que motivó cada paso, está en
-`docs/forma-de-trabajo.md`.
+`.claude/forma-de-trabajo.md`.
 
 ## Agentes
 
@@ -254,7 +258,7 @@ Google). Sin Stitch, Claude hace miniaturas HTML.
 ## Recomendaciones
 
 Recopiladas en las pruebas. El incidente que motivó cada una está en
-`docs/forma-de-trabajo.md`.
+`.claude/forma-de-trabajo.md`.
 
 **Proceso**
 
@@ -357,14 +361,18 @@ README.md                          esto
 .claude/settings.json              permisos (secretos, commits, dependencias), hooks y skillOverrides
 .claude/hooks/                     guard_shell.py, guard_config.py y su lanzador py.sh
 .claude/agents/                    explorer, implementer, reviewer, security_reviewer
-.claude/skills/arranque/           la entrevista inicial, catalogo.md y la plantilla de docs/proyecto.md
+.claude/skills/arranque/           la entrevista inicial y catalogo.md
 .claude/skills/entrevista/         el método de preguntas
 .claude/skills/direccion-visual/   el diseño visual
 .claude/skills/auditoria-seguridad/
 .claude/skills/retrospectiva/
-docs/forma-de-trabajo.md           cómo se construye, con el porqué de cada paso
-docs/convenciones.md               plantilla: estructura, errores, patrones prohibidos, interfaz web
-docs/seguridad.md                  lista de seguridad y riesgos propios
+.claude/forma-de-trabajo.md        cómo se construye, con el porqué de cada paso (de la plantilla)
+docs/proyecto.md                   plantilla: qué es, alcance, features, estado, lecciones
+docs/arquitectura.md               plantilla: aspectos clave, forma, supuestos, restricciones
+docs/stack.md                      plantilla: stack y librerías aprobadas
+docs/proceso.md                    plantilla: specs, pruebas, revisiones y ramas del proyecto
+docs/convenciones.md               plantilla: convenciones del lenguaje y del código, interfaz web
+docs/seguridad.md                  plantilla: lista de seguridad y riesgos propios
 specs/_plantilla.md                esqueleto de una spec
 ```
 

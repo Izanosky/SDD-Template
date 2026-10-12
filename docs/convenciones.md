@@ -4,8 +4,8 @@ Cómo se escribe el código de este proyecto, en detalle. Las leen el
 `implementer` y el `reviewer`. Solo va lo que difiere de las convenciones
 estándar del lenguaje: lo que el modelo ya sabe no se escribe. La
 configuración de las herramientas manda; aquí se explica el porqué. Lo
-rellena `/arranque` (fase 7); las pocas reglas que hacen falta en cada
-sesión se repiten, en una línea, en el `CLAUDE.md`. Si hay varios stacks
+rellena `/arranque` (fase 7). Si una regla rompe cosas cuando se olvida,
+se repite también en una línea en "Lo que rompe cosas" del `CLAUDE.md`. Si hay varios stacks
 (por ejemplo, API y web), repite las secciones por stack.
 
 ## Comandos

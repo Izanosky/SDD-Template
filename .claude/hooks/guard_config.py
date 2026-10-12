@@ -39,7 +39,7 @@ def _del_harness(ruta: Path) -> bool:
     except ValueError:
         return False
     return (rel.startswith((".claude/hooks/", ".claude/rules/", ".githooks/", ".github/workflows/"))
-            or rel == ".claude/settings.json")
+            or rel in {".claude/settings.json", ".claude/forma-de-trabajo.md"})
 
 
 def motivo(entrada: dict) -> str | None:

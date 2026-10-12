@@ -3,8 +3,9 @@
 Cómo se construye un proyecto una vez hecho el arranque, cuando
 `docs/proyecto.md` dice `Estado: aprobado`. Cada recomendación lleva el
 incidente que la motivó en las pruebas. Cuánto proceso se aplica (specs,
-pruebas, revisiones) lo fija la sección 7 de `docs/proyecto.md`, que decide
-el humano y que se puede cambiar cuando estorbe.
+pruebas, revisiones) lo fija `docs/proceso.md`, que decide el humano y que
+se puede cambiar cuando estorbe. Este fichero es de la plantilla, igual en
+todos los proyectos; las decisiones del proyecto están en `docs/`.
 
 ## Quién hace qué
 
@@ -28,13 +29,14 @@ el humano y que se puede cambiar cuando estorbe.
 
 | Qué | Dónde |
 |---|---|
-| Requisitos, alcance, decisiones, librerías, forma de trabajo | `docs/proyecto.md` |
-| Lista de features, la que está en curso y lo pendiente | `docs/proyecto.md`, al final |
-| Diseño visual y tokens | `docs/diseno.md` (los tokens, en el stack) |
-| Comandos, decisiones que no se deducen del código, lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque`; se carga siempre) |
-| Estructura, errores, patrones prohibidos, interfaz web | `docs/convenciones.md` |
+| Qué es, alcance, features, estado, pendiente, lecciones | `docs/proyecto.md` |
+| Aspectos clave, arquitectura, supuestos de riesgo, restricciones | `docs/arquitectura.md` |
+| Stack y librerías aprobadas | `docs/stack.md` |
+| Diseño visual y tokens | `docs/diseno.md` (los tokens, en el código) |
+| Proceso del proyecto: specs, pruebas, zonas críticas, revisiones, ramas | `docs/proceso.md` |
+| Convenciones del lenguaje y del código | `docs/convenciones.md` |
 | Riesgos propios y lista de seguridad | `docs/seguridad.md` |
-| Lecciones del proyecto, según ocurren | `docs/proyecto.md`, sección "Lecciones" |
+| Comandos y lo que rompe cosas | `CLAUDE.md` (lo genera `/arranque`; se carga siempre) |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
 | Cada vuelta de una feature | `progress/FNN/IT<n>/` (abajo) |
 | Investigaciones a fondo (convenciones, arquitecturas…) | `docs/investigaciones/<tema>.md` |
@@ -82,7 +84,7 @@ tras el commit.*
    piloto, un cambio de framework a mitad de la primera feature tiró una
    iteración entera, y la primera feature cargó con el toolchain y
    necesitó 11 vueltas.*
-2. **Spec**, si la sección 7 la pide para esta feature. Sin spec, el
+2. **Spec**, si `docs/proceso.md` la pide para esta feature. Sin spec, el
    encargo lleva los requisitos (cada línea, un requisito) y, si aparece
    una decisión de diseño de verdad, se para y se escribe la spec. La escribe la
    sesión principal con el humano, usando la skill `entrevista`. Antes de
@@ -103,14 +105,14 @@ tras el commit.*
    mucho dos tramos (normalmente lógica y datos, después interfaz), y cada
    tramo se revisa antes del siguiente. *Cada tramo es otro ciclo de
    implementación y revisión.*
-5. **Revisión funcional** (`reviewer`), si la sección 7 la pide, con
+5. **Revisión funcional** (`reviewer`), si `docs/proceso.md` la pide, con
    contexto limpio y nunca a cargo de quien implementó, sobre la misma
    `IT<n>`. Si pide cambios, se crea `IT<n+1>` y se relanza el
    `implementer` con los cambios de `review.md` citados tal cual. Después
    vuelve el `reviewer`. Las desviaciones a las que el reviewer da el
    visto bueno, la sesión principal las marca en la spec ("Visto bueno:
    reviewer, fecha").
-6. **Revisión de seguridad** (`security_reviewer`), si la sección 7 la pide:
+6. **Revisión de seguridad** (`security_reviewer`), si `docs/proceso.md` la pide:
    **al final de la feature y solo tras el `APPROVED` del reviewer** (si
    el proyecto va sin reviewer, tras la última vuelta del implementer). *En
    un piloto, en cada tramo supuso 47 pasadas para 2 rechazos; en paralelo
@@ -133,7 +135,7 @@ tras el commit.*
    millones de tokens leídos de caché.*
 
 Cada 4 features cerradas, o al cerrar una fase, se propone
-`/auditoria-seguridad` si la sección 7 la incluye. Al terminar, se propone
+`/auditoria-seguridad` si `docs/proceso.md` la incluye. Al terminar, se propone
 `/retrospectiva`.
 
 ### Encargo tipo
@@ -200,8 +202,8 @@ Todos, con el sí del humano.
 - **Un arreglo sobre algo ya cerrado** también es una feature nueva,
   pequeña, que se pone justo detrás de la que está en curso.
 - **Si cambia una decisión de base** (stack, plataforma, datos), se para la
-  feature, se vuelve a su fase del arranque, se actualiza
-  `docs/proyecto.md` y solo entonces se sigue.
+  feature, se vuelve a su fase del arranque, se actualiza su documento de
+  `docs/` y solo entonces se sigue.
 - **Investigación a fondo**, cuando el humano la pida (convenciones,
   arquitecturas, cómo lo resuelven otros): igual que en el arranque, se
   propone primero la pregunta, las fuentes y el coste, y el resultado queda
@@ -209,8 +211,8 @@ Todos, con el sí del humano.
 - **Un fallo sin causa clara** o un test intermitente se investiga antes de
   tocar código: reproducir, aislar, diagnosticar y después arreglar
   (`engineering:debug` o `investigate-first`, si alguna está instalada).
-- **Cambiar la forma de trabajo** (sección 7 de `docs/proyecto.md`): se
-  apunta con su fecha y su motivo, para que la retrospectiva pueda ver si
+- **Cambiar el proceso** (`docs/proceso.md`): se apunta en su sección
+  "Cambios", con su fecha y su motivo, para que la retrospectiva pueda ver si
   sirvió.
 
 ### Control y coste
@@ -289,7 +291,7 @@ su sesión, y `docs/proyecto.md` se reconcilia al fusionar.
 
 ## Pruebas
 
-Según la sección 7 de `docs/proyecto.md`:
+Según `docs/proceso.md`:
 
 - **Un test vale si cae con el código roto.** Se rompe la línea de
   producción, se ve caer el test y se restaura. Si para restaurar hay que

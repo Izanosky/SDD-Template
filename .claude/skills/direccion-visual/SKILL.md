@@ -48,7 +48,7 @@ Tono, claro u oscuro, densidad, cuánto movimiento, y las **librerías de
 interfaz**: componentes, iconos, animación y fuentes (con su licencia;
 servidas en local si hay CSP). Para elegirlas, `pick-ui-library` si está
 instalada. Cada dependencia necesita el sí del humano y se apunta en
-`docs/proyecto.md`.
+`docs/stack.md`.
 
 ## 4. Tres direcciones, y elige el humano
 

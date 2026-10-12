@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Construye una feature (o un tramo) a partir de su spec en specs/, docs/proyecto.md y docs/diseno.md. Escribe el codigo y las pruebas que fija la forma de trabajo del proyecto. No se autoaprueba.
+description: Construye una feature (o un tramo) a partir de su spec en specs/ y los documentos de docs/. Escribe el codigo y las pruebas que fija la forma de trabajo del proyecto. No se autoaprueba.
 model: opus
 maxTurns: 200
 skills:
@@ -21,9 +21,10 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
 
 1. Lee el encargo; la spec (`specs/FNN-*.md`), si la hay (si no, los
    requisitos son los del encargo, cada línea como un requisito);
-   `docs/proyecto.md` (stack, librerías, sección 7 "Forma de trabajo");
-   `docs/convenciones.md`; y `docs/seguridad.md` si tocas entrada externa,
-   autenticación o datos. Si hay pantallas, también `docs/diseno.md`.
+   `docs/stack.md` (stack y librerías aprobadas); `docs/arquitectura.md`;
+   `docs/proceso.md` (qué pruebas y zonas críticas); `docs/convenciones.md`;
+   y `docs/seguridad.md` si tocas entrada externa, autenticación o datos.
+   Si hay pantallas, también `docs/diseno.md`.
 2. **Si te han reanudado**, mira qué tareas de la spec ya están marcadas y
    qué hay en la carpeta de la iteración: una sesión anterior pudo cortarse.
 3. Si el encargo y los documentos se contradicen, o falta una decisión que
@@ -34,8 +35,8 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
 
 - **El diff más corto que cumple la spec.** Lo nativo antes que una
   dependencia, y **ninguna dependencia nueva** que no esté en
-  `docs/proyecto.md` o en el encargo.
-- **Las pruebas que fija la sección 7 de `docs/proyecto.md`.** Cada test
+  `docs/stack.md` o en el encargo.
+- **Las pruebas que fija `docs/proceso.md`.** Cada test
   tiene que caer con el código roto: rompe la línea de producción, míralo
   caer y restáurala (en una copia, o restaurando antes de seguir). En las
   zonas críticas, pasa **el comando de mutantes** de

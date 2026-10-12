@@ -1,6 +1,6 @@
 ---
 name: arranque
-description: Ronda inicial de un proyecto - entrevista al humano en orden (requisitos, alcance, aspectos clave segun el alcance, stack, librerias, diseno visual y forma de trabajo del proyecto) con una recomendacion en cada pregunta, y deja todo en docs/proyecto.md. Usar al empezar, cuando docs/proyecto.md no existe o no esta aprobado, o para revisar una fase. Solo la sesion principal.
+description: Ronda inicial de un proyecto - entrevista al humano en orden (requisitos, alcance, aspectos clave segun el alcance, stack, librerias, diseno visual y forma de trabajo del proyecto) con una recomendacion en cada pregunta, y deja cada decision en su documento de docs/ y el CLAUDE.md del proyecto. Usar al empezar, cuando docs/proyecto.md no dice "Estado: aprobado", o para revisar una fase. Solo la sesion principal.
 ---
 
 # Arranque
@@ -10,15 +10,18 @@ construye, para quién y con qué ambición, y solo después elegir cómo. Cada
 fase depende de las anteriores; **no se pregunta por tecnología antes de
 saber qué hace la aplicación**.
 
+Cada decisión queda en su documento de `docs/`, que ya existen como
+plantillas con huecos `<…>`:
+
 | Fase | Pregunta | Queda en |
 |---|---|---|
 | 1. Requisitos | ¿qué hace y para quién? | `docs/proyecto.md` |
 | 2. Alcance | ¿para uno mismo o para muchos? | `docs/proyecto.md` |
-| 3. Aspectos clave | ¿qué exige ese alcance? | `docs/proyecto.md` |
-| 4. Stack | ¿con qué se construye? | `docs/proyecto.md` |
-| 5. Librerías | ¿qué piezas van encima? | `docs/proyecto.md` |
+| 3. Aspectos clave | ¿qué exige ese alcance? | `docs/arquitectura.md` |
+| 4. Arquitectura y stack | ¿cómo se organiza y con qué se construye? | `docs/arquitectura.md`, `docs/stack.md` |
+| 5. Librerías | ¿qué piezas van encima? | `docs/stack.md` |
 | 6. Diseño visual | ¿cómo se ve? (si hay interfaz) | `docs/diseno.md` |
-| 7. Forma de trabajo | ¿con cuánto rigor se construye? | `docs/proyecto.md` |
+| 7. Forma de trabajo | ¿con cuánto rigor se construye? | `docs/proceso.md`, `docs/convenciones.md`, `docs/seguridad.md` |
 
 ## Cómo se pregunta
 
@@ -36,10 +39,9 @@ toma el humano. Además:
   de escalado.
 - **Con código ya existente**, lo que hay es la decisión tomada: se lee y
   se confirma, no se pregunta.
-- **Se escribe sobre la marcha**: al empezar, copia `proyecto.md` (de esta
-  carpeta) a `docs/proyecto.md` y actualízalo al cerrar cada fase. Así se
-  puede retomar en otra sesión. Al cerrar cada fase, propón `/clear`: el
-  fichero basta para seguir.
+- **Se escribe sobre la marcha**: rellena el documento de cada fase al
+  cerrarla. Así se puede retomar en otra sesión, y al cerrar cada fase
+  puedes proponer `/clear`: los documentos bastan para seguir.
 - **Sin commits**: el primero lo hace el humano al final.
 
 **Para investigar** (solo lo que apruebe el humano):
@@ -66,12 +68,11 @@ este tipo de proyecto. Antes de lanzarla, propón:
 Con el sí del humano, el resultado queda en
 `docs/investigaciones/<tema>.md`, con las fuentes, las fechas y las
 opciones con sus pros y contras. La decisión se sigue tomando con la
-entrevista, y en `docs/proyecto.md` queda la decisión con un enlace a la
-investigación. Con alcance **compartido** o **producción**, ofrécela tú en
-las fases 4 y 7 si hay decisiones que el humano no sabe valorar; no la
-lances sin su sí.
+entrevista, y queda en su documento con un enlace a la investigación. Con
+alcance **compartido** o **producción**, ofrécela tú en las fases 4 y 7 si
+hay decisiones que el humano no sabe valorar; no la lances sin su sí.
 
-## 1. Requisitos
+## 1. Requisitos → `docs/proyecto.md`
 
 Qué es, para quién y qué problema resuelve. Qué puede hacer el usuario
 (acciones concretas, no adjetivos). Qué entra en la primera versión y **qué
@@ -79,12 +80,12 @@ no**. Qué datos maneja y de dónde salen. En qué dispositivos se usa, ahora
 y más adelante.
 
 Cierra la fase con la **lista de features** en orden. La primera es
-siempre el **andamiaje**: el proyecto creado con el generador oficial del
-framework, un "hola mundo" de punta a punta y la comprobación de los
+siempre el **andamiaje** (F00): el proyecto creado con el generador oficial
+del framework, un "hola mundo" de punta a punta y la comprobación de los
 supuestos de riesgo (fase 4). Después, la feature de producto más pequeña
 que aporte valor.
 
-## 2. Alcance
+## 2. Alcance → `docs/proyecto.md`
 
 Para quién es (solo el humano, personas conocidas o abierto al público),
 cuántos usuarios se esperan y en cuánto tiempo, qué pasa si falla o pierde
@@ -98,7 +99,7 @@ humano lo ajuste:
 - **Producción**: público o muchos usuarios. Arquitectura, escala,
   seguridad y operación cuentan desde el principio.
 
-## 3. Aspectos clave
+## 3. Aspectos clave → `docs/arquitectura.md`
 
 Con alcance **personal**, solo lo imprescindible: dónde viven los datos y
 si se acepta perderlos. Con **compartido** o **producción**, recorre
@@ -107,7 +108,7 @@ línea, por qué importa en este producto y tu propuesta. **Lo que es caro
 cambiar después se decide ahora**; lo barato se aplaza con el disparador
 que lo traerá.
 
-## 4. Stack
+## 4. Arquitectura y stack → `docs/arquitectura.md` y `docs/stack.md`
 
 Forma de la arquitectura (monolito, cliente-servidor, serverless,
 local-first…), lenguaje, framework, base de datos y dónde se despliega.
@@ -118,9 +119,12 @@ también cuánto exigirá la interfaz: *en un piloto, el stack se eligió sin
 pensar en la ambición visual y hubo que cambiar de framework a mitad de la
 primera feature.*
 
-Apunta los **supuestos de riesgo**: lo que, si resulta falso, obliga a
-cambiar el stack (que una librería corra en la plataforma, que un plan
-gratuito aguante). Los comprueba la feature de andamiaje antes de escribir
+La forma va a `arquitectura.md`; el lenguaje, el framework, los datos y el
+despliegue, con su versión y la alternativa descartada, a `stack.md`.
+
+Apunta en `arquitectura.md` los **supuestos de riesgo**: lo que, si resulta
+falso, obliga a cambiar el stack (que una librería corra en la plataforma,
+que un plan gratuito aguante). Los comprueba F00 antes de escribir
 producto. Apunta también las **restricciones del entorno** (memoria del
 hosting, arranque en frío, cuotas, límites de los planes), cada una con su
 fecha y su fuente.
@@ -137,30 +141,32 @@ Con alcance **compartido** o **producción**, cierra la fase con:
 
 Si el humano quiere dejar constancia de las decisiones de arquitectura
 como ADR, usa `engineering:architecture` o `architecture-decision-records`,
-la que esté instalada. Para un diseño de sistema con más detalle (contratos
-de API, colas, reintentos, redundancia), `engineering:system-design`.
+la que esté instalada, y enlázalos desde `arquitectura.md`. Para un diseño
+de sistema con más detalle (contratos de API, colas, reintentos,
+redundancia), `engineering:system-design`.
 
-## 5. Librerías
+## 5. Librerías → `docs/stack.md`
 
 Lo que va encima del stack: acceso a datos, validación, autenticación,
 estado y caché en el cliente, formularios… Solo lo que pidan los requisitos
 y el alcance. Cada librería, con su versión, para qué sirve y la
 alternativa descartada. Antes de cualquier dependencia, mira si basta con
 lo nativo. Si un hecho no es seguro (versión, licencia, mantenimiento,
-límites), propón comprobarlo. **Lo que no esté en esta lista pide permiso
-al instalarse.**
+límites), propón comprobarlo. **`stack.md` es la lista de dependencias
+aprobadas: lo que no esté ahí pide permiso al instalarse.**
 
 Las de interfaz (componentes, iconos, animación, fuentes) se eligen en la
 fase 6, con las referencias delante. Las de pruebas, en la 7.
 
-## 6. Diseño visual
+## 6. Diseño visual → `docs/diseno.md`
 
-Solo si hay interfaz: **`/direccion-visual`**. Queda en `docs/diseno.md`.
+Solo si hay interfaz: **`/direccion-visual`**.
 
-## 7. Forma de trabajo de este proyecto
+## 7. Forma de trabajo → `docs/proceso.md`, `docs/convenciones.md` y `docs/seguridad.md`
 
 Cuánto proceso compensa, según el alcance. Recomienda según esta tabla y
-deja que el humano cambie cualquier casilla:
+deja que el humano cambie cualquier casilla. El resultado va a
+`proceso.md`:
 
 | | Personal | Compartido | Producción |
 |---|---|---|---|
@@ -174,41 +180,40 @@ deja que el humano cambie cualquier casilla:
 
 Además, decide con el humano y apunta:
 
-- **el comando que verifica todo** (tests, lint, tipos, build, auditoría de
-  dependencias, según lo que se haya elegido) y el comando de mutantes, si
-  los hay. Van a la sección "Comandos" del `CLAUDE.md` del proyecto; la
-  feature de andamiaje los deja funcionando y demuestra que cada paso sabe
-  fallar;
-- **si se pasa un escáner de secretos** (por ejemplo, gitleaks) antes del
-  primer push: un secreto commiteado y borrado sigue en el historial;
-- **las zonas críticas**, si las hay (dinero, escritura de datos, permisos,
-  parsers, fechas…);
-- **los riesgos propios de seguridad** (3-6, del más grave al menos), en
-  `docs/seguridad.md`, borrando los apartados condicionales que no
-  apliquen;
-- **las convenciones** (`docs/convenciones.md`). Propón en bloque lo
-  estándar del stack elegido (estructura de carpetas y fronteras, manejo de
-  errores, tipos, tests por capa y, si hay interfaz, el bloque web), para
-  que el humano lo acepte de una vez o abra lo que quiera. Pregunta solo lo
-  que es preferencia suya: en qué idioma van el código y los textos de la
-  interfaz, si hay patrones que quiere prohibir o exigir, y el formato de
-  ramas y mensajes de commit. Si quiere fundamentarlas mejor, ofrécele la
-  investigación a fondo. Las reglas que se apartan de lo estándar y se
-  necesitan en cada sesión van también, en una línea cada una, al
-  `CLAUDE.md`;
-- **las skills para los agentes según el stack**, si están instaladas: con
-  React, `vercel-react-best-practices` y `vercel-composition-patterns` en el
+- en `proceso.md`: **las zonas críticas**, si las hay (dinero, escritura de
+  datos, permisos, parsers, fechas…); **si se pasa un escáner de
+  secretos** (por ejemplo, gitleaks) antes del primer push, porque un
+  secreto commiteado y borrado sigue en el historial; y **las skills para
+  los agentes según el stack**, si están instaladas: con React,
+  `vercel-react-best-practices` y `vercel-composition-patterns` en el
   `implementer`; con Python, `modern-python`; con usuarios o servidor,
   `prd-securability-enhancement` para escribir las specs. Con el sí del
   humano, se añaden en `skills:` del agente y se ponen en `name-only` en
-  `skillOverrides` de `.claude/settings.json`.
+  `skillOverrides` de `.claude/settings.json`;
+- en `convenciones.md`: **las convenciones del lenguaje y del código**.
+  Propón en bloque lo estándar del stack elegido (estructura de carpetas y
+  fronteras, manejo de errores, tipos, tests por capa y, si hay interfaz,
+  el bloque web), para que el humano lo acepte de una vez o abra lo que
+  quiera. Pregunta solo lo que es preferencia suya: en qué idioma van el
+  código y los textos de la interfaz, si hay patrones que quiere prohibir o
+  exigir, y el formato de ramas y mensajes de commit. Si quiere
+  fundamentarlas mejor, ofrécele la investigación a fondo;
+- en `seguridad.md`: **los riesgos propios de seguridad** (3-6, del más
+  grave al menos), borrando los apartados condicionales que no apliquen;
+- **el comando que verifica todo** (tests, lint, tipos, build, auditoría de
+  dependencias, según lo que se haya elegido) y el de mutantes, si los
+  hay: van a la sección "Comandos" del `CLAUDE.md`. F00 los deja
+  funcionando y demuestra que cada paso sabe fallar.
 
 ## Cierre
 
 Comprueba que:
 
-- no queda ninguna decisión abierta sin aplazar con su disparador;
-- nada se contradice entre fases;
+- no queda ningún hueco `<…>` en los documentos de `docs/` (o se borró la
+  sección porque no aplica);
+- no queda ninguna decisión abierta sin aplazar con su disparador (las
+  revisables, en "Decisiones revisables" de `proyecto.md`);
+- nada se contradice entre documentos;
 - la primera feature se puede construir sin preguntas de arquitectura
   pendientes.
 
@@ -216,36 +221,28 @@ Enseña un resumen de una pantalla: qué se decidió en cada fase, qué es
 revisable y cuándo, y la primera feature. **Con el sí explícito del
 humano**, escribe `Estado: aprobado (AAAA-MM-DD)` en `docs/proyecto.md` y
 **genera el `CLAUDE.md` del proyecto** (abajo). Si la carpeta no es
-todavía un repositorio git, propón `git init`. Después,
-**propón el primer commit** (la plantilla y los documentos del arranque),
-tras mirar `git status`: los revisores comparan contra `HEAD`, y sin un
-commit previo no hay con qué comparar. Desde ahí se construye siguiendo
-`docs/forma-de-trabajo.md`.
+todavía un repositorio git, propón `git init`. Después, **propón el primer
+commit** (la plantilla y los documentos del arranque), tras mirar `git
+status`: los revisores comparan contra `HEAD`, y sin un commit previo no
+hay con qué comparar. Desde ahí se construye siguiendo
+`.claude/forma-de-trabajo.md`.
 
 Si más adelante cambia una decisión de base, se vuelve a su fase, se
-actualiza `docs/proyecto.md` (y `CLAUDE.md`, si cambia algo de lo que
-recoge) y solo entonces se sigue.
+actualiza su documento (y `CLAUDE.md`, si cambia algo de lo que recoge) y
+solo entonces se sigue.
 
 ## El `CLAUDE.md` del proyecto
 
 Sustituye al de la plantilla ("Proyecto sin arrancar"). Claude lo lee en
 cada sesión, y cada agente también, así que sigue la guía oficial de
 Claude Code (code.claude.com/docs/en/best-practices y /memory): **corto
-(unas 60 líneas, nunca más de 200), con encabezados y viñetas, y solo lo
+(unas 40 líneas, nunca más de 200), con encabezados y viñetas, y solo lo
 que hace falta en cada sesión y no se deduce del código.** Para cada línea:
 *¿quitarla haría que Claude se equivoque?* Si no, fuera.
 
-| Entra | No entra |
-|---|---|
-| comandos que Claude no adivina | lo que se deduce leyendo el código (el stack está en `package.json` o equivalente) |
-| reglas de código que se apartan de lo estándar | convenciones estándar del lenguaje |
-| cómo se prueba y con qué | documentación detallada (se enlaza) |
-| ramas y formato de commits | lo que cambia a menudo (el estado del proyecto vive en `docs/proyecto.md`) |
-| decisiones de arquitectura propias, con su motivo | explicaciones largas |
-| rarezas del entorno (variables necesarias, por nombre) | descripción fichero a fichero |
-| lo que rompe cosas y no es evidente | obviedades ("escribe código limpio") |
-
-Estructura:
+**Las decisiones no van aquí: viven en `docs/`**, y el `CLAUDE.md` las
+enlaza. Solo lleva lo que Claude necesita en cada sesión para no
+equivocarse:
 
 ```
 # <Nombre>
@@ -255,30 +252,31 @@ Estructura:
 <verificar todo, verificar rápido, arrancar, datos falsos (normal y peor
 caso), mutantes. Los completa F00.>
 
-## Decisiones que no se deducen del código
-- <decisión> — <motivo> (p. ej. "TypeScript 6.0, no 7: typescript-eslint
-  aún no lo admite").
-
 ## Lo que rompe cosas
-- <regla> — <motivo> (p. ej. "las fechas, siempre en local: la racha
-  depende del día del usuario").
+- <regla> — <motivo> → <documento donde se decidió> (p. ej. "las fechas,
+  siempre en local: la racha depende del día del usuario →
+  docs/arquitectura.md").
 
-## Repositorio y entorno
-- <ramas y formato de commits>
-- <variables de entorno necesarias, solo los nombres; política de coste>
-
-## Dónde está el resto
-docs/proyecto.md (decisiones y estado) · docs/convenciones.md ·
-docs/seguridad.md · docs/diseno.md
+## Dónde está cada decisión
+- Qué es, alcance, features y estado: docs/proyecto.md
+- Arquitectura, supuestos y restricciones: docs/arquitectura.md
+- Stack y librerías aprobadas: docs/stack.md
+- Diseño visual: docs/diseno.md
+- Proceso (specs, pruebas, revisiones, ramas): docs/proceso.md
+- Convenciones del código: docs/convenciones.md
+- Seguridad: docs/seguridad.md
 ```
 
-No repite la forma de trabajo ni las reglas duras (están en
+"Lo que rompe cosas" es lo único que se repite de los documentos: unas
+pocas reglas que, si Claude no las tiene presentes en cada sesión, rompen
+algo, cada una en una línea y con el enlace a dónde se decidió. No repite
+la forma de trabajo ni las reglas duras (están en
 `.claude/rules/harness.md`, que se carga siempre). **Si el proyecto ya
 tenía un `CLAUDE.md` propio**, no lo sustituyas: añade lo que falte,
 enséñale el cambio al humano y respeta lo que ya había.
 
-**Se mantiene vivo**: cuando cambia un comando, una decisión o aparece una
-regla nueva, se actualiza en el momento. Se añade una línea cuando Claude
+**Se mantiene vivo**: cuando cambia un comando o aparece una regla que
+rompe cosas, se actualiza en el momento. Se añade una línea cuando Claude
 comete el mismo error por segunda vez o el humano repite una corrección, y
 se poda lo que Claude ya hace bien sin ella (`/doctor prompt-audit` lo
 revisa). Si Claude se salta una instrucción concreta, se marca esa sola con

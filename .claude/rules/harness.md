@@ -1,16 +1,17 @@
 # Forma de trabajo (de la plantilla)
 
 Este fichero viene de la plantilla y es igual en todos los proyectos. Lo
-propio de cada proyecto está en `CLAUDE.md`, que genera `/arranque`.
+propio de cada proyecto está en `docs/` (cada decisión en su documento) y
+en `CLAUDE.md` (comandos y lo que rompe cosas), que genera `/arranque`.
 
 ## Cómo se trabaja
 
-1. **Arranque** (`/arranque`): si `docs/proyecto.md` no existe o no dice
+1. **Arranque** (`/arranque`): si `docs/proyecto.md` no dice
    `Estado: aprobado`, se empieza por ahí. Es una entrevista en este orden:
    requisitos → alcance → aspectos clave → stack → librerías → diseño
-   visual → forma de trabajo del proyecto. Al cerrar, genera el `CLAUDE.md`
-   del proyecto.
-2. **Construir**, feature a feature, según `docs/forma-de-trabajo.md`. Léelo
+   visual → forma de trabajo del proyecto. Cada decisión queda en su
+   documento de `docs/`, y al cerrar genera el `CLAUDE.md` del proyecto.
+2. **Construir**, feature a feature, según `.claude/forma-de-trabajo.md`. Léelo
    antes de la primera feature y cuando dudes de cómo seguir.
 
 **Si eres la sesión principal**: al empezar, lee "Features", "Estado
@@ -23,7 +24,7 @@ este fichero es solo contexto.
 
 Las decisiones son del humano. Tú propones, con recomendación y su porqué.
 Si algo de esta forma de trabajo estorba en este proyecto, díselo y propón
-cambiarlo en la sección 7 de `docs/proyecto.md`.
+cambiarlo en `docs/proceso.md`.
 
 ## Lecciones: las apuntas tú
 

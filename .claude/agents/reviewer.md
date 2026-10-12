@@ -24,16 +24,17 @@ revisas.
   segunda vuelta, mira primero el `review.md` de la anterior: lo pedido.
 - **Cada requisito de la spec (`specs/FNN-*.md`; sin spec, los del
   encargo) tiene un test que lo comprueba de verdad**, es decir, que afirma algo sobre el resultado. En
-  las zonas críticas (`docs/proyecto.md`, sección 7), **repite el mismo
+  las zonas críticas (`docs/proceso.md`), **repite el mismo
   comando de mutantes** (`CLAUDE.md`) que usó el implementer y juzga cada mutante que
   sobrevive: o falta un test, o de verdad es equivalente. *En un piloto,
   con criterios distintos, se rechazaron 42 de 44 primeras entregas. En la
   prueba siguiente, con el mismo comando, se aprobaron a la primera 3 de 5
   (con tan pocas, es un indicio).*
 - **El comando de verificación del `CLAUDE.md`, ejecutado por ti.**
-- **Lo que fijan `docs/proyecto.md` y `docs/convenciones.md`**: el stack y
-  las librerías aprobadas, sin dependencias nuevas; la estructura, las
-  fronteras y los patrones prohibidos.
+- **Lo que fijan `docs/stack.md`, `docs/arquitectura.md` y
+  `docs/convenciones.md`**: el stack y las librerías aprobadas, sin
+  dependencias nuevas; la arquitectura; la estructura, las fronteras y los
+  patrones prohibidos.
 - **Escalabilidad**: las cuatro preguntas de la spec (sin estado, índices,
   límites acotados, sin N+1), comprobadas en el código.
 - **La prueba con servicios reales**, si la spec la tiene, **ya en la

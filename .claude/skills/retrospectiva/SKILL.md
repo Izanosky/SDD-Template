@@ -14,9 +14,9 @@ indicio, dilo.
 
 Fuentes, de la más barata a la más cara:
 
-- el estado de las features, la sección "Lecciones" (el diario de lo que
-  falló o estorbó) y los cambios fechados de la sección 7 en
-  `docs/proyecto.md`;
+- el estado de las features y la sección "Lecciones" (el diario de lo que
+  falló o estorbó) de `docs/proyecto.md`, y los cambios fechados de
+  `docs/proceso.md`;
 - `git log`, que da un commit por feature, con su fecha;
 - las carpetas `progress/FNN/IT<n>/`: el número de carpetas es el número de
   intentos, y la primera línea de cada `review.md` y `security.md` dice el
@@ -35,7 +35,7 @@ Qué buscar:
 - **Qué no aportó**: un paso que nunca cambió nada. Ojo: que nadie cite una
   regla no prueba que sobre, porque puede ser justo la que evita el fallo.
   Antes de proponer quitarla, busca el incidente que la motivó en
-  `docs/forma-de-trabajo.md`.
+  `.claude/forma-de-trabajo.md`.
 - **Las skills**: cuáles dejaron rastro en las revisiones o en el código y
   cuáles no.
 - **Coste fijo del contexto** (método `context-budget` de ECC): cada turno
@@ -49,7 +49,7 @@ Qué buscar:
 - **Lo que fue un estorbo**: pregúntaselo al humano.
 
 Cada lección nueva se propone al humano **como recomendación con su
-incidente**, para `docs/forma-de-trabajo.md`. Si sirve para otros
+incidente**, para `.claude/forma-de-trabajo.md`. Si sirve para otros
 proyectos, también para el README de la plantilla.
 
 ## 2. El código

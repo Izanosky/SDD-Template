@@ -66,5 +66,5 @@ La entrevista termina cuando la frontera está vacía: todas las ramas
 recorridas y ninguna decisión tomada en silencio. Entonces resume lo
 acordado y **pide confirmación** de que es así. No actúes sobre ello hasta
 tenerla. Lo decidido se escribe donde diga quien te usa
-(`docs/proyecto.md`, la spec…) a medida que se decide, para poder retomarlo
+(el documento de `docs/` que toque, la spec…) a medida que se decide, para poder retomarlo
 en otra sesión.
