@@ -36,5 +36,6 @@ specs, tests, revisiones o CI, pídelos cuando los necesites.
 |---|---|
 | `CLAUDE.md` | lo que Claude lee siempre: la forma de trabajo y las reglas duras |
 | `.claude/skills/arranque/` | la entrevista inicial (`SKILL.md`), el catálogo de aspectos clave, la fase de diseño y la plantilla de `docs/proyecto.md` |
-| `docs/forma-de-trabajo.md` | cómo se construye una vez hecho el arranque |
+| `docs/forma-de-trabajo.md` | cómo se construye una vez hecho el arranque, y quién hace cada paso |
+| `.claude/agents/` | `implementer` (construye), `reviewer` (revisión funcional) y `security_reviewer` (seguridad, al final). Heredan el modelo de la sesión; para cambiarlo, añade `model:` en su cabecera |
 | `.claude/settings.json` | impide leer secretos y pide permiso para commits, push e instalar dependencias |

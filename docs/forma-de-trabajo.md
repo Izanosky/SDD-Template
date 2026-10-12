@@ -7,6 +7,19 @@ resolvió. El humano decide qué se usa en cada proyecto y lo puede cambiar
 cuando estorbe. Tests, CI, revisiones o métricas se añaden cuando él lo
 pide; esta plantilla no los impone.
 
+## Quién hace qué
+
+| Quién | Qué hace |
+|---|---|
+| **Sesión principal** (con el humano) | el arranque, las specs (un subagente no puede esperar a que el humano responda), lanzar los agentes, pasar sus resultados y los arreglos pequeños |
+| `implementer` | construye la feature o el tramo y devuelve qué hizo, con qué tests y qué capturas |
+| `reviewer` | revisión funcional con contexto limpio: `Veredicto: APPROVED` o `CHANGES_REQUESTED` |
+| `security_reviewer` | seguridad de la feature entera, al final y tras el `APPROVED` del reviewer |
+
+Los cambios pequeños y claros los hace la sesión principal sin lanzar
+agentes. Si un revisor pide cambios, se relanza el `implementer` con esos
+cambios citados tal cual, y después vuelve a pasar el `reviewer`.
+
 ## El ciclo de una feature
 
 1. **Una feature cada vez, en el orden de `docs/proyecto.md`.** La primera
@@ -33,9 +46,11 @@ pide; esta plantilla no los impone.
    recomendadas"). Si falta algo, se repregunta solo eso, en una línea.
    *"Sigue" no es aprobar; pero tres idas y vueltas por la frase exacta
    cansan.*
-5. **Implementar**, con las pruebas que el humano haya pedido.
-6. **Revisión independiente**, si el humano la quiere: la hace otro agente
-   con el contexto limpio, nunca quien implementó. **La de seguridad va al
+5. **Implementar** (`implementer`), con las pruebas que el humano haya
+   pedido. *Más de dos tramos por feature multiplica las vueltas:
+   normalmente basta con lógica y datos primero, y después la interfaz.*
+6. **Revisión independiente** (`reviewer`), si el humano la quiere: con el
+   contexto limpio, nunca quien implementó. **La de seguridad va al
    final de la feature y solo cuando la funcional ya aprobó.** *En un
    piloto, revisar seguridad en cada tramo supuso 47 pasadas para 2
    rechazos; en paralelo con la funcional, la mitad de las pasadas caían

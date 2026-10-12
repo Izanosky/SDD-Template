@@ -9,7 +9,10 @@
    requisitos → alcance → aspectos clave → stack → librerías → diseño
    visual.
 2. **Construir**, feature a feature, según `docs/forma-de-trabajo.md`. Léelo
-   antes de la primera feature y cuando dudes de cómo seguir.
+   antes de la primera feature y cuando dudes de cómo seguir. Si eres la
+   sesión principal, hablas con el humano, escribes las specs y lanzas a
+   los agentes (`implementer`, `reviewer`, `security_reviewer`). Si eres uno
+   de ellos, sigue tu definición.
 
 Las decisiones son del humano. Tú propones, con recomendación y su porqué.
 Si algo de esta forma de trabajo estorba en este proyecto, díselo y propón
