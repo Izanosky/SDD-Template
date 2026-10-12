@@ -16,3 +16,9 @@ dist/
 build/
 coverage/
 .playwright-mcp/
+
+# Carpetas de trabajo de las herramientas de mutantes
+mutants/
+.mutmut-cache
+.stryker-tmp/
+reports/mutation/

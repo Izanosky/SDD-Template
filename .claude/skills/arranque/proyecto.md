@@ -50,8 +50,7 @@ Lo que no esté aquí pide permiso al instalarse.
 
 ## 6. Diseño visual
 
-Ver `docs/diseno.md`. Comando para arrancar con datos falsos (normal y
-peor caso): `<comando>`.
+Ver `docs/diseno.md`.
 
 ## 7. Forma de trabajo
 
@@ -59,15 +58,15 @@ peor caso): `<comando>`.
 |---|---|
 | Spec antes de construir | |
 | Pruebas | |
-| Comando que verifica todo | |
-| Zonas críticas y comando de mutantes | |
+| Zonas críticas (con mutantes) | |
 | Revisión funcional | |
 | Revisión de seguridad | |
 | Auditoría completa | |
 | Ramas y commits | un commit por feature, lo aprueba el humano |
 | Skills de los agentes según el stack | |
 
-Convenciones y comandos: `docs/convenciones.md`. Riesgos propios de
+Los comandos (verificar, mutantes, datos falsos) están en
+`docs/convenciones.md`. Riesgos propios de
 seguridad: `docs/seguridad.md`.
 
 Cambios a esta sección a mitad de proyecto, con su fecha y su motivo, para

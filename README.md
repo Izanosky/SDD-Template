@@ -20,8 +20,11 @@ quieres tests, CI o métricas, se deciden en el arranque o se piden después.
 
 ## Uso
 
-1. Copia esta carpeta como raíz del proyecto nuevo (o copia sus ficheros en
-   uno que ya exista) y ejecuta `git init` si no es un repositorio.
+1. Copia esta carpeta como raíz del proyecto nuevo y ejecuta `git init`
+   si no es un repositorio. En un proyecto que ya existe, **no pises** su
+   `CLAUDE.md`, su `.gitignore` ni su `.claude/settings.json`: fusiónalos a
+   mano. El resto (`.claude/agents/`, `.claude/skills/`, `docs/`, `specs/`)
+   se copia tal cual.
 2. Antes del primer `git add -A`, mira `git status` y lleva a `.gitignore`
    lo personal que hubiera en la carpeta.
 3. Abre Claude Code en ella y escribe `/arranque`, o di qué quieres
@@ -51,7 +54,13 @@ Todo queda en `docs/proyecto.md`, que se puede retomar en otra sesión.
 | 4. Stack | arquitectura, lenguaje, framework, datos y despliegue: los eliges tú o Claude propone 2-3 opciones. Se apuntan los supuestos de riesgo |
 | 5. Librerías | lo que va encima del stack, con versión y alternativa descartada. Lo que no esté en la lista pide permiso |
 | 6. Diseño visual | `/direccion-visual`: qué pantallas se diseñan, tus referencias reales, tres direcciones para comparar (Google Stitch o miniaturas HTML), librerías de interfaz y tokens |
-| 7. Forma de trabajo | cuánto proceso según el alcance: spec, pruebas, comando de verificación, zonas críticas y mutantes, revisiones, auditorías, ramas y skills de los agentes |
+| 7. Forma de trabajo | cuánto proceso según el alcance: spec, pruebas, comando de verificación, zonas críticas y mutantes, revisiones, auditorías, ramas, skills de los agentes y convenciones de código (Claude propone las estándar del stack y te pregunta solo tus preferencias) |
+
+En cualquier fase, y también después, puedes pedir una **investigación a
+fondo** sobre convenciones, arquitecturas de referencia o cómo resuelven
+algo productos parecidos. Claude propone antes la pregunta, las fuentes y
+el coste, y el resultado queda en `docs/investigaciones/<tema>.md`, con
+fuentes y fechas. La decisión la sigues tomando tú.
 
 ## 2. Construir
 
@@ -95,6 +104,7 @@ número de intentos.
 | Riesgos propios y lista de seguridad | `docs/seguridad.md` |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
 | Iteraciones | `progress/FNN/IT<n>/` |
+| Investigaciones a fondo | `docs/investigaciones/<tema>.md` |
 | Auditorías y retrospectivas | `docs/auditorias/`, `docs/retrospectiva-<fecha>.md` |
 
 El detalle del ciclo, con el incidente que motivó cada paso, está en

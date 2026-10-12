@@ -22,10 +22,10 @@ revisas.
   cambió: `git diff HEAD` y `git status --short` para ver los ficheros
   nuevos (un commit por feature, así que eso es la feature). Si es una
   segunda vuelta, mira primero el `review.md` de la anterior: lo pedido.
-- **Cada requisito de la spec (`specs/FNN-*.md`) tiene un test que lo
-  comprueba de verdad**, es decir, que afirma algo sobre el resultado. En
+- **Cada requisito de la spec (`specs/FNN-*.md`; sin spec, los del
+  encargo) tiene un test que lo comprueba de verdad**, es decir, que afirma algo sobre el resultado. En
   las zonas críticas (`docs/proyecto.md`, sección 7), **repite el mismo
-  comando de mutantes** que usó el implementer y juzga cada mutante que
+  comando de mutantes** (`docs/convenciones.md`) que usó el implementer y juzga cada mutante que
   sobrevive: o falta un test, o de verdad es equivalente. *En un piloto,
   con criterios distintos, se rechazaron 42 de 44 primeras entregas. En la
   prueba siguiente, con el mismo comando, se aprobaron a la primera 3 de 5
@@ -51,6 +51,9 @@ revisas.
 - **Lo que sobra**, con `ponytail-review` y solo sobre el diff
   (reinventar la librería estándar, abstracciones con una sola
   implementación): va a una sección `## Sobra` que no bloquea.
+
+Tus copias y sabotajes, en tu propia carpeta temporal
+(`<temporal>/FNN-IT<n>-reviewer/`), nunca en el repositorio.
 
 Fuera de las zonas críticas, un test flojo es una observación, salvo que un
 requisito no tenga ningún test. **Revisión acotada**: si tu rechazo

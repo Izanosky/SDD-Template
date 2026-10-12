@@ -52,6 +52,24 @@ toma el humano. Además:
 
 Cada hecho, con su fuente y su fecha.
 
+**Investigación a fondo, a petición del humano**, en cualquier fase y sobre
+cualquier tema: convenciones, arquitecturas de referencia, cómo resuelven
+algo productos parecidos o qué prácticas usa un equipo profesional para
+este tipo de proyecto. Antes de lanzarla, propón:
+
+- la pregunta exacta y lo que queda fuera;
+- las fuentes (documentación oficial, repositorios de referencia,
+  artículos de ingeniería de empresas que lo hacen a escala);
+- con qué se hace (`explorer` o `/deep-research`) y su coste aproximado.
+
+Con el sí del humano, el resultado queda en
+`docs/investigaciones/<tema>.md`, con las fuentes, las fechas y las
+opciones con sus pros y contras. La decisión se sigue tomando con la
+entrevista, y en `docs/proyecto.md` queda la decisión con un enlace a la
+investigación. Con alcance **compartido** o **producción**, ofrécela tú en
+las fases 4 y 7 si hay decisiones que el humano no sabe valorar; no la
+lances sin su sí.
+
 ## 1. Requisitos
 
 Qué es, para quién y qué problema resuelve. Qué puede hacer el usuario
@@ -154,9 +172,14 @@ Además, decide con el humano y apunta:
 - **los riesgos propios de seguridad** (3-6, del más grave al menos), en
   `docs/seguridad.md`, borrando los apartados condicionales que no
   apliquen;
-- **las convenciones**: rellena `docs/convenciones.md` con lo decidido
-  (estructura y fronteras, idioma, errores, patrones prohibidos; el bloque
-  web, si hay interfaz). Los comandos los completa F00;
+- **las convenciones** (`docs/convenciones.md`). Propón en bloque lo
+  estándar del stack elegido (estructura de carpetas y fronteras, manejo de
+  errores, tipos, tests por capa y, si hay interfaz, el bloque web), para
+  que el humano lo acepte de una vez o abra lo que quiera. Pregunta solo lo
+  que es preferencia suya: en qué idioma van el código y los textos de la
+  interfaz, si hay patrones que quiere prohibir o exigir, y el formato de
+  ramas y mensajes de commit. Si quiere fundamentarlas mejor, ofrécele la
+  investigación a fondo. Los comandos los completa F00;
 - **las skills para los agentes según el stack**, si están instaladas: con
   React, `vercel-react-best-practices` y `vercel-composition-patterns` en el
   `implementer`; con Python, `modern-python`; con usuarios o servidor,
@@ -177,8 +200,11 @@ Enseña un resumen de una pantalla: qué se decidió en cada fase, qué es
 revisable y cuándo, y la primera feature. **Con el sí explícito del
 humano**, escribe `Estado: aprobado (AAAA-MM-DD)` en `docs/proyecto.md` y
 rellena `CLAUDE.md` (qué es el proyecto y el resumen del stack). Si la
-carpeta no es todavía un repositorio git, propón `git init`. Desde ahí se
-construye siguiendo `docs/forma-de-trabajo.md`.
+carpeta no es todavía un repositorio git, propón `git init`. Después,
+**propón el primer commit** (la plantilla y los documentos del arranque),
+tras mirar `git status`: los revisores comparan contra `HEAD`, y sin un
+commit previo no hay con qué comparar. Desde ahí se construye siguiendo
+`docs/forma-de-trabajo.md`.
 
 Si más adelante cambia una decisión de base, se vuelve a su fase, se
 actualiza `docs/proyecto.md` y solo entonces se sigue.

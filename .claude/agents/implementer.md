@@ -19,11 +19,14 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
 
 ## Antes de escribir
 
-1. Lee el encargo; la spec (`specs/FNN-*.md`), si la hay; `docs/proyecto.md`
-   (stack, librerías, sección 7 "Forma de trabajo"); `docs/convenciones.md`;
-   `docs/seguridad.md` si tocas entrada externa, autenticación o datos; y
-   `docs/forma-de-trabajo.md`. Si hay pantallas, también `docs/diseno.md`.
-2. Si el encargo y los documentos se contradicen, o falta una decisión que
+1. Lee el encargo; la spec (`specs/FNN-*.md`), si la hay (si no, los
+   requisitos son los del encargo, cada línea como un requisito);
+   `docs/proyecto.md` (stack, librerías, sección 7 "Forma de trabajo");
+   `docs/convenciones.md`; y `docs/seguridad.md` si tocas entrada externa,
+   autenticación o datos. Si hay pantallas, también `docs/diseno.md`.
+2. **Si te han reanudado**, mira qué tareas de la spec ya están marcadas y
+   qué hay en la carpeta de la iteración: una sesión anterior pudo cortarse.
+3. Si el encargo y los documentos se contradicen, o falta una decisión que
    no te corresponde tomar, **para y dilo en una línea**. No elijas por el
    humano.
 
@@ -35,8 +38,8 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
 - **Las pruebas que fija la sección 7 de `docs/proyecto.md`.** Cada test
   tiene que caer con el código roto: rompe la línea de producción, míralo
   caer y restáurala (en una copia, o restaurando antes de seguir). En las
-  zonas críticas, pasa **el comando de mutantes** apuntado allí, el mismo
-  que repetirá el `reviewer`. Cada mutante que sobreviva acaba en un test
+  zonas críticas, pasa **el comando de mutantes** de
+  `docs/convenciones.md`, el mismo que repetirá el `reviewer`. Cada mutante que sobreviva acaba en un test
   nuevo o en "equivalente: <por qué>".
 - **El nombre de un test no promete más de lo que comprueba.** Un límite se
   compara con el valor de la spec, no con la constante del código. Un doble
@@ -62,7 +65,7 @@ aprueba una dependencia.
 
 ## Capturas (si tocas pantallas)
 
-Arranca la app con el comando de datos falsos de `docs/proyecto.md`, con
+Arranca la app con el comando de datos falsos de `docs/convenciones.md`, con
 datos normales y con el peor caso (nombres largos, cero elementos, cifras
 enormes). Captura cada pantalla que tocaste: claro y oscuro si existen,
 1280 y 390 px. Como mucho unas 8 capturas. Usa un navegador **aislado**
@@ -71,10 +74,24 @@ enormes). Captura cada pantalla que tocaste: claro y oscuro si existen,
 cortado o solapado, desalineado, contraste pobre o algo fuera del diseño.
 Al terminar, para **solo tu servidor**, por su PID.
 
+## Entorno
+
+- Tus copias y sabotajes, en tu propia carpeta temporal
+  (`<temporal>/FNN-IT<n>-implementer/`), sin enlaces a `node_modules` ni
+  `.venv`: un `rm -rf` puede atravesar el enlace.
+- Para deshacer un sabotaje, se restaura la línea; **nunca "restaurar de
+  HEAD"**, que borra el trabajo sin commitear.
+- Los procesos, por su PID, nunca por nombre.
+- Los lockfiles se regeneran sin actualizar versiones.
+
 ## Prohibido
 
-Commit, leer `.env` o claves, tocar carpetas de otras iteraciones, dependencias no aprobadas, operaciones
-destructivas sobre datos reales, editar `docs/` y darte por aprobado.
+Commit, leer `.env` o claves, tocar carpetas de otras iteraciones,
+dependencias no aprobadas, operaciones destructivas sobre datos reales,
+darte por aprobado y editar `docs/`. Hay una excepción: en F00, o en la
+primera feature con pantallas, rellenas los comandos de
+`docs/convenciones.md` (verificar, mutantes, datos falsos) si el encargo
+lo pide.
 
 ## Qué escribes
 

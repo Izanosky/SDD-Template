@@ -36,6 +36,7 @@ el humano y que se puede cambiar cuando estorbe.
 | Lecciones del proyecto, según ocurren | `docs/proyecto.md`, sección "Lecciones" |
 | Spec de una feature | `specs/FNN-<nombre>.md`, desde `specs/_plantilla.md` |
 | Cada vuelta de una feature | `progress/FNN/IT<n>/` (abajo) |
+| Investigaciones a fondo (convenciones, arquitecturas…) | `docs/investigaciones/<tema>.md` |
 | Auditorías y retrospectivas | `docs/auditorias/`, `docs/retrospectiva-<fecha>.md` |
 | Qué cambió en la feature en curso | `git diff HEAD` (un commit por feature) |
 
@@ -80,7 +81,9 @@ tras el commit.*
    piloto, un cambio de framework a mitad de la primera feature tiró una
    iteración entera, y la primera feature cargó con el toolchain y
    necesitó 11 vueltas.*
-2. **Spec**, si la sección 7 la pide para esta feature. La escribe la
+2. **Spec**, si la sección 7 la pide para esta feature. Sin spec, el
+   encargo lleva los requisitos (cada línea, un requisito) y, si aparece
+   una decisión de diseño de verdad, se para y se escribe la spec. La escribe la
    sesión principal con el humano, usando la skill `entrevista`. Antes de
    redactar, se pregunta lo ambiguo: *una spec se reescribió entera por no
    hacerlo.* Va en `specs/FNN-<nombre>.md`, desde la plantilla, y ocupa
@@ -103,9 +106,12 @@ tras el commit.*
    contexto limpio y nunca a cargo de quien implementó, sobre la misma
    `IT<n>`. Si pide cambios, se crea `IT<n+1>` y se relanza el
    `implementer` con los cambios de `review.md` citados tal cual. Después
-   vuelve el `reviewer`.
+   vuelve el `reviewer`. Las desviaciones a las que el reviewer da el
+   visto bueno, la sesión principal las marca en la spec ("Visto bueno:
+   reviewer, fecha").
 6. **Revisión de seguridad** (`security_reviewer`), si la sección 7 la pide:
-   **al final de la feature y solo tras el `APPROVED` del reviewer.** *En
+   **al final de la feature y solo tras el `APPROVED` del reviewer** (si
+   el proyecto va sin reviewer, tras la última vuelta del implementer). *En
    un piloto, en cada tramo supuso 47 pasadas para 2 rechazos; en paralelo
    con el reviewer, la mitad de las pasadas caían en código que se iba a
    rehacer.* Si pide cambios, se hace otra vuelta, que pasa por el
@@ -140,6 +146,14 @@ La carpeta progress/FNN/IT<n>/ ya existe: deja ahí impl.md y evidence.md.
 Dependencias aprobadas: <lista o "ninguna nueva">.
 [Reglas que han cambiado en esta sesión: <…>.] [Arreglos míos que verás en el diff: <…>.]
 [No toques: <…>.] [Hipótesis sin verificar: <…>.]
+```
+
+Al `reviewer` y al `security_reviewer`:
+
+```
+Revisa FNN (<título>), IT<n>. Spec: specs/FNN-<nombre>.md (o requisitos: <…>).
+Escribe progress/FNN/IT<n>/review.md (o security.md).
+[Revisión acotada: el rechazo anterior fue solo por tests.] [Arreglos míos que verás en el diff: <…>.]
 ```
 
 - **Las hipótesis, etiquetadas como hipótesis.** *Una causa supuesta y
@@ -187,6 +201,10 @@ Todos, con el sí del humano.
 - **Si cambia una decisión de base** (stack, plataforma, datos), se para la
   feature, se vuelve a su fase del arranque, se actualiza
   `docs/proyecto.md` y solo entonces se sigue.
+- **Investigación a fondo**, cuando el humano la pida (convenciones,
+  arquitecturas, cómo lo resuelven otros): igual que en el arranque, se
+  propone primero la pregunta, las fuentes y el coste, y el resultado queda
+  en `docs/investigaciones/<tema>.md`.
 - **Un fallo sin causa clara** o un test intermitente se investiga antes de
   tocar código (`investigate-first`, si está instalada).
 - **Cambiar la forma de trabajo** (sección 7 de `docs/proyecto.md`): se
