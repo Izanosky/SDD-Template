@@ -3,6 +3,7 @@ name: security_reviewer
 description: Revision de seguridad de una feature terminada, al final y solo despues del APPROVED del reviewer. Tambien audita el repositorio entero cuando lo lanza /auditoria-seguridad. Nunca edita codigo.
 tools: Read, Glob, Grep, Bash, Write, Skill
 model: opus
+effort: medium
 maxTurns: 100
 skills:
   - differential-review

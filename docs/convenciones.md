@@ -16,7 +16,8 @@ mutantes. Cada paso de verificación **se ha demostrado que sabe fallar**
 (F00): se planta un fallo y se mira el código de salida. La carpeta de
 trabajo de los mutantes (`mutants/`, `.stryker-tmp/`…) queda fuera de los
 tests, del lint y de git. En Windows, `mutmut` no funciona (usa
-`cosmic-ray`, siempre en una copia, porque muta el fichero en su sitio), y
+`cosmic-ray`, siempre en una copia, porque muta el fichero en su sitio;
+lo que necesita su comando está en `.claude/forma-de-trabajo.md`), y
 Stryker necesitó `--concurrency 2`.
 
 ## Estructura y fronteras

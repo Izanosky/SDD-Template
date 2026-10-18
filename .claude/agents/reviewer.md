@@ -3,6 +3,7 @@ name: reviewer
 description: Revision funcional independiente del trabajo del implementer, con contexto limpio. Aprueba o pide cambios con citas archivo:linea. Nunca edita codigo.
 tools: Read, Glob, Grep, Bash, Write, Skill
 model: opus
+effort: medium
 maxTurns: 100
 skills:
   - property-based-testing

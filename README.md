@@ -133,13 +133,13 @@ El detalle del ciclo, con el incidente que motivó cada paso, está en
 
 ## Agentes
 
-| Agente | Qué hace | Modelo · `maxTurns` | Skills precargadas (si están instaladas) |
+| Agente | Qué hace | Modelo · `effort` · `maxTurns` | Skills precargadas (si están instaladas) |
 |---|---|---|---|
 | sesión principal | el arranque, las specs, lanzar los agentes, los arreglos pequeños, mantener `docs/proyecto.md` | el de la sesión | — |
-| `explorer` | busca un hecho (una librería, un límite, cómo está hecho algo) con su fuente y su fecha | sonnet · 60 | — |
-| `implementer` | construye la feature o el tramo, con pruebas y capturas | opus · 200 | `ponytail`, `property-based-testing`, `migration`, `surgical-patch`, `make-interfaces-feel-better`, `web-design-guidelines` |
-| `reviewer` | revisión funcional con contexto limpio; nunca edita código | opus · 100 | `property-based-testing`, `web-design-guidelines`, `ponytail-review` |
-| `security_reviewer` | seguridad de la feature entera, al final y tras el `APPROVED` del reviewer; también audita el repositorio | opus · 100 | `differential-review` (e invoca `supply-chain-risk-auditor`, `variant-analysis` y `sharp-edges` cuando toca) |
+| `explorer` | busca un hecho (una librería, un límite, cómo está hecho algo) con su fuente y su fecha | sonnet · low · 60 | — |
+| `implementer` | construye la feature o el tramo, con pruebas y capturas | opus · medium · 200 | `ponytail`, `property-based-testing`, `migration`, `surgical-patch`, `make-interfaces-feel-better`, `web-design-guidelines` |
+| `reviewer` | revisión funcional con contexto limpio; nunca edita código | opus · medium · 100 | `property-based-testing`, `web-design-guidelines`, `ponytail-review` |
+| `security_reviewer` | seguridad de la feature entera, al final y tras el `APPROVED` del reviewer; también audita el repositorio | opus · medium · 100 | `differential-review` (e invoca `supply-chain-risk-auditor`, `variant-analysis` y `sharp-edges` cuando toca) |
 
 Opus en quien construye y revisa porque lo caro son las vueltas de más,
 no el precio por token. Opus cuesta el doble que Sonnet en entrada y
@@ -149,7 +149,11 @@ veces más cara, y una vuelta evitada por feature lo compensa. En la prueba
 mínima (Opus), el reviewer aprobó 5 de 7 revisiones; en el piloto
 (Sonnet), 47 de 96. Es un indicio, no una prueba, porque también cambiaron
 las reglas. Con suscripción, la diferencia se nota en la cuota, no en
-dólares. `maxTurns` pone tope al
+dólares. El `effort` va fijo para que los agentes no hereden el de la
+sesión; la sesión principal lo sube a `high` en las revisiones de zonas
+críticas y en la auditoría (el implementer se queda en `medium`). El implementer no carga las herramientas que no usa
+(`disallowedTools`): con todas arrancaba con el doble de contexto que un
+revisor. `maxTurns` pone tope al
 gasto: si un agente llega a él, se reanuda; el número no se sube a
 ciegas.
 

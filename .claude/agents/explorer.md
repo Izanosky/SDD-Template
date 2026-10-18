@@ -3,6 +3,7 @@ name: explorer
 description: Investigacion de solo lectura para responder un hecho concreto (una libreria, un plan, un limite, como esta hecho algo en el repo) antes de decidir. Devuelve hallazgos con fuente y fecha, no decisiones ni codigo.
 tools: Read, Glob, Grep, WebSearch, WebFetch
 model: sonnet
+effort: low
 maxTurns: 60
 ---
 

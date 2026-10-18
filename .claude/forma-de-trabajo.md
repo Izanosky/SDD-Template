@@ -111,7 +111,10 @@ tras el commit.*
    `implementer` con los cambios de `review.md` citados tal cual. Después
    vuelve el `reviewer`. Las desviaciones a las que el reviewer da el
    visto bueno, la sesión principal las marca en la spec ("Visto bueno:
-   reviewer, fecha").
+   reviewer, fecha"). Las observaciones que no bloquean no pasan al
+   implementer como "decide tú": la sesión principal las decide con el
+   humano o las descarta. *Una así costó una vuelta entera, y en la
+   siguiente el mismo reviewer la retiró.*
 6. **Revisión de seguridad** (`security_reviewer`), si `docs/proceso.md` la pide:
    **al final de la feature y solo tras el `APPROVED` del reviewer** (si
    el proyecto va sin reviewer, tras la última vuelta del implementer). *En
@@ -168,6 +171,9 @@ Escribe progress/FNN/IT<n>/review.md (o security.md).
 - **Los arreglos que hizo la sesión principal, declarados**: *uno sin
   declarar volvió como "cambio no explicado".*
 - **Agentes en paralelo, solo sobre ficheros distintos**, y se les dice.
+- **"No toques" nunca incluye marcar las tareas de la spec**: eso le toca
+  siempre al implementer. *Un "no toques specs/" se lo impidió dos veces
+  en la misma feature: un rechazo y una reanudación solo para marcarlas.*
 
 ### Agente que vuelve sin terminar
 
@@ -175,6 +181,11 @@ Si un agente corta antes de escribir su fichero (`impl.md`, `review.md` o
 `security.md`), no se lanza otro, que empezaría de cero: se le escribe con `SendMessage` para que continúe. Como
 mucho dos veces; a la tercera, el atasco es real y se para para contárselo
 al humano.
+
+Si la sesión se cortó con el agente a medias, ya no se le puede escribir:
+se lanza uno nuevo en la misma carpeta, y el encargo dice que otro se
+cortó y que parta de lo que hay en el árbol (`git status`, tareas
+marcadas). *En un piloto pasó cinco veces.*
 
 ### Arreglos pequeños
 
@@ -238,6 +249,20 @@ Todos, con el sí del humano.
   - Tareas mecánicas, como aplicar correcciones de texto ya decididas:
     `haiku`, con el texto redactado por la sesión principal. *Un modelo que
     no implementó rellena los huecos con lo que suena plausible.*
+- **Esfuerzo de razonamiento (`effort`)**, fijo en cada agente para que
+  no herede el de la sesión: `medium` el implementer y los revisores,
+  `low` el explorer. Para una revisión (funcional o de seguridad) en las
+  zonas críticas, y para la auditoría, la sesión principal lo sube a
+  `high` con el parámetro `effort` al lanzarlo. El implementer se queda en
+  `medium` también ahí: los mutantes y la revisión son su red. *Si el
+  humano trabajaba en `high` o `max`, todos los agentes razonaban a ese
+  nivel, más lentos y más caros. Y con "zonas críticas en `high`" para
+  todos, en un proyecto de dinero, donde casi todo es zona crítica, todo
+  acababa en `high`.*
+- **El implementer no carga herramientas que no usa** (`disallowedTools`
+  en su definición: lanzar agentes, artefactos, tareas programadas…). *Con
+  todas, arrancaba con 45-54 k tokens de contexto frente a los 24 k de
+  los revisores, y ese contexto se relee en cada llamada.*
 - **`maxTurns`** en cada agente pone tope al gasto: 200 el implementer, 100
   los revisores y 60 el explorer. Si un agente llega al tope, se reanuda
   (arriba), no se sube el número a ciegas.
@@ -302,7 +327,12 @@ Según `docs/proceso.md`:
   requisito. *En un piloto se rechazaron 42 de 44 primeras entregas por
   mutantes que el implementador no había probado: cada uno usaba un
   criterio distinto. En la prueba siguiente, un mutante encontró un fallo
-  real en la zona crítica (recortar antes de ordenar).*
+  real en la zona crítica (recortar antes de ordenar).* Si la batería
+  entera tarda más de unos 5 minutos, en cada vuelta se pasa solo sobre
+  los ficheros críticos que cambian, y la entera una vez al cerrar la
+  feature. *En una prueba con dos ficheros críticos, acotar no perdió
+  ningún mutante pero tampoco ahorró: la pasada de cierre se comió lo
+  ganado.*
 - **Un test de límite se compara con el valor de la spec**, no con la
   constante del código.
 - **Un doble de prueba respeta los límites reales** (paginación, filtros).
@@ -316,10 +346,26 @@ Según `docs/proceso.md`:
   con un protocolo escrito. Nunca se da por verificado sin más.
 - **Un solo comando verifica todo**: tests, lint, tipos, build y auditoría
   de dependencias. Antes de fiarse de él, se demuestra que cada paso sabe
-  fallar. *Hubo un comprobador de tipos que no comprobaba nada.*
+  fallar. *Hubo un comprobador de tipos que no comprobaba nada.* Si un
+  paso necesita red (la auditoría de dependencias) y el agente no la
+  tiene, lo dice en su fichero y lo ejecuta la sesión principal. *Pasó dos
+  veces: el agente no podía cerrar en verde.*
 - **Herramientas de mutantes en Windows**: `mutmut` no funciona en Windows
   nativo (usa `cosmic-ray`), y Stryker necesitó `--concurrency 2` para no
-  dar ETIMEDOUT.
+  dar ETIMEDOUT. `cosmic-ray` puede dar por bueno lo que no ha probado, así
+  que su comando (F00):
+  - llama al Python del entorno por su **ruta absoluta**: *con `python` sin
+    resolver, todos los mutantes salían "muertos" sin ejecutar un test*;
+  - fija `PYTHONUTF8=1`: *un "€" en la salida de los tests dejó 48 de 53
+    mutantes como `INCOMPETENT`*;
+  - **falla si algún mutante sale `INCOMPETENT`** (el test no llegó a
+    ejecutarse), y trabaja en una copia, porque muta el fichero en su
+    sitio;
+  - y en F00 demuestra que sabe fallar: con una función sin tests, tienen
+    que salir supervivientes.
+
+  `cosmic-ray` no muta textos ni expresiones regulares: esos literales se
+  sabotean a mano, y el reviewer hace los suyos.
 
 ## Interfaz
 
