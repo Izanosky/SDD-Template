@@ -1,6 +1,6 @@
 ---
 name: arranque
-description: Ronda inicial de un proyecto - entrevista al humano en orden (requisitos, alcance, aspectos clave segun el alcance, stack, librerias, diseno visual y forma de trabajo del proyecto) con una recomendacion en cada pregunta, y deja cada decision en su documento de docs/ y el CLAUDE.md del proyecto. Usar al empezar, cuando docs/proyecto.md no dice "Estado: aprobado", o para revisar una fase. Solo la sesion principal.
+description: 'Ronda inicial de un proyecto - entrevista al humano en orden (requisitos, alcance, aspectos clave segun el alcance, stack, librerias, diseno visual y forma de trabajo del proyecto) con una recomendacion en cada pregunta, y deja cada decision en su documento de docs/ y el CLAUDE.md del proyecto. Usar al empezar, cuando docs/proyecto.md no dice "Estado: aprobado", o para revisar una fase. Solo la sesion principal.'
 ---
 
 # Arranque
