@@ -8,9 +8,6 @@ disallowedTools: Agent, SendMessage, ListAgents, Skill, AskUserQuestion, Artifac
 skills:
   - ponytail:ponytail
   - property-based-testing
-  - migration
-  - surgical-patch
-  - make-interfaces-feel-better
   - web-design-guidelines
 ---
 
@@ -41,7 +38,8 @@ frío: lo que necesitas está en el encargo y en los documentos que cita.
   `docs/stack.md` o en el encargo.
 - **Las pruebas que fija `docs/proceso.md`.** Cada test
   tiene que caer con el código roto: rompe la línea de producción, míralo
-  caer y restáurala (en una copia, o restaurando antes de seguir). En las
+  caer y restáurala. Hazlo en el árbol real: guarda antes una copia del
+  fichero y, al restaurar, compruébalo con `cmp` contra ella. En las
   zonas críticas, pasa **el comando de mutantes** de
   `CLAUDE.md`, el mismo que repetirá el `reviewer`. Cada mutante que sobreviva acaba en un test
   nuevo o en "equivalente: <por qué>".
@@ -82,9 +80,10 @@ Al terminar, para **solo tu servidor**, por su PID.
 
 ## Entorno
 
-- Tus copias y sabotajes, en tu propia carpeta temporal
-  (`<temporal>/FNN-IT<n>-implementer/`), sin enlaces a `node_modules` ni
-  `.venv`: un `rm -rf` puede atravesar el enlace.
+- Tus copias (las de la herramienta de mutantes), en tu propia carpeta temporal
+  (`<temporal>/FNN-IT<n>-implementer/`). Si enlazas `node_modules` o
+  `.venv`, al terminar quita primero el enlace y después la copia: un
+  `rm -rf` atraviesa el enlace y vacía el original.
 - Para deshacer un sabotaje, se restaura la línea; **nunca "restaurar de
   HEAD"**, que borra el trabajo sin commitear.
 - Los procesos, por su PID, nunca por nombre.

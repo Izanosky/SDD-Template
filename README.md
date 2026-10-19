@@ -137,7 +137,7 @@ El detalle del ciclo, con el incidente que motivó cada paso, está en
 |---|---|---|---|
 | sesión principal | el arranque, las specs, lanzar los agentes, los arreglos pequeños, mantener `docs/proyecto.md` | el de la sesión | — |
 | `explorer` | busca un hecho (una librería, un límite, cómo está hecho algo) con su fuente y su fecha | sonnet · low · 60 | — |
-| `implementer` | construye la feature o el tramo, con pruebas y capturas | opus · medium · 200 | `ponytail`, `property-based-testing`, `migration`, `surgical-patch`, `make-interfaces-feel-better`, `web-design-guidelines` |
+| `implementer` | construye la feature o el tramo, con pruebas y capturas | opus · medium · 200 | `ponytail`, `property-based-testing`, `web-design-guidelines` |
 | `reviewer` | revisión funcional con contexto limpio; nunca edita código | opus · medium · 100 | `property-based-testing`, `web-design-guidelines`, `ponytail-review` |
 | `security_reviewer` | seguridad de la feature entera, al final y tras el `APPROVED` del reviewer; también audita el repositorio | opus · medium · 100 | `differential-review` (e invoca `supply-chain-risk-auditor`, `variant-analysis` y `sharp-edges` cuando toca) |
 
@@ -214,8 +214,7 @@ la precarga.
 | `property-based-testing` | [trailofbits/skills](https://github.com/trailofbits/skills), CC BY-SA 4.0 | `implementer`, `reviewer` | el reviewer la usó para juzgar propiedades (formato de ids en los bordes) |
 | `differential-review`, `supply-chain-risk-auditor`, `variant-analysis`, `sharp-edges` | trailofbits/skills, CC BY-SA 4.0 | `security_reviewer` | el security_reviewer las consideró por regla, pero en la prueba no hizo falta invocarlas (sin cambios de lockfile ni hallazgos que rastrear); de `differential-review`, precargada, no hay rastro medible |
 | `ponytail:ponytail` | plugin ponytail, MIT | `implementer` | sin rastro medible: las precargadas no dejan huella en los ficheros |
-| `migration`, `surgical-patch`, `investigate-first` | skills de usuario (origen sin registrar) | `implementer`; `investigate-first`, la sesión principal | sin rastro medible |
-| `make-interfaces-feel-better` | affaan-m/ECC, MIT | `implementer` | sin rastro medible |
+| `investigate-first` | skill de usuario (origen sin registrar) | la sesión principal | sin rastro medible |
 | `frontend-design` | plugin oficial de Anthropic | `/direccion-visual` sin Stitch | las tres miniaturas HTML |
 | `ui-ux-pro-max`, `pick-ui-library`, `redesign-existing-projects` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), [emilkowalski/skills](https://github.com/emilkowalski/skills), [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill); MIT | `/direccion-visual` | paletas, fuentes y elección de librerías de interfaz |
 | `architecture-decision-records`, `council` | affaan-m/ECC, MIT | `/arranque` | ADR si los quieres; contraste cuando hay varias opciones buenas |
@@ -308,8 +307,8 @@ Recopiladas en las pruebas. El incidente que motivó cada una está en
   no se lanza otro.
 - Cada agente en su propia carpeta temporal. Los procesos se matan por su
   PID, nunca por nombre.
-- Copias de trabajo sin enlaces a `node_modules` o `.venv`. Nunca
-  "restaurar de HEAD" para deshacer un sabotaje.
+- Una copia con `node_modules` o `.venv` enlazado se borra quitando antes
+  el enlace. Nunca "restaurar de HEAD" para deshacer un sabotaje.
 
 **Pruebas**
 

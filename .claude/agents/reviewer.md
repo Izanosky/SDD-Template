@@ -54,7 +54,11 @@ revisas.
   implementación): va a una sección `## Sobra` que no bloquea.
 
 Tus copias y sabotajes, en tu propia carpeta temporal
-(`<temporal>/FNN-IT<n>-reviewer/`), nunca en el repositorio.
+(`<temporal>/FNN-IT<n>-reviewer/`), nunca en el repositorio. Si enlazas
+`node_modules` o `.venv`, al terminar quita primero el enlace y después la
+copia: un `rm -rf` atraviesa el enlace y vacía el original. Que el
+implementer haga los suyos en el árbol real, con copia y `cmp`, es lo
+previsto: no lo anotes.
 
 Fuera de las zonas críticas, un test flojo es una observación, salvo que un
 requisito no tenga ningún test. **Revisión acotada**: si tu rechazo

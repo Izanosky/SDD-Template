@@ -66,10 +66,8 @@ carpetas salieron todas las cifras que motivaron los cambios (rechazos por
 causa, pasadas de seguridad inútiles).* La carpeta se commitea con la
 feature.
 
-**Al empezar cada sesión**, la sesión principal lee las secciones
-"Features", "Estado actual" y "Pendiente" de `docs/proyecto.md` y dice al
-humano por dónde va el proyecto. **Al cerrar cada paso del ciclo**, las
-actualiza. *Al quitarse un estado que se pudiera derivar, lo único que
+**`docs/proyecto.md` se actualiza al cerrar cada paso del ciclo** (qué
+se lee al empezar la sesión, en `.claude/rules/harness.md`). *Al quitarse un estado que se pudiera derivar, lo único que
 recuerda en qué punto está el proyecto es ese fichero. Una sesión arrancó
 con un pendiente que ya estaba hecho, porque nadie lo había actualizado
 tras el commit.*
@@ -299,14 +297,9 @@ sin pedir nunca un secreto.
 
 ### Lecciones del proyecto
 
-Cuando algo de la forma de trabajo falla o estorba, la sesión principal lo
-apunta **en el momento y sin que se lo pidan** en la sección "Lecciones" de
-`docs/proyecto.md`: qué pasó, cuánto costó y de qué feature e iteración
-salió, sin proponer todavía el arreglo. Cuándo apuntar, en
-`.claude/rules/harness.md`. Los agentes lo dejan en su fichero de la
-iteración, bajo `## Para la forma de trabajo`, y la sesión principal lo
-pasa. *En la prueba mínima, ese diario fue lo que más sirvió
-para mejorar la plantilla.* La `/retrospectiva` lo convierte en cambios.
+Cuándo y cómo se apuntan, en `.claude/rules/harness.md`. *En la prueba
+mínima, ese diario fue lo que más sirvió para mejorar la plantilla.* La
+`/retrospectiva` lo convierte en cambios.
 
 ### En equipo
 
@@ -403,10 +396,16 @@ Según `docs/proceso.md`:
 - **Los procesos se matan por su PID, nunca por nombre.** *`taskkill /IM
   node.exe` mató todos los `node` de la máquina, y un servidor de Vite
   sobrevivió a TaskStop.*
-- **Las copias de trabajo, sin enlaces a `node_modules` o `.venv`.** *Un
-  `rm -rf` atravesó el enlace y casi vacía el original.*
+- **Una copia de trabajo con `node_modules` o `.venv` enlazado se borra
+  quitando primero el enlace.** *Un `rm -rf` atravesó el enlace y casi
+  vacía el original. Prohibir el enlace no servía: en JS, sin él, la copia
+  no corre los tests.*
 - **Nunca "restaurar de HEAD" para deshacer un sabotaje**: se pierde el
   trabajo sin commitear.
+- **Los sabotajes del implementer, en el árbol real** (copia del fichero y
+  `cmp` al restaurar). *Si se piden "en una copia", en JS la copia necesita
+  enlazar `node_modules`, con el riesgo de la regla anterior. En Gestor, el implementer los hizo cuatro veces en el árbol real sin perder
+  nada, y el reviewer lo anotó cada vez como fallo.*
 - **Lo que se sabe de fuera** (versiones, planes, límites), con su fuente y
   su fecha. *Un proveedor pasó a "legacy" entre dos consultas.*
 - **Windows y Linux**: los `.sh` con finales LF y bit de ejecución
@@ -445,14 +444,12 @@ dejarlos pasar sin vigilar. **Sin bash, en cambio, los hooks no llegan a
 ejecutarse y nada lo avisa**: si un comando que debería bloquearse (por
 ejemplo, `cat .env`) pasa, lo primero es comprobar `bash --version`.
 
-- **Los secretos no pasan por el contexto**: no se leen `.env` ni claves,
-  no se imprimen y no se copian (`.claude/settings.json` lo bloquea). Un
-  secreto que llega al chat, a un log o a un commit se rota: borrarlo no
-  basta, porque sigue en el historial. Antes del primer push conviene
+Las reglas duras (secretos, datos reales, servicios reales) están en
+`.claude/rules/harness.md`. Además:
+
+- **Un secreto que llega al chat, a un log o a un commit se rota**: borrarlo
+  no basta, porque sigue en el historial. Antes del primer push conviene
   pasar un escáner de secretos.
 - **El atacante no usa tu interfaz**: llama a la API directamente.
-- **Nada destructivo sobre datos reales** (`DROP`, `TRUNCATE`, o `DELETE`
-  y `UPDATE` sin `WHERE`).
-- **Se avisa antes de tocar servicios reales** y de lo que cuestan. Los
-  pasos que se le piden al humano van en orden ejecutable, con el
+- **Los pasos que se le piden al humano** van en orden ejecutable, con el
   resultado esperado y **sin pedirle nunca un secreto**.
