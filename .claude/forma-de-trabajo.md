@@ -112,7 +112,20 @@ tras el commit.*
    reviewer, fecha"). Las observaciones que no bloquean no pasan al
    implementer como "decide tú": la sesión principal las decide con el
    humano o las descarta. *Una así costó una vuelta entera, y en la
-   siguiente el mismo reviewer la retiró.*
+   siguiente el mismo reviewer la retiró.* Si la causa del rechazo es
+   `spec`, no se relanza al implementer: la sesión principal lo lleva al
+   humano, se escribe la enmienda y la vuelta siguiente la lleva en el
+   encargo. *En Crackify F06, dos vueltas seguidas se rechazaron por pasos
+   de despliegue que faltaban en la spec, y en Gestor F15 por un texto de
+   la spec que dejaba una tarea en rojo.* Desde la segunda vuelta el
+   reviewer mira lo pedido y lo que cambió, y pide los fallos repetidos
+   como clase, no uno a uno. *En Gestor F15, cada vuelta sacaba mutantes
+   nuevos sobre código ya revisado: 11 revisiones.* **Lo que se pide en
+   dos features se arregla en su origen**: una regla del linter, un paso
+   del comando de verificación o una línea en `docs/convenciones.md`, que
+   la sesión principal propone al humano al cerrar la feature. *En Crackify
+   y Gestor, dos de cada tres de los 93 rechazos eran por tests o mutantes,
+   y la primera entrega de casi cada tramo volvía.*
 6. **Revisión de seguridad** (`security_reviewer`), si `docs/proceso.md` la pide:
    **al final de la feature y solo tras el `APPROVED` del reviewer** (si
    el proyecto va sin reviewer, tras la última vuelta del implementer). *En

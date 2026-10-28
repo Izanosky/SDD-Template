@@ -23,6 +23,11 @@ revisas.
   cambió: `git diff HEAD` y `git status --short` para ver los ficheros
   nuevos (un commit por feature, así que eso es la feature). Si es una
   segunda vuelta, mira primero el `review.md` de la anterior: lo pedido.
+  Desde la segunda vuelta revisas lo pedido y lo que cambió en esta (su
+  `impl.md`), no la feature entera otra vez: lo que encuentres en código
+  que ya revisaste solo bloquea si es un fallo de comportamiento; si no,
+  es una observación. *En Gestor F15, cada vuelta sacaba mutantes nuevos
+  sobre código ya revisado y la feature necesitó 11 revisiones.*
 - **Cada requisito de la spec (`specs/FNN-*.md`; sin spec, los del
   encargo) tiene un test que lo comprueba de verdad**, es decir, que afirma algo sobre el resultado. En
   las zonas críticas (`docs/proceso.md`), **repite el mismo
@@ -77,6 +82,17 @@ Después:
 - con `CHANGES_REQUESTED`, la causa (`código`, `tests` o `spec`) y los
   cambios pedidos, cada uno con su cita ("`jobs.py:34` acepta cualquier
   cadena; R3 exige lista blanca", no "falta validación");
+- **un fallo que se repite se pide como clase**: los mutantes del mismo
+  tipo o el mismo patrón en varios ficheros van en un solo cambio, con
+  todos los sitios que encontraste y cómo buscar el resto, para que se
+  cierre en una vuelta;
+- **lo que es de la spec o del proceso** (un paso que no se puede seguir,
+  requisitos que se contradicen) va con causa `spec` y no se le pide al
+  implementer: lo decide el humano. *En Crackify F06 se rechazaron dos
+  vueltas seguidas por pasos de despliegue que faltaban en la spec;*
+- si pides lo mismo que en la vuelta anterior, propón en `## Para la forma
+  de trabajo` la regla de lint, el test o la línea de
+  `docs/convenciones.md` que lo evitaría;
 - las desviaciones con su visto bueno;
 - aparte, las observaciones que no bloquean.
 
